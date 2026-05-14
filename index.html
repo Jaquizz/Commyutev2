@@ -1865,6 +1865,7 @@ function initMap(){
     window.onMapReady = onMapReady;
 window.loadFriends=loadFriends;
 window.clearRequest=clearRequest;
+window.clearIncomingRequest=clearIncomingRequest;
 window.resendVerification=resendVerification;
 window.startMessageNotifications=startMessageNotifications;
 window.startConversation=startConversation;
@@ -1980,7 +1981,13 @@ async function loadRequests(){
           <div style="display:flex;gap:12px;align-items:flex-start">
             <div class="avatar" style="background:${avatarColor(r.fromUid)}">${(r.fromName||'?')[0]}</div>
             <div style="flex:1">
-              <strong>${r.fromName}</strong> ${sb}
+              <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.3rem">
+                <strong>${r.fromName}</strong>
+                <div style="display:flex;align-items:center;gap:6px">
+                  ${sb}
+                  ${r.status==='declined'?`<button class="btn btn-outline btn-sm" style="font-size:.72rem;padding:3px 10px" onclick="clearIncomingRequest('${d.id}')">Clear</button>`:''}
+                </div>
+              </div>
               <div style="font-size:.8rem;color:var(--muted);margin:.4rem 0;background:var(--cream);padding:.5rem;border-radius:8px">"${r.message}"</div>
               <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:.7rem">
                 <span class="badge badge-blue">${r.compensation}</span>
@@ -2021,6 +2028,15 @@ async function clearRequest(reqId){
     await db.collection('rideRequests').doc(reqId).delete();
     showToast('Request cleared.');
     loadRequests();
+  } catch(e){ showToast('Error: '+e.message); }
+}
+
+async function clearIncomingRequest(reqId){
+  try{
+    await db.collection('rideRequests').doc(reqId).delete();
+    showToast('Request removed.');
+    loadRequests();
+    loadPendingOverview();
   } catch(e){ showToast('Error: '+e.message); }
 }
 
