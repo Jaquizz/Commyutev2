@@ -2098,7 +2098,7 @@ async function loadFriends(){
   const partners = currentUserData.partners||[];
   const el = document.getElementById('friends-list');
   if(!partners.length){
-    el.innerHTML='<p class="text-muted" style="font-size:.875rem;text-align:center;padding:2rem;grid-column:1/-1">No partners yet. <a style="color:var(--green);cursor:pointer" onclick="showDash('map')">Find classmates on the map →</a></p>';
+    el.innerHTML='<p class="text-muted" style="font-size:.875rem;text-align:center;padding:2rem;grid-column:1/-1">No partners yet. <a style="color:var(--green);cursor:pointer" onclick="showDash(&quot;map&quot;)">Find classmates on the map \u2192</a></p>';
     return;
   }
   try{
