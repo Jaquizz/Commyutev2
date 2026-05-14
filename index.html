@@ -1766,12 +1766,21 @@ function loadDashboard(){
   document.getElementById('guestActions').classList.add('hidden');
   document.getElementById('authActions').classList.remove('hidden');
   const d = currentUserData;
-  document.getElementById('sb-avatar').textContent = initials(d.firstName,d.lastName);
+  // Set sidebar avatar
+  const sbAv = document.getElementById('sb-avatar');
+  if(sbAv){
+    if(d.photoURL){
+      photoCache[currentUser.uid] = d.photoURL;
+      sbAv.innerHTML = `<img src="${d.photoURL}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+    } else {
+      sbAv.textContent = initials(d.firstName,d.lastName);
+    }
+  }
   document.getElementById('sb-name').textContent = d.firstName+' '+d.lastName;
   showPage('dashboard');
   showDash('overview');
-  // Start listening for new messages
   startMessageNotifications();
+  cacheMyPhoto();
 }
 
 // ── OVERVIEW ──
@@ -1824,8 +1833,10 @@ async function loadPartners(){
     const snap = await db.collection('users').doc(uid).get();
     if(!snap.exists) return '';
     const p = snap.data();
+    if(p.photoURL) photoCache[uid] = p.photoURL;
+    const avHtml = avatarHtml(uid, p.firstName, p.lastName, '40px', p.photoURL);
     return `<div style="display:flex;align-items:center;gap:10px;padding:.7rem 0;border-bottom:1px solid var(--border)">
-      <div class="avatar" style="background:${avatarColor(uid)}">${initials(p.firstName,p.lastName)}</div>
+      ${avHtml}
       <div style="flex:1"><strong style="font-size:.875rem">${p.firstName} ${p.lastName}</strong>
       <div style="font-size:.75rem;color:var(--muted)">${p.grade} · ${p.neighborhoodZone||''}</div></div>
       <span class="badge badge-green">Partner</span>
@@ -1850,7 +1861,8 @@ async function loadPendingOverview(){
   el.innerHTML = snap.docs.slice(0,2).map(d=>{
     const r=d.data();
     return `<div class="ride-item">
-      <div class="avatar" style="background:${avatarColor(r.fromUid)};font-size:.8rem">${(r.fromName||'?')[0]}</div>
+      <div>${avatarHtml(r.fromUid, r.fromName?.split(' ')[0]||'?', r.fromName?.split(' ')[1]||'')}
+      </div>
       <div class="ride-info"><strong>${r.fromName}</strong><span>${r.compensation} · ${(r.days||[]).join(', ')}</span></div>
       <div style="display:flex;gap:5px">
         <button class="btn btn-primary btn-sm" onclick="respondRequest('${d.id}','${r.fromUid}','accepted')">✓</button>
@@ -1925,7 +1937,8 @@ async function onMapReady(){
     const card=document.createElement('div');
     card.className='peer-card';
     card.innerHTML=`
-      <div class="avatar" style="background:${col}">${initials(p.firstName,p.lastName)}</div>
+     if(p.photoURL) photoCache[pd.id]=p.photoURL;
+       <div style="margin:0 auto .3rem;display:flex;justify-content:center">${avatarHtml(pd.id,p.firstName,p.lastName,'48px',p.photoURL||null)}</div>
       <strong>${p.firstName}</strong>
       <span class="peer-detail">${p.grade} · ${zone}</span>
       <span class="peer-detail">${p.ridePreference==='driver'?'🚗 Driver':p.ridePreference==='rider'?'🎒 Rider':'🚗🎒 Both'}</span>
@@ -1978,7 +1991,8 @@ async function loadRequests(){
           :'<span class="badge badge-red">✗ Declined</span>';
         return `<div class="card mb1">
           <div style="display:flex;gap:12px;align-items:flex-start">
-            <div class="avatar" style="background:${avatarColor(r.fromUid)}">${(r.fromName||'?')[0]}</div>
+            <div>${avatarHtml(r.fromUid, r.fromName?.split(' ')[0]||'?', r.fromName?.split(' ')[1]||'')}
+            </div>
             <div style="flex:1">
               <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.3rem">
                 <strong>${r.fromName}</strong>
@@ -2290,8 +2304,13 @@ async function loadMessages(){
         const otherName=c.participantNames?.[otherId]||'Classmate';
         const thread=document.createElement('div');
         thread.className='msg-thread'+(d.id===activeConvId?' active':'');
-        thread.innerHTML=`<div class="avatar" style="background:${avatarColor(otherId)};width:36px;height:36px;font-size:.8rem">${(otherName||'?')[0].toUpperCase()}</div>
+        const threadAv = avatarHtml(otherId, otherName?.split(' ')[0]||'?', otherName?.split(' ')[1]||''  , '36px', photoCache[otherId]||null);
+        thread.innerHTML=`${threadAv}
           <div class="msg-thread-info"><strong>${otherName}</strong><span>${c.lastMessage||''}</span></div>`;
+        // Fetch photo in background if not cached
+        if(!photoCache[otherId]) fetchAndCachePhoto(otherId).then(url=>{
+          if(url){ const avEl=thread.querySelector('div'); if(avEl) avEl.outerHTML=avatarHtml(otherId,otherName?.split(' ')[0]||'?',otherName?.split(' ')[1]||''  ,'36px',url); }
+        });
         thread.onclick=()=>openConv(d.id,otherName,otherId,thread);
         el.appendChild(thread);
       });
@@ -2376,6 +2395,40 @@ function openConv(convId, otherName, otherId, threadEl){
 function escapeHtml(text){
   return text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
+// ── GLOBAL AVATAR HELPER ──
+const photoCache = {};
+
+function avatarHtml(uid, firstName, lastName, size, photoURL){
+  size = size || '40px';
+  const col = avatarColor(uid||'?');
+  const inits = initials(firstName||'?', lastName||'?');
+  const sizeNum = parseFloat(size);
+  const fontSize = Math.round(sizeNum * 0.38) + 'px';
+  const base = `width:${size};height:${size};border-radius:50%;flex-shrink:0;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;font-weight:700;`;
+  const cached = photoCache[uid] || photoURL;
+  if(cached){
+    return `<div style="${base}background:${col}"><img src="${cached}" style="width:100%;height:100%;object-fit:cover;border-radius:50%" onerror="this.style.display='none'"></div>`;
+  }
+  return `<div style="${base}background:${col};color:#fff;font-size:${fontSize}">${inits}</div>`;
+}
+
+async function fetchAndCachePhoto(uid){
+  if(photoCache[uid]) return photoCache[uid];
+  try{
+    const snap = await db.collection('users').doc(uid).get();
+    if(snap.exists && snap.data().photoURL){
+      photoCache[uid] = snap.data().photoURL;
+      return photoCache[uid];
+    }
+  } catch(e){}
+  return null;
+}
+
+async function cacheMyPhoto(){
+  if(!currentUser||!currentUserData) return;
+  if(currentUserData.photoURL) photoCache[currentUser.uid] = currentUserData.photoURL;
+}
+
 
 async function sendMsg(convId, otherId){
   const input=document.getElementById('msg-input-active');
@@ -2503,7 +2556,7 @@ async function loadFriends(){
       });
       const convId = existingConv ? existingConv.id : null;
       return `<div class="card" style="text-align:center">
-        <div class="avatar" style="background:${col};margin:0 auto .8rem;width:56px;height:56px;font-size:1.2rem">${av}</div>
+        <div style="margin:0 auto .8rem;display:flex;justify-content:center">${avHtml}</div>
         <strong style="font-size:.95rem">${p.firstName} ${p.lastName}</strong>
         <div style="font-size:.78rem;color:var(--muted);margin:.3rem 0">${p.grade} · ${p.neighborhoodZone||''}</div>
         <div style="display:flex;gap:6px;justify-content:center;margin:.5rem 0">
@@ -2622,8 +2675,16 @@ async function removeNickname(){
 async function loadProfile(){
   if(!currentUser||!currentUserData) return;
   const d=currentUserData;
-  const av=initials(d.firstName,d.lastName);
-  document.getElementById('profile-avatar').textContent=av;
+  // Set profile avatar with photo if available
+  const prAv = document.getElementById('profile-avatar');
+  if(prAv){
+    if(d.photoURL){
+      photoCache[currentUser.uid] = d.photoURL;
+      prAv.innerHTML = `<img src="${d.photoURL}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+    } else {
+      prAv.textContent = initials(d.firstName,d.lastName);
+    }
+  }
   document.getElementById('profile-name').textContent=d.firstName+' '+d.lastName;
   document.getElementById('profile-stat-rides').textContent=d.totalRides||0;
   document.getElementById('profile-stat-co2').textContent=d.totalCO2Saved||0;
@@ -2953,33 +3014,43 @@ async function uploadProfilePhoto(input){
   if(!input.files[0] || !currentUser) return;
   const file = input.files[0];
   if(file.size > 5*1024*1024){ showToast('Photo must be under 5MB.'); return; }
+  // Resize image before storing to keep Firestore doc small
   const reader = new FileReader();
   reader.onload = async (e)=>{
-    const dataUrl = e.target.result;
-    // Store as base64 in Firestore (fine for small profile photos)
-    await db.collection('users').doc(currentUser.uid).update({photoURL:dataUrl});
-    currentUserData.photoURL = dataUrl;
-    // Update all avatars on screen
-    document.querySelectorAll('#profile-avatar, #sb-avatar').forEach(av=>{
-      av.innerHTML = `<img src="${dataUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
-    });
-    showToast('Profile photo updated! 📸');
+    // Resize to max 200x200 using canvas
+    const img = new Image();
+    img.onload = async ()=>{
+      const canvas = document.createElement('canvas');
+      const MAX = 200;
+      const ratio = Math.min(MAX/img.width, MAX/img.height);
+      canvas.width = img.width * ratio;
+      canvas.height = img.height * ratio;
+      canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+      const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+      
+      // Save to Firestore
+      await db.collection('users').doc(currentUser.uid).update({photoURL:dataUrl});
+      currentUserData.photoURL = dataUrl;
+      
+      // Update cache
+      photoCache[currentUser.uid] = dataUrl;
+      
+      // Update sidebar avatar
+      const sbAv = document.getElementById('sb-avatar');
+      if(sbAv) sbAv.innerHTML = `<img src="${dataUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+      
+      // Update profile avatar
+      const prAv = document.getElementById('profile-avatar');
+      if(prAv) prAv.innerHTML = `<img src="${dataUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+      
+      showToast('Profile photo updated! 📸');
+    };
+    img.src = e.target.result;
   };
   reader.readAsDataURL(file);
 }
 
-// Update loadProfile to show photo if exists
-const _origLoadProfile = window.loadProfile;
-window.loadProfile = async function(){
-  await _origLoadProfile();
-  if(currentUserData?.photoURL){
-    const img = `<img src="${currentUserData.photoURL}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
-    const pa = document.getElementById('profile-avatar');
-    const sa = document.getElementById('sb-avatar');
-    if(pa) pa.innerHTML=img;
-    if(sa) sa.innerHTML=img;
-  }
-};
+// loadProfile now handles photos directly
 
 // ── REPORT USER ──
 function reportUser(uid, name){
@@ -3097,7 +3168,7 @@ async function loadAdminPage(){
   const el = document.getElementById('admin-users-list');
   el.innerHTML = users.sort((a,b)=>b.totalRides-a.totalRides).map(u=>`
     <div style="display:flex;align-items:center;gap:10px;padding:.7rem 0;border-bottom:1px solid var(--border)">
-      <div class="avatar" style="background:${avatarColor(u.id)};flex-shrink:0">${initials(u.firstName,u.lastName)}</div>
+      <div>${avatarHtml(u.id, u.firstName, u.lastName, '40px', u.photoURL||null)}</div>
       <div style="flex:1">
         <strong style="font-size:.875rem">${u.firstName} ${u.lastName}</strong>
         <div style="font-size:.75rem;color:var(--muted)">${u.grade} · ${u.neighborhoodZone||''} · ${u.totalRides||0} rides · ${u.totalCO2Saved||0} lbs CO₂</div>
