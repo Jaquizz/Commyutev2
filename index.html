@@ -1076,6 +1076,7 @@ const firebaseConfig = {
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
+db.settings({ databaseId: 'commyute' });
 
 // ── CONSTANTS ──
 const SCHOOL = "Bishop O'Dowd High School";
