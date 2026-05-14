@@ -666,6 +666,7 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
         <a onclick="showDash('requests')" id="dnav-requests"><span class="sn-icon">🚗</span>Ride Requests<span class="notif-dot" id="req-dot" style="display:none"></span></a>
         <a onclick="showDash('available')" id="dnav-available"><span class="sn-icon">🪑</span>Available Rides</a>
         <a onclick="showDash('schedule')" id="dnav-schedule"><span class="sn-icon">🗓</span>My Schedule</a>
+        <a onclick="showDash('friends')" id="dnav-friends"><span class="sn-icon">👥</span>Friends & Partners</a>
         <a onclick="showDash('messages')" id="dnav-messages"><span class="sn-icon">💬</span>Messages<span class="notif-dot" id="msg-dot" style="display:none"></span></a>
       </nav>
       <div class="sidebar-section-label">Insights</div>
@@ -697,7 +698,7 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
           <div class="stat-card"><div class="stat-label">Rides This Month</div><div class="stat-num" id="stat-rides">0</div></div>
           <div class="stat-card"><div class="stat-label">CO₂ Saved</div><div class="stat-num" id="stat-co2">0</div><div class="stat-unit">lbs</div></div>
           <div class="stat-card"><div class="stat-label">Money Saved</div><div class="stat-num" id="stat-money">$0</div></div>
-          <div class="stat-card"><div class="stat-label">Time Saved</div><div class="stat-num" id="stat-time">0</div><div class="stat-unit">min</div></div>
+          <div class="stat-card"><div class="stat-label">Social Time</div><div class="stat-num" id="stat-time">0</div><div class="stat-unit">min with friends 🤝</div></div>
         </div>
         <div class="grid-2">
           <div>
@@ -791,6 +792,15 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
         </div>
       </div>
 
+      <!-- FRIENDS -->
+      <div class="dash-section" id="ds-friends">
+        <div class="main-header">
+          <div><h2>Friends &amp; Partners 👥</h2><p class="text-muted" style="font-size:.875rem">Your accepted carpool partners — send ride requests and messages</p></div>
+        </div>
+        <div class="alert alert-info">👥 Partners are students who have accepted your ride request or whose request you accepted. You can only message partners.</div>
+        <div id="friends-list" class="auto-grid"><p class="text-muted" style="font-size:.875rem;text-align:center;padding:2rem">No partners yet. <a style="color:var(--green);cursor:pointer" onclick="showDash('map')">Find classmates on the map →</a></p></div>
+      </div>
+
       <!-- IMPACT -->
       <div class="dash-section" id="ds-impact">
         <div class="main-header">
@@ -802,7 +812,7 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
           <div class="stat-card" style="border-top:3px solid var(--accent)"><div class="stat-label">Total Miles Shared</div><div class="stat-num" id="imp-miles">0</div><div class="stat-unit">miles</div></div>
           <div class="stat-card" style="border-top:3px solid var(--blue)"><div class="stat-label">Total Rides</div><div class="stat-num" id="imp-rides">0</div><div class="stat-unit">trips</div></div>
           <div class="stat-card" style="border-top:3px solid var(--purple)"><div class="stat-label">Money Saved</div><div class="stat-num" id="imp-money">$0</div></div>
-          <div class="stat-card" style="border-top:3px solid #e67e22"><div class="stat-label">Time Saved</div><div class="stat-num" id="imp-time">0</div><div class="stat-unit">minutes</div></div>
+          <div class="stat-card" style="border-top:3px solid #e67e22"><div class="stat-label">Social Time 🤝</div><div class="stat-num" id="imp-time">0</div><div class="stat-unit">min with friends</div></div>
         </div>
         <div class="grid-2">
           <div class="card">
@@ -812,7 +822,7 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
               <div><div style="display:flex;justify-content:space-between;font-size:.85rem;margin-bottom:3px"><span>⚡ Energy saved</span><strong id="eq-energy">0 kWh</strong></div><div class="progress"><div class="progress-bar" id="pb-energy" style="width:0%"></div></div></div>
               <div><div style="display:flex;justify-content:space-between;font-size:.85rem;margin-bottom:3px"><span>🚗 Car trips offset</span><strong id="eq-trips">0</strong></div><div class="progress"><div class="progress-bar" id="pb-trips" style="width:0%"></div></div></div>
             </div>
-            <div class="alert alert-info" style="margin-top:1.2rem;font-size:.8rem">📊 Stats are calculated from your actual confirmed rides, your car's MPG, and the distance of each trip.</div>
+            <div class="alert alert-info" style="margin-top:1.2rem;font-size:.8rem">📊 CO₂ and money stats use your car's real-world MPG (model-corrected for Bay Area driving). Social time = minutes spent commuting with friends instead of alone.</div>
           </div>
           <div class="card">
             <div class="card-title" style="margin-bottom:1rem">Log a New Ride</div>
@@ -1105,23 +1115,144 @@ const ZIP_ZONES = {
 function getNeighborhood(zip){ return ZIP_ZONES[zip] || "Oakland Area"; }
 
 // ── MPG LOOKUP ──
+// Real-world MPG database — Bay Area corrected (EPA × 0.82 for hills + stop-go traffic)
+// These reflect actual observed MPG in urban Bay Area driving, not sticker values
 const MPG_DB = {
-  "toyota camry":32,"toyota corolla":34,"toyota rav4":30,"toyota prius":52,
-  "toyota highlander":24,"honda civic":36,"honda accord":33,"honda crv":30,
-  "honda pilot":24,"ford f-150":21,"ford escape":30,"ford explorer":24,
-  "chevrolet malibu":32,"chevrolet equinox":31,"chevrolet silverado":20,
-  "tesla model 3":130,"tesla model y":125,"nissan altima":33,"nissan rogue":30,
-  "hyundai elantra":37,"hyundai sonata":35,"hyundai tucson":29,
-  "kia soul":30,"kia sorento":27,"subaru outback":29,"subaru forester":30,
-  "volkswagen jetta":34,"bmw 3 series":30,"audi a4":28,"jeep wrangler":20,
-  "dodge charger":23,"ram 1500":21,"gmc sierra":21
+  // Toyota
+  "toyota camry":26,"toyota camry hybrid":38,"toyota corolla":28,"toyota corolla hybrid":40,
+  "toyota rav4":24,"toyota rav4 hybrid":33,"toyota prius":46,"toyota prius prime":50,
+  "toyota highlander":20,"toyota highlander hybrid":30,"toyota tacoma":18,"toyota tundra":16,
+  "toyota sienna":33,"toyota venza":35,"toyota chr":25,"toyota yaris":28,
+  // Honda
+  "honda civic":29,"honda civic hybrid":42,"honda accord":28,"honda accord hybrid":40,
+  "honda crv":25,"honda crv hybrid":36,"honda pilot":20,"honda odyssey":19,
+  "honda hrv":26,"honda passport":21,"honda ridgeline":18,
+  // Ford
+  "ford f-150":17,"ford f150":17,"ford escape":26,"ford escape hybrid":38,
+  "ford explorer":20,"ford mustang":21,"ford bronco":18,"ford expedition":16,
+  "ford fusion":24,"ford fusion hybrid":38,"ford edge":23,
+  // Chevrolet
+  "chevrolet malibu":26,"chevrolet equinox":25,"chevrolet silverado":17,
+  "chevrolet traverse":20,"chevrolet tahoe":15,"chevrolet suburban":14,
+  "chevrolet colorado":18,"chevrolet bolt":115,"chevrolet trax":26,
+  // Tesla (MPGe converted to effective urban range)
+  "tesla model 3":115,"tesla model y":110,"tesla model s":105,"tesla model x":95,
+  // Nissan
+  "nissan altima":27,"nissan rogue":25,"nissan sentra":29,"nissan pathfinder":19,
+  "nissan frontier":19,"nissan leaf":100,"nissan murano":22,
+  // Hyundai / Kia
+  "hyundai elantra":30,"hyundai elantra hybrid":48,"hyundai sonata":27,
+  "hyundai sonata hybrid":42,"hyundai tucson":24,"hyundai tucson hybrid":36,
+  "hyundai santa fe":22,"hyundai palisade":20,"hyundai ioniq":45,
+  "kia soul":26,"kia sorento":22,"kia telluride":19,"kia forte":29,
+  "kia sportage":24,"kia niro":42,"kia carnival":20,
+  // Subaru
+  "subaru outback":25,"subaru forester":26,"subaru impreza":27,"subaru crosstrek":28,
+  "subaru legacy":26,"subaru ascent":20,"subaru wrx":22,
+  // Volkswagen / German
+  "volkswagen jetta":28,"volkswagen tiguan":22,"volkswagen atlas":21,
+  "volkswagen golf":26,"volkswagen passat":25,
+  "bmw 3 series":25,"bmw 5 series":23,"bmw x3":22,"bmw x5":19,
+  "audi a4":24,"audi q5":22,"audi a6":23,"mercedes c class":24,
+  "mercedes e class":22,"mercedes glc":22,
+  // Jeep / Ram / Dodge
+  "jeep wrangler":17,"jeep grand cherokee":19,"jeep cherokee":21,"jeep compass":23,
+  "dodge charger":20,"dodge challenger":18,"dodge durango":17,
+  "ram 1500":18,"gmc sierra":17,"gmc yukon":14,"gmc terrain":23,
+  // Other popular
+  "volvo xc90":20,"volvo xc60":22,"land rover defender":18,
+  "mazda cx5":25,"mazda cx9":20,"mazda 3":27,"mazda 6":25,
+  "acura mdx":20,"acura rdx":23,"lexus rx":22,"lexus es":26,
+  "lincoln navigator":16,"cadillac escalade":14,"chrysler pacifica":20
 };
+
+// Bay Area real-world correction — accounts for hills, stop-go, AC use
+const BAY_AREA_FACTOR = 0.95; // 5% reduction for Bay Area hills
+
+// Per-model real-world correction factors (EPA vs actual observed, independent of location)
+// Sources: fueleconomy.gov real-world data, owner reports, Consumer Reports
+const MODEL_CORRECTION = {
+  "toyota camry": 0.92,        // 32 EPA → ~29 real
+  "toyota corolla": 0.91,
+  "toyota rav4": 0.90,
+  "toyota prius": 0.96,        // Hybrids are more accurate
+  "toyota prius prime": 0.95,
+  "toyota highlander": 0.89,
+  "honda civic": 0.91,
+  "honda accord": 0.90,
+  "honda crv": 0.89,
+  "honda pilot": 0.87,
+  "ford f-150": 0.85,          // Trucks tend to underperform EPA
+  "ford f150": 0.85,
+  "ford escape": 0.90,
+  "ford explorer": 0.88,
+  "ford mustang": 0.87,
+  "chevrolet silverado": 0.84,
+  "chevrolet equinox": 0.90,
+  "chevrolet malibu": 0.91,
+  "chevrolet tahoe": 0.83,
+  "nissan altima": 0.90,
+  "nissan rogue": 0.89,
+  "hyundai elantra": 0.92,
+  "hyundai sonata": 0.91,
+  "hyundai tucson": 0.89,
+  "kia soul": 0.90,
+  "kia sorento": 0.88,
+  "subaru outback": 0.90,
+  "subaru forester": 0.91,
+  "subaru impreza": 0.91,
+  "volkswagen jetta": 0.91,
+  "bmw 3 series": 0.88,        // German cars tend to underperform EPA
+  "bmw 5 series": 0.87,
+  "audi a4": 0.88,
+  "mercedes c class": 0.88,
+  "jeep wrangler": 0.84,       // Off-road vehicles significantly underperform
+  "jeep grand cherokee": 0.87,
+  "dodge charger": 0.87,
+  "ram 1500": 0.84,
+  "gmc sierra": 0.84,
+};
+
 function getMPG(year, make, model){
   const key = (make+" "+model).toLowerCase().replace(/[^a-z0-9 ]/g,"");
+
+  // Find base MPG from database
+  let baseMPG = null;
+  let matchedKey = null;
+
+  // Try exact match first
   for(const k of Object.keys(MPG_DB)){
-    if(key.includes(k) || k.includes(key.split(" ").slice(0,2).join(" "))) return MPG_DB[k];
+    if(key===k){ baseMPG=MPG_DB[k]; matchedKey=k; break; }
   }
-  return 28;
+  // Try partial match
+  if(!baseMPG){
+    for(const k of Object.keys(MPG_DB)){
+      if(k.split(" ").every(w=>key.includes(w))){ baseMPG=MPG_DB[k]; matchedKey=k; break; }
+    }
+  }
+  // Fallback by make
+  if(!baseMPG){
+    const makeOnly = make.toLowerCase();
+    for(const k of Object.keys(MPG_DB)){
+      if(k.startsWith(makeOnly)){ baseMPG=MPG_DB[k]; break; }
+    }
+  }
+  if(!baseMPG) baseMPG = 23; // generic default
+
+  // Apply per-model real-world correction
+  let modelFactor = 1.0;
+  if(matchedKey && MODEL_CORRECTION[matchedKey]){
+    modelFactor = MODEL_CORRECTION[matchedKey];
+  } else {
+    // Generic correction by vehicle type if no specific factor
+    if(key.includes('hybrid') || key.includes('prius') || key.includes('ionic')) modelFactor = 0.96;
+    else if(key.includes('truck') || key.includes('1500') || key.includes('sierra') || key.includes('f-150')) modelFactor = 0.84;
+    else if(key.includes('suv') || key.includes('4runner') || key.includes('tahoe')) modelFactor = 0.86;
+    else modelFactor = 0.90; // generic car correction
+  }
+
+  // Apply model correction first, then Bay Area 5% adjustment
+  return Math.round(baseMPG * modelFactor * BAY_AREA_FACTOR);
 }
 
 // ── EMISSIONS CALCS ──
@@ -1134,7 +1265,10 @@ function calcMoney(miles, mpg, totalPeople){
   return Math.round((miles/mpg) * 4.50 * (1-1/totalPeople) * 100) / 100;
 }
 function calcTime(miles, totalPeople){
-  return totalPeople > 1 ? Math.round((miles/25)*60*0.15) : 0;
+  // Social time = actual commute time spent riding with someone instead of driving alone
+  if(totalPeople < 2) return 0;
+  const avgSpeed = 22; // Bay Area urban average mph (lower due to traffic + hills)
+  return Math.round((miles / avgSpeed) * 60);
 }
 
 // ── UTILS ──
@@ -1178,6 +1312,7 @@ function showDash(id){
   if(id==='impact') loadImpact();
   if(id==='leaderboard') loadLeaderboard();
   if(id==='messages') loadMessages();
+  if(id==='friends') loadFriends();
   if(id==='requests') loadRequests();
   if(id==='schedule') loadSchedule();
   if(id==='available') loadAvailableRides();
@@ -1373,10 +1508,10 @@ async function loadOverview(){
 
 async function loadRecentRides(containerId, lim){
   if(!currentUser) return;
-  const snap = await db.collection('rides')
+  const rawRides = await db.collection('rides')
     .where('userId','==',currentUser.uid)
-    .orderBy('createdAt','desc')
-    .limit(lim||5).get();
+    .limit(50).get();
+  const snap = {docs: rawRides.docs.sort((a,b)=>(b.data().createdAt?.toMillis?.()||0)-(a.data().createdAt?.toMillis?.()||0)).slice(0,lim||5)};
   const el = document.getElementById(containerId);
   if(snap.empty){
     el.innerHTML='<p class="text-muted" style="font-size:.875rem;text-align:center;padding:1rem">No rides logged yet. <a style="color:var(--green);cursor:pointer" onclick="showDash(\'schedule\')">Log your first ride →</a></p>';
@@ -1445,6 +1580,8 @@ function initMap(){
   if(!currentUser||!currentUserData) return;
   if(!mapLoaded){
     window.onMapReady = onMapReady;
+window.loadFriends=loadFriends;
+window.startConversation=startConversation;
     const script = document.createElement('script');
     script.src=`https://maps.googleapis.com/maps/api/js?key=${MAPS_KEY}&libraries=places,geometry&callback=onMapReady`;
     script.async=true; document.head.appendChild(script);
@@ -1647,12 +1784,18 @@ async function postRide(){
 
 async function loadAvailableRides(){
   if(!currentUser) return;
+  // No orderBy to avoid composite index requirement — sort client-side
   const snap = await db.collection('availableRides')
     .where('school','==',SCHOOL)
-    .where('isActive','==',true)
-    .orderBy('createdAt','desc').get();
+    .where('isActive','==',true).get();
   const el = document.getElementById('available-rides-list');
-  const others = snap.docs.filter(d=>d.data().driverUid!==currentUser.uid);
+  const others = snap.docs
+    .filter(d=>d.data().driverUid!==currentUser.uid)
+    .sort((a,b)=>{
+      const ta = a.data().createdAt?.toMillis?.()||0;
+      const tb = b.data().createdAt?.toMillis?.()||0;
+      return tb-ta;
+    });
   if(!others.length){
     el.innerHTML='<p class="text-muted" style="font-size:.875rem;grid-column:1/-1">No rides posted yet. Be the first!</p>';
     return;
@@ -1757,12 +1900,16 @@ async function loadSchedule(){
   if(!currentUser) return;
   const days=['Monday','Tuesday','Wednesday','Thursday','Friday'];
   const today=new Date().toLocaleDateString('en-US',{weekday:'long'});
-  const snap=await db.collection('rides').where('userId','==',currentUser.uid).orderBy('createdAt','desc').limit(20).get();
+  const rawSnap=await db.collection('rides').where('userId','==',currentUser.uid).limit(50).get();
+  const snap={docs:rawSnap.docs.sort((a,b)=>(b.data().createdAt?.toMillis?.()||0)-(a.data().createdAt?.toMillis?.()||0)).slice(0,20)};
   const ridesByDay={};
   snap.docs.forEach(d=>{
     const r=d.data();
     if(r.date){
-      const dayName=new Date(r.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'long'});
+      // Parse date correctly regardless of timezone
+      const parts = r.date.split('-');
+      const rDate = new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]));
+      const dayName = rDate.toLocaleDateString('en-US',{weekday:'long'});
       if(!ridesByDay[dayName]) ridesByDay[dayName]=r;
     }
   });
@@ -1784,9 +1931,9 @@ async function loadSchedule(){
 async function loadMessages(){
   if(!currentUser) return;
   if(convUnsub) convUnsub();
+  // No orderBy to avoid composite index — sort client-side in snapshot
   convUnsub=db.collection('conversations')
     .where('participants','array-contains',currentUser.uid)
-    .orderBy('lastMessageAt','desc')
     .onSnapshot(snap=>{
       const el=document.getElementById('conv-list');
       if(snap.empty){
@@ -1794,7 +1941,12 @@ async function loadMessages(){
         return;
       }
       el.innerHTML='';
-      snap.docs.forEach(d=>{
+      const sortedDocs = [...snap.docs].sort((a,b)=>{
+        const ta=a.data().lastMessageAt?.toMillis?.()||0;
+        const tb=b.data().lastMessageAt?.toMillis?.()||0;
+        return tb-ta;
+      });
+      sortedDocs.forEach(d=>{
         const c=d.data();
         const otherId=c.participants.find(p=>p!==currentUser.uid);
         const otherName=c.participantNames?.[otherId]||'Classmate';
@@ -1828,12 +1980,13 @@ function openConv(convId, otherName, otherId, threadEl){
   });
   if(msgUnsub) msgUnsub();
   msgUnsub=db.collection('conversations').doc(convId).collection('messages')
-    .orderBy('sentAt','asc')
-    .onSnapshot(snap=>{
+    .onSnapshot(rawSnap=>{
+      // Sort by sentAt client-side
+      const sortedMsgs = [...rawSnap.docs].sort((a,b)=>(a.data().sentAt?.toMillis?.()||0)-(b.data().sentAt?.toMillis?.()||0));
       const body=document.getElementById('msg-body-active');
       if(!body) return;
       body.innerHTML='';
-      snap.docs.forEach(d=>{
+      sortedMsgs.forEach(d=>{
         const m=d.data();
         const isMe=m.senderId===currentUser.uid;
         const div=document.createElement('div');
@@ -1939,24 +2092,97 @@ async function logRide(){
 }
 
 // ── LEADERBOARD ──
+// ── FRIENDS PAGE ──
+async function loadFriends(){
+  if(!currentUser||!currentUserData) return;
+  const partners = currentUserData.partners||[];
+  const el = document.getElementById('friends-list');
+  if(!partners.length){
+    el.innerHTML='<p class="text-muted" style="font-size:.875rem;text-align:center;padding:2rem;grid-column:1/-1">No partners yet. <a style="color:var(--green);cursor:pointer" onclick="showDash('map')">Find classmates on the map →</a></p>';
+    return;
+  }
+  try{
+    const rows = await Promise.all(partners.map(async uid=>{
+      const snap = await db.collection('users').doc(uid).get();
+      if(!snap.exists) return '';
+      const p = snap.data();
+      const col = avatarColor(uid);
+      const av = initials(p.firstName,p.lastName);
+      // Check if conversation exists
+      const convSnap = await db.collection('conversations')
+        .where('participants','array-contains',currentUser.uid).get();
+      const existingConv = convSnap.docs.find(d=>{
+        const parts = d.data().participants||[];
+        return parts.includes(uid);
+      });
+      const convId = existingConv ? existingConv.id : null;
+      return `<div class="card" style="text-align:center">
+        <div class="avatar" style="background:${col};margin:0 auto .8rem;width:56px;height:56px;font-size:1.2rem">${av}</div>
+        <strong style="font-size:.95rem">${p.firstName} ${p.lastName}</strong>
+        <div style="font-size:.78rem;color:var(--muted);margin:.3rem 0">${p.grade} · ${p.neighborhoodZone||''}</div>
+        <div style="display:flex;gap:6px;justify-content:center;margin:.5rem 0">
+          <span class="badge badge-green">✓ Partner</span>
+          <span class="badge badge-blue">${p.ridePreference==='driver'?'🚗 Driver':p.ridePreference==='rider'?'🎒 Rider':'🚗🎒 Both'}</span>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px;margin-top:.8rem">
+          ${convId
+            ? `<button class="btn btn-primary btn-sm w100" onclick="showDash('messages')">💬 Message</button>`
+            : `<button class="btn btn-outline btn-sm w100" onclick="startConversation('${uid}','${p.firstName} ${p.lastName}')">💬 Start Chat</button>`}
+          <button class="btn btn-outline btn-sm w100" onclick="openRequestModal('${uid}','${p.firstName}')">🚗 Request Ride</button>
+        </div>
+      </div>`;
+    }));
+    el.innerHTML = rows.join('') || '<p class="text-muted" style="text-align:center;grid-column:1/-1">No partners found.</p>';
+  } catch(e){ el.innerHTML='<p class="text-muted" style="text-align:center;grid-column:1/-1">Error loading friends: '+e.message+'</p>'; }
+}
+
+async function startConversation(otherId, otherName){
+  if(!currentUser||!currentUserData) return;
+  const myName = currentUserData.firstName+' '+currentUserData.lastName;
+  try{
+    // Check if conversation already exists
+    const existing = await db.collection('conversations')
+      .where('participants','array-contains',currentUser.uid).get();
+    const found = existing.docs.find(d=>(d.data().participants||[]).includes(otherId));
+    if(found){
+      showToast('Conversation already exists — opening messages!');
+      showDash('messages');
+      return;
+    }
+    await db.collection('conversations').add({
+      participants:[currentUser.uid, otherId],
+      participantNames:{[currentUser.uid]:myName,[otherId]:otherName},
+      school:SCHOOL,
+      lastMessage:'Started a conversation',
+      lastMessageAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    showToast('Conversation started! 💬');
+    showDash('messages');
+  } catch(e){ showToast('Error: '+e.message); }
+}
+
 async function loadLeaderboard(){
+  // Fetch all school users, filter client-side to avoid Firestore composite index requirement
   const snap=await db.collection('users')
     .where('schoolName','==',SCHOOL)
-    .where('showOnLeaderboard','==',true)
-    .orderBy('totalCO2Saved','desc')
-    .limit(20).get();
+    .get();
   const el=document.getElementById('leaderboard-list');
-  if(snap.empty){
-    el.innerHTML='<p class="text-muted" style="font-size:.875rem;text-align:center;padding:1rem">No one on the leaderboard yet. Be the first to opt in!</p>';
+  // Filter to only those who opted in, sort by CO2 saved
+  const eligible = snap.docs
+    .filter(d=>d.data().showOnLeaderboard===true && d.data().nickname)
+    .sort((a,b)=>(b.data().totalCO2Saved||0)-(a.data().totalCO2Saved||0))
+    .slice(0,20);
+  if(eligible.length===0){
+    el.innerHTML='<p class="text-muted" style="font-size:.875rem;text-align:center;padding:1rem">No one on the leaderboard yet. Set a nickname below to be the first!</p>';
   } else {
-    el.innerHTML=snap.docs.map((d,i)=>{
+    el.innerHTML=eligible.map((d,i)=>{
       const u=d.data();
       const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
       const rankClass=i===0?'gold':i===1?'silver':i===2?'bronze':'';
       const isMe=d.id===currentUser?.uid;
       return `<div class="lb-row">
         <div class="lb-rank ${rankClass}">${medal||('#'+(i+1))}</div>
-        <div class="lb-info"><strong>${u.nickname||'Anonymous'}${isMe?' (you)':''}</strong>
+        <div class="lb-info"><strong>${u.nickname}${isMe?' (you)':''}</strong>
         <span>${u.totalRides||0} rides · ${u.neighborhoodZone||''}</span></div>
         <div class="lb-score">${u.totalCO2Saved||0}<br><span style="font-size:.7rem;color:var(--muted)">lbs CO₂</span></div>
       </div>`;
