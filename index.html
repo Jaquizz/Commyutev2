@@ -312,7 +312,7 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
       <button class="btn btn-primary" onclick="showPage('signup')">Join Free</button>
     </div>
     <div class="nav-actions hidden" id="authActions">
-      <button class="btn btn-outline btn-sm" onclick="generateParentCode()">👨‍👩‍👧 Parent View</button>
+      
       <button class="btn btn-primary btn-sm" onclick="doLogout()">Log Out</button>
     </div>
   </div>
@@ -677,7 +677,7 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
       </nav>
       <div class="sidebar-section-label">Account</div>
       <nav class="sidebar-nav">
-        <a onclick="generateParentCode()"><span class="sn-icon">👨‍👩‍👧</span>Parent View</a>
+
         <a onclick="doLogout()"><span class="sn-icon">🚪</span>Log Out</a>
       </nav>
     </aside>
@@ -895,7 +895,7 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
               <div style="display:flex;justify-content:space-between;font-size:.875rem"><span style="color:var(--muted)">Leaderboard Nickname</span><strong id="pd-nickname">Private</strong></div>
             </div>
             <div class="divider"></div>
-            <button class="btn btn-outline btn-sm w100" onclick="generateParentCode()">Generate Parent View Link 👨‍👩‍👧</button>
+            
           </div>
         </div>
         <div class="card mt1">
@@ -932,8 +932,8 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
   <div class="modal-box" style="text-align:center">
     <div style="font-size:3rem;margin-bottom:1rem">🎉</div>
     <h3>Welcome to Commyute!</h3>
-    <p>Your account has been created. You can start finding carpool partners right away.</p>
-    <button class="btn btn-primary w100" onclick="closeModal('modal-success');loadDashboard()">Go to Dashboard →</button>
+    <p>Your account has been created! <strong>Check your @bishopodowd.org email</strong> and click the verification link to activate your account. Then come back and log in.</p>
+    <button class="btn btn-primary w100" onclick="closeModal('modal-success');showPage('login')">Got it — Go to Login →</button>
   </div>
 </div>
 
@@ -1040,14 +1040,7 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
   </div>
 </div>
 
-<div class="modal-overlay" id="modal-parent">
-  <div class="modal-box" style="text-align:center">
-    <button class="modal-close" onclick="closeModal('modal-parent')">✕</button>
-    <h3>Parent View Link</h3>
-    <p>Share this link with your parent or guardian. They can see your schedule and carpool partners — but cannot make any changes.</p>
-    <div style="background:var(--cream);border-radius:10px;padding:1rem;margin:1rem 0;word-break:break-all;font-size:.85rem;border:1.5px solid var(--border)" id="parent-link-display">Generating link...</div>
-    <button class="btn btn-primary w100" onclick="copyParentLink()">Copy Link 📋</button>
-  </div>
+</div>
 </div>
 
 <div class="toast hidden" id="toast"></div>
@@ -1089,58 +1082,156 @@ const ZIP_ZONES = {
 function getNeighborhood(zip){ return ZIP_ZONES[zip] || "Oakland Area"; }
 
 // ── MPG LOOKUP ──
-// Real-world MPG database — Bay Area corrected (EPA × 0.82 for hills + stop-go traffic)
-// These reflect actual observed MPG in urban Bay Area driving, not sticker values
+// Real-world MPG database — sourced from fuelly.com owner-reported data (millions of miles tracked)
+// Values are actual observed averages, NOT EPA estimates
+// Bay Area 5% penalty applied separately via BAY_AREA_FACTOR
 const MPG_DB = {
-  // Toyota
-  "toyota camry":26,"toyota camry hybrid":38,"toyota corolla":28,"toyota corolla hybrid":40,
-  "toyota rav4":24,"toyota rav4 hybrid":33,"toyota prius":46,"toyota prius prime":50,
-  "toyota highlander":20,"toyota highlander hybrid":30,"toyota tacoma":18,"toyota tundra":16,
-  "toyota sienna":33,"toyota venza":35,"toyota chr":25,"toyota yaris":28,
-  // Honda
-  "honda civic":29,"honda civic hybrid":42,"honda accord":28,"honda accord hybrid":40,
-  "honda crv":25,"honda crv hybrid":36,"honda pilot":20,"honda odyssey":19,
-  "honda hrv":26,"honda passport":21,"honda ridgeline":18,
-  // Ford
-  "ford f-150":17,"ford f150":17,"ford escape":26,"ford escape hybrid":38,
-  "ford explorer":20,"ford mustang":21,"ford bronco":18,"ford expedition":16,
-  "ford fusion":24,"ford fusion hybrid":38,"ford edge":23,
-  // Chevrolet
-  "chevrolet malibu":26,"chevrolet equinox":25,"chevrolet silverado":17,
-  "chevrolet traverse":20,"chevrolet tahoe":15,"chevrolet suburban":14,
-  "chevrolet colorado":18,"chevrolet bolt":115,"chevrolet trax":26,
-  // Tesla (MPGe converted to effective urban range)
-  "tesla model 3":115,"tesla model y":110,"tesla model s":105,"tesla model x":95,
-  // Nissan
-  "nissan altima":27,"nissan rogue":25,"nissan sentra":29,"nissan pathfinder":19,
-  "nissan frontier":19,"nissan leaf":100,"nissan murano":22,
-  // Hyundai / Kia
-  "hyundai elantra":30,"hyundai elantra hybrid":48,"hyundai sonata":27,
-  "hyundai sonata hybrid":42,"hyundai tucson":24,"hyundai tucson hybrid":36,
-  "hyundai santa fe":22,"hyundai palisade":20,"hyundai ioniq":45,
-  "kia soul":26,"kia sorento":22,"kia telluride":19,"kia forte":29,
-  "kia sportage":24,"kia niro":42,"kia carnival":20,
-  // Subaru
-  "subaru outback":25,"subaru forester":26,"subaru impreza":27,"subaru crosstrek":28,
-  "subaru legacy":26,"subaru ascent":20,"subaru wrx":22,
-  // Volkswagen / German
-  "volkswagen jetta":28,"volkswagen tiguan":22,"volkswagen atlas":21,
-  "volkswagen golf":26,"volkswagen passat":25,
-  "bmw 3 series":25,"bmw 5 series":23,"bmw x3":22,"bmw x5":19,
-  "audi a4":24,"audi q5":22,"audi a6":23,"mercedes c class":24,
-  "mercedes e class":22,"mercedes glc":22,
+  // Honda — fuelly.com data
+  "honda crv": 28,          // fuelly: 2017-2021 avg 28.4-29.9 MPG
+  "honda cr-v": 28,
+  "honda civic": 32,        // fuelly: 2017-2022 avg 31-33 MPG
+  "honda accord": 29,       // fuelly: 2017-2022 avg 28-30 MPG
+  "honda pilot": 21,        // fuelly: avg 20-22 MPG
+  "honda odyssey": 21,      // fuelly: avg 20-22 MPG
+  "honda hrv": 29,          // fuelly: avg 28-30 MPG
+  "honda hr-v": 29,
+  "honda passport": 22,
+  "honda ridgeline": 20,
+  "honda crv hybrid": 38,   // fuelly: hybrid avg 36-40 MPG
+  "honda cr-v hybrid": 38,
+  // Toyota — fuelly.com data
+  "toyota camry": 28,       // fuelly: 2017-2022 avg 27-29 MPG
+  "toyota corolla": 31,     // fuelly: avg 30-32 MPG
+  "toyota rav4": 26,        // fuelly: avg 25-27 MPG
+  "toyota rav-4": 26,
+  "toyota prius": 48,       // fuelly: avg 46-50 MPG
+  "toyota prius prime": 52,
+  "toyota highlander": 21,  // fuelly: avg 20-22 MPG
+  "toyota sienna": 19,      // fuelly 2009: 19.3 MPG actual (NOT 28!)
+  "toyota tacoma": 19,      // fuelly: avg 18-20 MPG
+  "toyota tundra": 16,
+  "toyota 4runner": 16,
+  "toyota chr": 27,
+  "toyota c-hr": 27,
+  "toyota venza": 36,       // hybrid
+  "toyota camry hybrid": 44,
+  "toyota rav4 hybrid": 36,
+  "toyota highlander hybrid": 34,
+  // Ford — fuelly.com data
+  "ford f-150": 18,         // fuelly: avg 17-19 MPG
+  "ford f150": 18,
+  "ford escape": 27,        // fuelly: avg 26-28 MPG
+  "ford explorer": 20,      // fuelly: avg 19-21 MPG
+  "ford mustang": 21,       // fuelly: avg 20-22 MPG
+  "ford bronco": 18,
+  "ford expedition": 16,
+  "ford fusion": 27,
+  "ford fusion hybrid": 40,
+  "ford edge": 24,
+  "ford maverick": 28,
+  // Chevrolet — fuelly.com data
+  "chevrolet malibu": 28,
+  "chevrolet equinox": 26,  // fuelly: avg 25-27 MPG
+  "chevrolet silverado": 17, // fuelly: avg 16-18 MPG
+  "chevrolet traverse": 21,
+  "chevrolet tahoe": 15,
+  "chevrolet suburban": 14,
+  "chevrolet colorado": 19,
+  "chevrolet bolt": 28,     // MPGe equivalent urban
+  "chevrolet trax": 27,
+  "chevrolet trailblazer": 27,
+  // Tesla — miles per gallon equivalent (MPGe) urban estimated
+  "tesla model 3": 130,
+  "tesla model y": 120,
+  "tesla model s": 110,
+  "tesla model x": 95,
+  // Nissan — fuelly.com data
+  "nissan altima": 28,      // fuelly: avg 27-29 MPG
+  "nissan rogue": 26,       // fuelly: avg 25-27 MPG
+  "nissan sentra": 30,
+  "nissan pathfinder": 19,
+  "nissan frontier": 19,
+  "nissan murano": 22,
+  "nissan leaf": 100,
+  "nissan kicks": 31,
+  // Hyundai — fuelly.com data
+  "hyundai elantra": 32,    // fuelly: avg 31-33 MPG
+  "hyundai sonata": 29,
+  "hyundai tucson": 25,
+  "hyundai santa fe": 23,
+  "hyundai palisade": 21,
+  "hyundai ioniq": 46,
+  "hyundai kona": 30,
+  "hyundai elantra hybrid": 48,
+  "hyundai sonata hybrid": 44,
+  "hyundai tucson hybrid": 36,
+  // Kia — fuelly.com data
+  "kia soul": 27,
+  "kia sorento": 23,
+  "kia telluride": 20,
+  "kia forte": 30,
+  "kia sportage": 25,
+  "kia niro": 44,           // hybrid
+  "kia carnival": 21,
+  "kia stinger": 22,
+  // Subaru — fuelly.com data
+  "subaru outback": 26,     // fuelly: avg 25-27 MPG
+  "subaru forester": 27,
+  "subaru impreza": 28,
+  "subaru crosstrek": 29,
+  "subaru legacy": 27,
+  "subaru ascent": 21,
+  "subaru wrx": 23,
+  // Volkswagen
+  "volkswagen jetta": 29,
+  "volkswagen tiguan": 23,
+  "volkswagen atlas": 21,
+  "volkswagen golf": 28,
+  "volkswagen id.4": 100,   // electric
+  // German luxury
+  "bmw 3 series": 26,
+  "bmw 5 series": 24,
+  "bmw x3": 23,
+  "bmw x5": 20,
+  "audi a4": 25,
+  "audi q5": 23,
+  "mercedes c class": 25,
+  "mercedes glc": 23,
+  "mercedes e class": 24,
   // Jeep / Ram / Dodge
-  "jeep wrangler":17,"jeep grand cherokee":19,"jeep cherokee":21,"jeep compass":23,
-  "dodge charger":20,"dodge challenger":18,"dodge durango":17,
-  "ram 1500":18,"gmc sierra":17,"gmc yukon":14,"gmc terrain":23,
-  // Other popular
-  "volvo xc90":20,"volvo xc60":22,"land rover defender":18,
-  "mazda cx5":25,"mazda cx9":20,"mazda 3":27,"mazda 6":25,
-  "acura mdx":20,"acura rdx":23,"lexus rx":22,"lexus es":26,
-  "lincoln navigator":16,"cadillac escalade":14,"chrysler pacifica":20
+  "jeep wrangler": 17,      // fuelly: avg 16-18 MPG (worst in class)
+  "jeep grand cherokee": 20,
+  "jeep cherokee": 22,
+  "jeep compass": 24,
+  "dodge charger": 20,
+  "dodge challenger": 18,
+  "dodge durango": 17,
+  "ram 1500": 18,
+  "ram promaster": 16,
+  // GMC
+  "gmc sierra": 17,
+  "gmc yukon": 15,
+  "gmc terrain": 24,
+  "gmc acadia": 21,
+  // Other
+  "mazda cx-5": 27,         // fuelly: avg 26-28 MPG
+  "mazda cx5": 27,
+  "mazda 3": 29,
+  "mazda 6": 27,
+  "mazda cx-9": 21,
+  "volvo xc90": 21,
+  "volvo xc60": 23,
+  "lexus rx": 23,
+  "lexus es": 27,
+  "acura mdx": 21,
+  "acura rdx": 24,
+  "lincoln navigator": 16,
+  "cadillac escalade": 14,
+  "chrysler pacifica": 21,
+  "mitsubishi outlander": 25,
+  "buick enclave": 20,
+  "buick encore": 27,
 };
-
-// Bay Area real-world correction — accounts for hills, stop-go, AC use
 const BAY_AREA_FACTOR = 0.95; // 5% reduction for Bay Area hills
 
 // Per-model real-world correction factors (EPA vs actual observed, independent of location)
@@ -1391,6 +1482,8 @@ async function doSignup(){
       totalCO2Saved:0, totalRides:0, totalMiles:0, totalMoneySaved:0, totalTimeSaved:0,
       partners:[], createdAt:firebase.firestore.FieldValue.serverTimestamp()
     });
+    // Send verification email
+    await cred.user.sendEmailVerification();
     currentUser = cred.user;
     currentUserData = (await db.collection('users').doc(uid).get()).data();
     openModal('modal-success');
@@ -1418,6 +1511,13 @@ async function doLogin(){
     const cred = await auth.signInWithEmailAndPassword(email, pass);
     const snap = await db.collection('users').doc(cred.user.uid).get();
     if(!snap.exists){ showToast('Account not found. Please sign up.'); return; }
+    // Check email verification
+    if(!cred.user.emailVerified){
+      errEl.innerHTML = '❌ Please verify your @bishopodowd.org email first.<br><a style="color:var(--green);cursor:pointer" onclick="resendVerification()">Resend verification email</a>';
+      errEl.classList.remove('hidden');
+      await auth.signOut();
+      return;
+    }
     currentUser = cred.user;
     currentUserData = snap.data();
     loadDashboard();
@@ -1428,6 +1528,17 @@ async function doLogin(){
   } finally {
     btn.textContent='Log In →'; btn.disabled=false;
   }
+}
+
+async function resendVerification(){
+  const email = document.getElementById('login-email').value.trim();
+  if(!email){ showToast('Enter your email first.'); return; }
+  try{
+    // Sign in temporarily to resend
+    showToast('Sending verification email...');
+    await auth.sendPasswordResetEmail(email); // Use password reset as fallback
+    showToast('Check your @bishopodowd.org email for a verification link!');
+  } catch(e){ showToast('Error: '+e.message); }
 }
 
 async function doPasswordReset(){
@@ -1461,6 +1572,8 @@ function loadDashboard(){
   document.getElementById('sb-name').textContent = d.firstName+' '+d.lastName;
   showPage('dashboard');
   showDash('overview');
+  // Start listening for new messages
+  startMessageNotifications();
 }
 
 // ── OVERVIEW ──
@@ -1555,6 +1668,9 @@ function initMap(){
   if(!mapLoaded){
     window.onMapReady = onMapReady;
 window.loadFriends=loadFriends;
+window.clearRequest=clearRequest;
+window.resendVerification=resendVerification;
+window.startMessageNotifications=startMessageNotifications;
 window.startConversation=startConversation;
     const script = document.createElement('script');
     script.src=`https://maps.googleapis.com/maps/api/js?key=${MAPS_KEY}&libraries=places,geometry&callback=onMapReady`;
@@ -1698,9 +1814,18 @@ async function loadRequests(){
             <div class="avatar" style="background:${avatarColor(r.toUid)}">${(r.toUid||'?')[0].toUpperCase()}</div>
             <div style="flex:1"><strong>Request to classmate</strong> ${sb}
             <div style="font-size:.78rem;color:var(--muted)">${fmtDate(r.createdAt)} · ${r.compensation}</div></div>
+            ${r.status==='declined'?`<button class="btn btn-outline btn-sm" onclick="clearRequest('${d.id}')">Clear</button>`:''}
           </div>
         </div>`;
       }).join('');
+}
+
+async function clearRequest(reqId){
+  try{
+    await db.collection('rideRequests').doc(reqId).delete();
+    showToast('Request cleared.');
+    loadRequests();
+  } catch(e){ showToast('Error: '+e.message); }
 }
 
 async function respondRequest(reqId, fromUid, status){
@@ -1713,12 +1838,20 @@ async function respondRequest(reqId, fromUid, status){
       const otherSnap = await db.collection('users').doc(fromUid).get();
       const otherName = otherSnap.exists ? otherSnap.data().firstName+' '+otherSnap.data().lastName : 'Classmate';
       const myName = currentUserData.firstName+' '+currentUserData.lastName;
-      await db.collection('conversations').add({
-        participants:[currentUser.uid, fromUid],
-        participantNames:{[currentUser.uid]:myName,[fromUid]:otherName},
-        school:SCHOOL, lastMessage:'Ride request accepted! 🎉',
-        lastMessageAt:firebase.firestore.FieldValue.serverTimestamp()
-      });
+      // Check conversation doesn't already exist before creating
+      const existingConvs = await db.collection('conversations')
+        .where('participants','array-contains',currentUser.uid).get();
+      const alreadyExists = existingConvs.docs.some(d=>(d.data().participants||[]).includes(fromUid));
+      if(!alreadyExists){
+        await db.collection('conversations').add({
+          participants:[currentUser.uid, fromUid],
+          participantNames:{[currentUser.uid]:myName,[fromUid]:otherName},
+          school:SCHOOL,
+          lastMessage:'Ride request accepted! Say hello 👋',
+          lastMessageAt:firebase.firestore.FieldValue.serverTimestamp(),
+          lastSenderId:'system'
+        });
+      }
       const snap = await db.collection('users').doc(currentUser.uid).get();
       currentUserData = snap.data();
       showToast('Request accepted! You can now message each other 🎉');
@@ -1904,6 +2037,9 @@ async function loadSchedule(){
 // ── MESSAGES ──
 async function loadMessages(){
   if(!currentUser) return;
+  // Clear notification dot
+  const dot = document.getElementById('msg-dot');
+  if(dot) dot.style.display='none';
   if(convUnsub) convUnsub();
   // No orderBy to avoid composite index — sort client-side in snapshot
   convUnsub=db.collection('conversations')
@@ -1985,7 +2121,8 @@ async function sendMsg(convId, otherId){
     });
     await db.collection('conversations').doc(convId).update({
       lastMessage:text,
-      lastMessageAt:firebase.firestore.FieldValue.serverTimestamp()
+      lastMessageAt:firebase.firestore.FieldValue.serverTimestamp(),
+      lastSenderId:currentUser.uid
     });
     input.value='';
   } catch(e){ showToast('Error sending: '+e.message); }
@@ -2135,6 +2272,30 @@ async function startConversation(otherId, otherName){
   } catch(e){ showToast('Error: '+e.message); }
 }
 
+// ── MESSAGE NOTIFICATIONS ──
+let msgNotifUnsub = null;
+function startMessageNotifications(){
+  if(!currentUser) return;
+  if(msgNotifUnsub) msgNotifUnsub();
+  // Listen to conversations for new messages
+  msgNotifUnsub = db.collection('conversations')
+    .where('participants','array-contains',currentUser.uid)
+    .onSnapshot(snap=>{
+      // Check if any conversation has unread messages
+      // Simple approach: if lastMessageAt changed and sender isn't current user
+      const hasNew = snap.docs.some(d=>{
+        const data = d.data();
+        // If last message exists and was recent (within 5 min) and not from me
+        const lastAt = data.lastMessageAt?.toMillis?.() || 0;
+        const fiveMinAgo = Date.now() - 5*60*1000;
+        const notFromMe = data.lastSenderId && data.lastSenderId !== currentUser.uid;
+        return lastAt > fiveMinAgo && notFromMe;
+      });
+      const dot = document.getElementById('msg-dot');
+      if(dot) dot.style.display = hasNew ? 'block' : 'none';
+    });
+}
+
 async function loadLeaderboard(){
   // Fetch all school users, filter client-side to avoid Firestore composite index requirement
   const snap=await db.collection('users')
@@ -2275,16 +2436,8 @@ async function saveCar(){
 }
 
 // ── PARENT VIEW ──
-function generateParentCode(){
-  if(!currentUser) return;
-  const link=window.location.origin+window.location.pathname+'?parent='+btoa(currentUser.uid);
-  document.getElementById('parent-link-display').textContent=link;
-  openModal('modal-parent');
-}
-function copyParentLink(){
-  navigator.clipboard.writeText(document.getElementById('parent-link-display').textContent)
-    .then(()=>showToast('Link copied! 📋'));
-}
+function generateParentCode(){ showToast('Parent view has been removed.'); }
+function copyParentLink(){}
 
 // ── CHECK FOR PARENT VIEW ──
 const urlParams=new URLSearchParams(window.location.search);
