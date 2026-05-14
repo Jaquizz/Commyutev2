@@ -724,7 +724,7 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
             </div>
             <div class="card">
               <div class="card-header"><span class="card-title">My Carpool Partners</span></div>
-              <div id="partners-list"><p class="text-muted" style="font-size:.875rem;text-align:center;padding:1rem">No partners yet. <a style="color:var(--green);cursor:pointer" onclick="showDash('map')">Find classmates →</a></p></div>
+              <div id="partners-list"><p class="text-muted" style="font-size:.875rem;text-align:center;padding:1rem">No partners yet.</p></div>
             </div>
           </div>
         </div>
@@ -751,7 +751,7 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
           </div>
           <div>
             <div class="card-title mb1">Your Outgoing Requests</div>
-            <div id="outgoing-requests"><p class="text-muted" style="font-size:.875rem;text-align:center;padding:1rem">No outgoing requests yet. <a style="color:var(--green);cursor:pointer" onclick="showDash('map')">Find classmates →</a></p></div>
+            <div id="outgoing-requests"><p class="text-muted" style="font-size:.875rem;text-align:center;padding:1rem">No outgoing requests yet.</p></div>
           </div>
         </div>
       </div>
@@ -768,7 +768,7 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
       <!-- SCHEDULE -->
       <div class="dash-section" id="ds-schedule">
         <div class="main-header">
-          <div><h2>My Schedule 🗓</h2><p class="text-muted" style="font-size:.875rem">Your recurring carpool rides this week</p></div>
+          <div><h2>My Schedule 🗓</h2><p class="text-muted" style="font-size:.875rem">Your confirmed rides this week</p></div>
           <button class="btn btn-primary btn-sm" onclick="openAddRideModal()">+ Log a Ride</button>
         </div>
         <div class="card mb1">
@@ -781,6 +781,15 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
         </div>
       </div>
 
+      <!-- FRIENDS -->
+      <div class="dash-section" id="ds-friends">
+        <div class="main-header">
+          <div><h2>Friends &amp; Partners 👥</h2><p class="text-muted" style="font-size:.875rem">Your accepted carpool partners</p></div>
+        </div>
+        <div class="alert alert-info">👥 Partners are students who have accepted your ride request or whose request you accepted. You can only message partners.</div>
+        <div id="friends-list" class="auto-grid"><p class="text-muted" style="font-size:.875rem;text-align:center;padding:2rem">No partners yet.</p></div>
+      </div>
+
       <!-- MESSAGES -->
       <div class="dash-section" id="ds-messages">
         <div class="main-header"><h2>Messages 💬</h2><p class="text-muted" style="font-size:.875rem">Only between confirmed carpool partners</p></div>
@@ -790,15 +799,6 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
             <div class="msg-empty">Select a conversation to start messaging.</div>
           </div>
         </div>
-      </div>
-
-      <!-- FRIENDS -->
-      <div class="dash-section" id="ds-friends">
-        <div class="main-header">
-          <div><h2>Friends &amp; Partners 👥</h2><p class="text-muted" style="font-size:.875rem">Your accepted carpool partners — send ride requests and messages</p></div>
-        </div>
-        <div class="alert alert-info">👥 Partners are students who have accepted your ride request or whose request you accepted. You can only message partners.</div>
-        <div id="friends-list" class="auto-grid"><p class="text-muted" style="font-size:.875rem;text-align:center;padding:2rem">No partners yet. <a style="color:var(--green);cursor:pointer" onclick="showDash('map')">Find classmates on the map →</a></p></div>
       </div>
 
       <!-- IMPACT -->
@@ -831,7 +831,7 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
             <div class="form-group"><label>End Address</label><input type="text" id="ride-end" placeholder="Bishop O'Dowd High School, Oakland"></div>
             <div class="form-group"><label>Date of Ride</label><input type="date" id="ride-date"></div>
             <div class="form-group"><label>Were you the driver or passenger?</label><select id="ride-role"><option value="passenger">Passenger (someone drove me)</option><option value="driver">Driver (I drove others)</option></select></div>
-            <div class="form-group" id="passengers-field"><label>Number of passengers (including you)</label><input type="number" id="ride-passengers" min="2" max="6" value="2" placeholder="2"></div>
+            <div class="form-group"><label>Number of people in car (including you)</label><input type="number" id="ride-passengers" min="2" max="6" value="2"></div>
             <div id="ride-calc-result" class="hidden alert alert-success"></div>
             <div style="display:flex;gap:8px;margin-top:.5rem">
               <button class="btn btn-outline btn-sm" style="flex:1;justify-content:center" onclick="calcRide()">Calculate →</button>
@@ -846,7 +846,7 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
         <div class="main-header">
           <div><h2>Leaderboard 🏆</h2><p class="text-muted" style="font-size:.875rem">Bishop O'Dowd — ranked by CO₂ saved</p></div>
         </div>
-        <div class="alert alert-info">🏆 Only students who opted in with a nickname appear here. Your exact stats are never shown — just your rank and CO₂ saved.</div>
+        <div class="alert alert-info">🏆 Only students who opted in with a nickname appear here.</div>
         <div class="grid-2">
           <div class="card">
             <div class="card-header"><span class="card-title">Top Emissions Savers — O'Dowd</span></div>
@@ -854,13 +854,11 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
           </div>
           <div class="card">
             <div class="card-title" style="margin-bottom:1rem">Your Leaderboard Status</div>
-            <div id="lb-my-status">
-              <p style="font-size:.875rem;color:var(--muted);margin-bottom:1rem">Want to appear on the leaderboard? Set a public nickname below. You can change or remove it anytime.</p>
-              <div class="form-group"><label>Your Public Nickname</label><input type="text" id="lb-nickname-input" placeholder="GreenEagle, EcoRider, etc."></div>
-              <div style="display:flex;gap:8px">
-                <button class="btn btn-primary btn-sm" style="flex:1;justify-content:center" onclick="saveNickname()">Save Nickname</button>
-                <button class="btn btn-outline btn-sm" style="flex:1;justify-content:center" onclick="removeNickname()">Remove Me</button>
-              </div>
+            <p style="font-size:.875rem;color:var(--muted);margin-bottom:1rem">Set a public nickname to appear on the leaderboard.</p>
+            <div class="form-group"><label>Your Public Nickname</label><input type="text" id="lb-nickname-input" placeholder="GreenEagle, EcoRider, etc."></div>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-primary btn-sm" style="flex:1;justify-content:center" onclick="saveNickname()">Save</button>
+              <button class="btn btn-outline btn-sm" style="flex:1;justify-content:center" onclick="removeNickname()">Remove Me</button>
             </div>
           </div>
         </div>
@@ -892,7 +890,7 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
               <div style="display:flex;justify-content:space-between;font-size:.875rem;padding-bottom:.8rem;border-bottom:1px solid var(--border)"><span style="color:var(--muted)">Age</span><strong id="pd-age">—</strong></div>
               <div style="display:flex;justify-content:space-between;font-size:.875rem;padding-bottom:.8rem;border-bottom:1px solid var(--border)"><span style="color:var(--muted)">Grade</span><strong id="pd-grade">—</strong></div>
               <div style="display:flex;justify-content:space-between;font-size:.875rem;padding-bottom:.8rem;border-bottom:1px solid var(--border)"><span style="color:var(--muted)">Email</span><strong id="pd-email">—</strong></div>
-              <div style="display:flex;justify-content:space-between;font-size:.875rem;padding-bottom:.8rem;border-bottom:1px solid var(--border)"><span style="color:var(--muted)">Neighborhood Zone</span><strong id="pd-zone">—</strong></div>
+              <div style="display:flex;justify-content:space-between;font-size:.875rem;padding-bottom:.8rem;border-bottom:1px solid var(--border)"><span style="color:var(--muted)">Neighborhood</span><strong id="pd-zone">—</strong></div>
               <div style="display:flex;justify-content:space-between;font-size:.875rem;padding-bottom:.8rem;border-bottom:1px solid var(--border)"><span style="color:var(--muted)">Car</span><strong id="pd-car">—</strong></div>
               <div style="display:flex;justify-content:space-between;font-size:.875rem"><span style="color:var(--muted)">Leaderboard Nickname</span><strong id="pd-nickname">Private</strong></div>
             </div>
@@ -930,8 +928,6 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
 </div>
 
 <!-- ══════ MODALS ══════ -->
-
-<!-- Signup Success -->
 <div class="modal-overlay" id="modal-success">
   <div class="modal-box" style="text-align:center">
     <div style="font-size:3rem;margin-bottom:1rem">🎉</div>
@@ -941,14 +937,13 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
   </div>
 </div>
 
-<!-- Post a Ride -->
 <div class="modal-overlay" id="modal-post-ride">
   <div class="modal-box">
     <button class="modal-close" onclick="closeModal('modal-post-ride')">✕</button>
     <h3>Post an Available Ride</h3>
     <p>Let classmates know you have a seat available.</p>
-    <div class="form-group"><label>Departure Area (general — no exact address)</label><input type="text" id="pr-from" placeholder="e.g. Oakland Hills, Piedmont"></div>
-    <div class="form-group"><label>Destination</label><input type="text" id="pr-to" placeholder="Bishop O'Dowd High School" value="Bishop O'Dowd High School"></div>
+    <div class="form-group"><label>Departure Area</label><input type="text" id="pr-from" placeholder="e.g. Oakland Hills, Piedmont"></div>
+    <div class="form-group"><label>Destination</label><input type="text" id="pr-to" value="Bishop O'Dowd High School"></div>
     <div class="form-row">
       <div class="form-group"><label>Day</label><select id="pr-day"><option>Monday</option><option>Tuesday</option><option>Wednesday</option><option>Thursday</option><option>Friday</option></select></div>
       <div class="form-group"><label>Pickup Time</label><input type="time" id="pr-time" value="07:30"></div>
@@ -960,14 +955,13 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
   </div>
 </div>
 
-<!-- Request Ride -->
 <div class="modal-overlay" id="modal-request-ride">
   <div class="modal-box">
     <button class="modal-close" onclick="closeModal('modal-request-ride')">✕</button>
     <h3>Request a Ride</h3>
     <p>Send a ride request to <strong id="req-target-name">this student</strong>. A safety message is required.</p>
     <input type="hidden" id="req-target-uid">
-    <div class="form-group"><label>Safety Message (required — introduce yourself and your route)</label><textarea id="req-message" rows="3" placeholder="Hi! I'm [name], I live in [neighborhood] and I'm heading to O'Dowd. I'm looking for a ride on [days]. Happy to contribute [compensation]. Please let me know if this works!"></textarea></div>
+    <div class="form-group"><label>Safety Message (required)</label><textarea id="req-message" rows="3" placeholder="Hi! I'm [name], I live in [neighborhood]..."></textarea></div>
     <div class="form-row">
       <div class="form-group"><label>Preferred Days</label>
         <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:.3rem">
@@ -978,20 +972,19 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
           <label style="display:flex;align-items:center;gap:4px;font-size:.8rem"><input type="checkbox" value="Friday" class="req-day">Fri</label>
         </div>
       </div>
-      <div class="form-group"><label>Compensation</label><select id="req-comp"><option value="free">Free</option><option value="cash">Cash</option><option value="baked">Baked goods 🍪</option><option value="open">Open to anything</option></select></div>
+      <div class="form-group"><label>Compensation</label><select id="req-comp"><option value="free">Free</option><option value="cash">Cash</option><option value="baked">Baked goods 🍪</option><option value="open">Open</option></select></div>
     </div>
     <button class="btn btn-primary w100" onclick="sendRideRequest()">Send Request →</button>
   </div>
 </div>
 
-<!-- Log a Ride (shortcut) -->
 <div class="modal-overlay" id="modal-log-ride">
   <div class="modal-box">
     <button class="modal-close" onclick="closeModal('modal-log-ride')">✕</button>
     <h3>Log a Ride</h3>
     <p>Record that a ride actually happened. Your route details are private.</p>
     <div class="form-group"><label>Start (private)</label><input type="text" id="lr-start" placeholder="Your home or pickup point"></div>
-    <div class="form-group"><label>End</label><input type="text" id="lr-end" placeholder="Bishop O'Dowd High School, Oakland" value="Bishop O'Dowd High School, Oakland, CA"></div>
+    <div class="form-group"><label>End</label><input type="text" id="lr-end" value="Bishop O'Dowd High School, Oakland, CA"></div>
     <div class="form-row">
       <div class="form-group"><label>Date</label><input type="date" id="lr-date"></div>
       <div class="form-group"><label>Role</label><select id="lr-role"><option value="passenger">Passenger</option><option value="driver">Driver</option></select></div>
@@ -1005,19 +998,14 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
   </div>
 </div>
 
-<!-- Add Car -->
 <div class="modal-overlay" id="modal-car">
   <div class="modal-box">
     <button class="modal-close" onclick="closeModal('modal-car')">✕</button>
     <h3>Add Your Car</h3>
     <p>This lets us calculate accurate emissions saved on your rides.</p>
     <div style="display:flex;gap:10px;margin-bottom:1rem">
-      <div class="car-option selected" id="co-model" onclick="selectCarOpt2('model')" style="flex:1;text-align:center;padding:.8rem;cursor:pointer">
-        🚗<br><strong style="font-size:.82rem">Year / Make / Model</strong>
-      </div>
-      <div class="car-option" id="co-mpg" onclick="selectCarOpt2('mpg')" style="flex:1;text-align:center;padding:.8rem;cursor:pointer">
-        ⛽<br><strong style="font-size:.82rem">Enter MPG manually</strong>
-      </div>
+      <div class="car-option selected" id="co-model" onclick="selectCarOpt2('model')" style="flex:1;text-align:center;padding:.8rem;cursor:pointer">🚗<br><strong style="font-size:.82rem">Year / Make / Model</strong></div>
+      <div class="car-option" id="co-mpg" onclick="selectCarOpt2('mpg')" style="flex:1;text-align:center;padding:.8rem;cursor:pointer">⛽<br><strong style="font-size:.82rem">Enter MPG manually</strong></div>
     </div>
     <div id="car-modal-model">
       <div class="form-row">
@@ -1033,7 +1021,6 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
   </div>
 </div>
 
-<!-- Edit Profile -->
 <div class="modal-overlay" id="modal-edit-profile">
   <div class="modal-box">
     <button class="modal-close" onclick="closeModal('modal-edit-profile')">✕</button>
@@ -1053,7 +1040,6 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
   </div>
 </div>
 
-<!-- Parent Code -->
 <div class="modal-overlay" id="modal-parent">
   <div class="modal-box" style="text-align:center">
     <button class="modal-close" onclick="closeModal('modal-parent')">✕</button>
@@ -1061,28 +1047,16 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
     <p>Share this link with your parent or guardian. They can see your schedule and carpool partners — but cannot make any changes.</p>
     <div style="background:var(--cream);border-radius:10px;padding:1rem;margin:1rem 0;word-break:break-all;font-size:.85rem;border:1.5px solid var(--border)" id="parent-link-display">Generating link...</div>
     <button class="btn btn-primary w100" onclick="copyParentLink()">Copy Link 📋</button>
-    <p style="font-size:.78rem;color:var(--muted);margin-top:.8rem">This link only shows read-only info. No account needed for your parent.</p>
   </div>
 </div>
 
-<!-- Toast -->
 <div class="toast hidden" id="toast"></div>
 
-<!-- Firebase Compat SDKs — global scope, no import needed -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
 <script>
-// ── FIREBASE INIT ──
-const firebaseConfig = {
-  apiKey: "AIzaSyCNpvN2Fau-uDPV3BG5q2ljA99Ytg2q6_4",
-  authDomain: "commyute-13e3e.firebaseapp.com",
-  projectId: "commyute-13e3e",
-  storageBucket: "commyute-13e3e.firebasestorage.app",
-  messagingSenderId: "104654403919",
-  appId: "1:104654403919:web:9bbe535e374362aea7ad3a"
-};
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
 const db = firebase.firestore();
@@ -2366,6 +2340,7 @@ if(parentCode){
     })();
   } catch(e){ console.error('Parent view error:',e); }
 }
+
 </script>
 </body>
 </html>
