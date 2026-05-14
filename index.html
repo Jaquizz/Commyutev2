@@ -2157,10 +2157,42 @@ if(parentCode){
   })();
 }
 
-// ── EXPOSE GLOBALS ──
+// ── EXPOSE ALL GLOBALS so onclick= attributes work ──
+window.showPage=showPage;
+window.showDash=showDash;
+window.doLogin=doLogin;
+window.doLogout=doLogout;
+window.doSignup=doSignup;
+window.doPasswordReset=doPasswordReset;
+window.suStep=suStep;
+window.loadDashboard=loadDashboard;
+window.handleIdUpload=handleIdUpload;
+window.toggleCarFields=toggleCarFields;
+window.selectCarOpt=selectCarOpt;
+window.openRequestModal=openRequestModal;
+window.sendRideRequest=sendRideRequest;
+window.respondRequest=respondRequest;
+window.openPostRideModal=openPostRideModal;
+window.postRide=postRide;
+window.openAddRideModal=openAddRideModal;
+window.calcModalRide=calcModalRide;
+window.confirmLogRide=confirmLogRide;
+window.calcRide=calcRide;
+window.logRide=logRide;
+window.sendMsg=sendMsg;
+window.saveNickname=saveNickname;
+window.removeNickname=removeNickname;
+window.openEditProfileModal=openEditProfileModal;
+window.saveProfile=saveProfile;
+window.openCarModal=openCarModal;
+window.selectCarOpt2=selectCarOpt2;
+window.saveCar=saveCar;
+window.generateParentCode=generateParentCode;
+window.copyParentLink=copyParentLink;
 window.closeModal=closeModal;
 window.openModal=openModal;
-window.openRequestModal=window.openRequestModal;
+window.initMap=initMap;
+window.onMapReady=onMapReady;
 </script>
 </body>
 </html>
