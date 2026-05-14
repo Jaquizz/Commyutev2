@@ -150,16 +150,16 @@ input[type=file]{display:none}
 #map{width:100%;height:100%}
 
 /* MESSAGING */
-.msg-layout{display:grid;grid-template-columns:280px 1fr;border:1.5px solid var(--border);border-radius:var(--radius);overflow:hidden;background:var(--warm-white);height:520px}
-.msg-list{border-right:1.5px solid var(--border);overflow-y:auto}
+.msg-layout{display:grid;grid-template-columns:280px 1fr;border:1.5px solid var(--border);border-radius:var(--radius);overflow:hidden;background:var(--warm-white);height:calc(100vh - 200px);min-height:500px}
+.msg-list{border-right:1.5px solid var(--border);overflow-y:auto;display:flex;flex-direction:column}
 .msg-thread{padding:13px 15px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;display:flex;gap:11px;align-items:flex-start}
 .msg-thread:hover,.msg-thread.active{background:var(--green-light)}
 .msg-thread-info{flex:1;min-width:0}
 .msg-thread-info strong{display:block;font-size:.85rem;font-weight:600}
 .msg-thread-info span{font-size:.75rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
-.msg-chat{display:flex;flex-direction:column}
-.msg-header{padding:.9rem 1.3rem;border-bottom:1.5px solid var(--border);display:flex;align-items:center;gap:11px}
-.msg-body{flex:1;overflow-y:auto;padding:1.3rem;display:flex;flex-direction:column;gap:12px}
+.msg-chat{display:flex;flex-direction:column;height:100%;overflow:hidden}
+.msg-header{padding:.9rem 1.3rem;border-bottom:1.5px solid var(--border);display:flex;align-items:center;gap:11px;flex-shrink:0}
+.msg-body{flex:1;overflow-y:auto;padding:1.3rem;display:flex;flex-direction:column;gap:12px;min-height:0}
 .msg-bubble{max-width:75%}
 .msg-bubble.them{align-self:flex-start}
 .msg-bubble.me{align-self:flex-end}
@@ -168,8 +168,8 @@ input[type=file]{display:none}
 .msg-bubble.me .bubble{background:var(--green);color:#fff}
 .bubble-name{font-size:.72rem;color:var(--muted);margin-bottom:3px}
 .msg-bubble.me .bubble-name{text-align:right}
-.msg-input-row{padding:.9rem 1.3rem;border-top:1.5px solid var(--border);display:flex;gap:9px}
-.msg-input-row input{flex:1;padding:9px 13px;border:1.5px solid var(--border);border-radius:10px;font-family:inherit;font-size:.85rem;outline:none}
+.msg-input-row{padding:.9rem 1.3rem;border-top:1.5px solid var(--border);display:flex;gap:9px;flex-shrink:0;background:var(--warm-white)}
+.msg-input-row input{flex:1;padding:9px 13px;border:1.5px solid var(--border);border-radius:10px;font-family:inherit;font-size:.85rem;outline:none;min-width:0}
 .msg-input-row input:focus{border-color:var(--green)}
 .msg-empty{display:flex;align-items:center;justify-content:center;flex:1;color:var(--muted);font-size:.875rem;text-align:center;padding:2rem}
 
@@ -1747,6 +1747,8 @@ async function doPasswordReset(){
 async function doLogout(){
   await auth.signOut();
   currentUser=null; currentUserData=null; activeConvId=null;
+  const panel = document.getElementById('msg-chat-panel');
+  if(panel) panel.innerHTML='<div class="msg-empty">Select a conversation to start messaging.</div>';
   if(convUnsub) convUnsub();
   if(msgUnsub) msgUnsub();
   document.getElementById('guestNav').classList.remove('hidden');
@@ -1866,6 +1868,8 @@ function initMap(){
 window.loadFriends=loadFriends;
 window.clearRequest=clearRequest;
 window.clearIncomingRequest=clearIncomingRequest;
+window.sendMsgText=sendMsgText;
+window.escapeHtml=escapeHtml;
 window.resendVerification=resendVerification;
 window.startMessageNotifications=startMessageNotifications;
 window.startConversation=startConversation;
@@ -2300,41 +2304,82 @@ async function loadMessages(){
 }
 
 function openConv(convId, otherName, otherId, threadEl){
+  // Don't rebuild if same conversation already open
+  if(activeConvId === convId){
+    document.querySelectorAll('.msg-thread').forEach(t=>t.classList.remove('active'));
+    if(threadEl) threadEl.classList.add('active');
+    const inp = document.getElementById('msg-input-active');
+    if(inp) inp.focus();
+    return;
+  }
   activeConvId=convId;
   document.querySelectorAll('.msg-thread').forEach(t=>t.classList.remove('active'));
   if(threadEl) threadEl.classList.add('active');
+
   const panel=document.getElementById('msg-chat-panel');
-  panel.innerHTML=`
-    <div class="msg-header">
-      <div class="avatar" style="background:${avatarColor(otherId)};width:36px;height:36px;font-size:.8rem">${(otherName||'?')[0].toUpperCase()}</div>
-      <div><strong style="font-size:.875rem">${otherName}</strong><div style="font-size:.75rem;color:var(--muted)">O'Dowd · Carpool Partner ✓</div></div>
-    </div>
-    <div class="msg-body" id="msg-body-active"></div>
-    <div class="msg-input-row">
-      <input type="text" id="msg-input-active" placeholder="Type a message…">
-      <button class="btn btn-primary btn-sm" onclick="sendMsg('${convId}','${otherId}')">Send</button>
-    </div>`;
-  document.getElementById('msg-input-active').addEventListener('keydown',e=>{
-    if(e.key==='Enter') sendMsg(convId,otherId);
-  });
-  if(msgUnsub) msgUnsub();
-  msgUnsub=db.collection('conversations').doc(convId).collection('messages')
+
+  // Build chat UI with proper structure
+  const header = document.createElement('div');
+  header.className = 'msg-header';
+  header.innerHTML = `
+    <div class="avatar" style="background:${avatarColor(otherId)};width:36px;height:36px;font-size:.8rem;flex-shrink:0">${(otherName||'?')[0].toUpperCase()}</div>
+    <div><strong style="font-size:.875rem">${otherName}</strong><div style="font-size:.75rem;color:var(--muted)">O'Dowd · Carpool Partner ✓</div></div>`;
+
+  const body = document.createElement('div');
+  body.className = 'msg-body';
+  body.id = 'msg-body-active';
+
+  const inputRow = document.createElement('div');
+  inputRow.className = 'msg-input-row';
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.id = 'msg-input-active';
+  input.placeholder = 'Type a message…';
+  const sendBtn = document.createElement('button');
+  sendBtn.className = 'btn btn-primary btn-sm';
+  sendBtn.textContent = 'Send';
+  sendBtn.onclick = ()=>sendMsg(convId, otherId);
+  input.addEventListener('keydown', e=>{ if(e.key==='Enter') sendMsg(convId, otherId); });
+  inputRow.appendChild(input);
+  inputRow.appendChild(sendBtn);
+
+  // Clear and rebuild panel
+  panel.innerHTML = '';
+  panel.appendChild(header);
+  panel.appendChild(body);
+  panel.appendChild(inputRow);
+
+  // Focus input
+  setTimeout(()=>input.focus(), 100);
+
+  // Unsubscribe previous listener
+  if(msgUnsub){ msgUnsub(); msgUnsub=null; }
+
+  msgUnsub = db.collection('conversations').doc(convId).collection('messages')
     .onSnapshot(rawSnap=>{
-      // Sort by sentAt client-side
-      const sortedMsgs = [...rawSnap.docs].sort((a,b)=>(a.data().sentAt?.toMillis?.()||0)-(b.data().sentAt?.toMillis?.()||0));
-      const body=document.getElementById('msg-body-active');
-      if(!body) return;
-      body.innerHTML='';
+      const sortedMsgs = [...rawSnap.docs].sort((a,b)=>
+        (a.data().sentAt?.toMillis?.()||0)-(b.data().sentAt?.toMillis?.()||0));
+      const msgBody = document.getElementById('msg-body-active');
+      if(!msgBody) return;
+      const wasAtBottom = msgBody.scrollHeight - msgBody.scrollTop - msgBody.clientHeight < 60;
+      msgBody.innerHTML='';
       sortedMsgs.forEach(d=>{
         const m=d.data();
         const isMe=m.senderId===currentUser.uid;
-        const div=document.createElement('div');
-        div.className='msg-bubble '+(isMe?'me':'them');
-        div.innerHTML=`<div class="bubble-name">${isMe?'You':m.senderName}</div><div class="bubble">${m.text}</div>`;
-        body.appendChild(div);
+        const bubble=document.createElement('div');
+        bubble.className='msg-bubble '+(isMe?'me':'them');
+        bubble.innerHTML=`<div class="bubble-name">${isMe?'You':m.senderName||'Classmate'}</div><div class="bubble">${escapeHtml(m.text||'')}</div>`;
+        msgBody.appendChild(bubble);
       });
-      body.scrollTop=body.scrollHeight;
+      // Auto-scroll only if user was already at bottom
+      if(wasAtBottom || sortedMsgs.length <= 1){
+        msgBody.scrollTop = msgBody.scrollHeight;
+      }
     });
+}
+
+function escapeHtml(text){
+  return text.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
 
 async function sendMsg(convId, otherId){
@@ -2342,6 +2387,9 @@ async function sendMsg(convId, otherId){
   if(!input) return;
   const text=input.value.trim();
   if(!text) return;
+  // Clear input immediately for responsive feel
+  input.value='';
+  input.focus();
   try{
     await db.collection('conversations').doc(convId).collection('messages').add({
       senderId:currentUser.uid,
@@ -2353,8 +2401,11 @@ async function sendMsg(convId, otherId){
       lastMessageAt:firebase.firestore.FieldValue.serverTimestamp(),
       lastSenderId:currentUser.uid
     });
-    input.value='';
-  } catch(e){ showToast('Error sending: '+e.message); }
+  } catch(e){
+    // Restore text if send failed
+    input.value=text;
+    showToast('Error sending: '+e.message);
+  }
 }
 
 // ── IMPACT ──
@@ -2886,11 +2937,18 @@ function skipWelcome(){
 const _origLoadDash = window.loadDashboard;
 window.loadDashboard = function(){
   _origLoadDash();
-  // Show welcome if first time
+  // Show welcome only for genuinely new users
   setTimeout(async()=>{
-    if(currentUser && currentUserData && !currentUserData.hasCompletedWelcome){
+    if(!currentUser || !currentUserData) return;
+    const d = currentUserData;
+    // Consider account "new" only if: no completed welcome AND no existing activity
+    const hasExistingData = (d.totalRides > 0) || (d.partners && d.partners.length > 0) || d.car || d.zip || d.hasCompletedWelcome;
+    if(!hasExistingData){
       const overlay = document.getElementById('welcome-overlay');
       if(overlay) overlay.style.display='flex';
+    } else if(!d.hasCompletedWelcome) {
+      // Mark as completed for existing users so it never shows again
+      await db.collection('users').doc(currentUser.uid).update({hasCompletedWelcome:true});
     }
   }, 500);
 };
