@@ -1569,7 +1569,7 @@ function showDash(id){
   document.querySelectorAll('.sidebar-nav a').forEach(a=>a.classList.remove('active'));
   const dn = document.getElementById('dnav-'+id);
   if(dn) dn.classList.add('active');
-  if(id==='map') initMap();
+  if(id==='map'){ mapInstance=null; initMap(); }
   if(id==='impact') loadImpact();
   if(id==='leaderboard') loadLeaderboard();
   if(id==='messages') loadMessages();
@@ -1865,19 +1865,14 @@ function initMap(){
   if(!currentUser||!currentUserData) return;
   if(!mapLoaded){
     window.onMapReady = onMapReady;
-window.loadFriends=loadFriends;
-window.clearRequest=clearRequest;
-window.clearIncomingRequest=clearIncomingRequest;
-window.sendMsgText=sendMsgText;
-window.escapeHtml=escapeHtml;
-window.resendVerification=resendVerification;
-window.startMessageNotifications=startMessageNotifications;
-window.startConversation=startConversation;
     const script = document.createElement('script');
     script.src=`https://maps.googleapis.com/maps/api/js?key=${MAPS_KEY}&libraries=places,geometry&callback=onMapReady`;
-    script.async=true; document.head.appendChild(script);
+    script.async=true;
+    script.onerror = ()=>showToast('Could not load Google Maps. Check your connection.');
+    document.head.appendChild(script);
     mapLoaded=true;
-  } else if(window.google&&window.google.maps&&!mapInstance){
+  } else if(window.google&&window.google.maps){
+    // Map already loaded — just refresh the data
     onMapReady();
   }
 }
@@ -3177,6 +3172,10 @@ window.confirmTodayRide = confirmTodayRide;
 window.loadAdminPage = loadAdminPage;
 window.adminDeactivate = adminDeactivate;
 
+window.initMap=initMap;
+window.loadFriends=loadFriends;
+window.clearRequest=clearRequest;
+window.sendMsgText=sendMsgText;
 </script>
 </body>
 </html><!-- THIS TAG IS INVALID — JS IS APPENDED BELOW -->
