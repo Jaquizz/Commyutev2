@@ -698,7 +698,7 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
           <div class="stat-card"><div class="stat-label">Rides This Month</div><div class="stat-num" id="stat-rides">0</div></div>
           <div class="stat-card"><div class="stat-label">CO₂ Saved</div><div class="stat-num" id="stat-co2">0</div><div class="stat-unit">lbs</div></div>
           <div class="stat-card"><div class="stat-label">Money Saved</div><div class="stat-num" id="stat-money">$0</div></div>
-          <div class="stat-card"><div class="stat-label">Social Time</div><div class="stat-num" id="stat-time">0</div><div class="stat-unit">min with friends 🤝</div></div>
+          <div class="stat-card"><div class="stat-label">Time Together 🤝</div><div class="stat-num" id="stat-time">0</div><div class="stat-unit">min in the car</div></div>
         </div>
         <div class="grid-2">
           <div>
@@ -812,7 +812,7 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
           <div class="stat-card" style="border-top:3px solid var(--accent)"><div class="stat-label">Total Miles Shared</div><div class="stat-num" id="imp-miles">0</div><div class="stat-unit">miles</div></div>
           <div class="stat-card" style="border-top:3px solid var(--blue)"><div class="stat-label">Total Rides</div><div class="stat-num" id="imp-rides">0</div><div class="stat-unit">trips</div></div>
           <div class="stat-card" style="border-top:3px solid var(--purple)"><div class="stat-label">Money Saved</div><div class="stat-num" id="imp-money">$0</div></div>
-          <div class="stat-card" style="border-top:3px solid #e67e22"><div class="stat-label">Social Time 🤝</div><div class="stat-num" id="imp-time">0</div><div class="stat-unit">min with friends</div></div>
+          <div class="stat-card" style="border-top:3px solid #e67e22"><div class="stat-label">Time Together 🤝</div><div class="stat-num" id="imp-time">0</div><div class="stat-unit">min in the car</div></div>
         </div>
         <div class="grid-2">
           <div class="card">
@@ -822,7 +822,7 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
               <div><div style="display:flex;justify-content:space-between;font-size:.85rem;margin-bottom:3px"><span>⚡ Energy saved</span><strong id="eq-energy">0 kWh</strong></div><div class="progress"><div class="progress-bar" id="pb-energy" style="width:0%"></div></div></div>
               <div><div style="display:flex;justify-content:space-between;font-size:.85rem;margin-bottom:3px"><span>🚗 Car trips offset</span><strong id="eq-trips">0</strong></div><div class="progress"><div class="progress-bar" id="pb-trips" style="width:0%"></div></div></div>
             </div>
-            <div class="alert alert-info" style="margin-top:1.2rem;font-size:.8rem">📊 CO₂ and money stats use your car's real-world MPG (model-corrected for Bay Area driving). Social time = minutes spent commuting with friends instead of alone.</div>
+            <div class="alert alert-info" style="margin-top:1.2rem;font-size:.8rem">📊 CO₂ and money stats use your car's real-world MPG (model-corrected for Bay Area driving). Time Together = total minutes you and your carpool partners spend in the car each ride, based on estimated drive time between your start and end points.</div>
           </div>
           <div class="card">
             <div class="card-title" style="margin-bottom:1rem">Log a New Ride</div>
@@ -1337,11 +1337,10 @@ function calcCO2(miles, mpg, totalPeople){
 function calcMoney(miles, mpg, totalPeople){
   return Math.round((miles/mpg) * 4.50 * (1-1/totalPeople) * 100) / 100;
 }
-function calcTime(miles, totalPeople){
-  // Social time = actual commute time spent riding with someone instead of driving alone
-  if(totalPeople < 2) return 0;
-  const avgSpeed = 22; // Bay Area urban average mph (lower due to traffic + hills)
-  return Math.round((miles / avgSpeed) * 60);
+function calcTime(minutes, totalPeople){
+  // minutes comes directly from Google Maps Duration — actual drive time
+  if(totalPeople < 2) return minutes || 0;
+  return minutes || 0;
 }
 
 // ── UTILS ──
@@ -1947,17 +1946,34 @@ function openAddRideModal(){
 
 async function estimateDistance(start, end){
   try{
-    const geo = async (addr) => {
-      const r = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(addr)}&key=${MAPS_KEY}`);
-      return r.json();
-    };
-    const [r1,r2] = await Promise.all([geo(start), geo(end)]);
-    if(r1.status!=='OK'||r2.status!=='OK') return null;
-    const l1=r1.results[0].geometry.location, l2=r2.results[0].geometry.location;
-    const R=3958.8, dLat=(l2.lat-l1.lat)*Math.PI/180, dLng=(l2.lng-l1.lng)*Math.PI/180;
-    const a=Math.sin(dLat/2)**2+Math.cos(l1.lat*Math.PI/180)*Math.cos(l2.lat*Math.PI/180)*Math.sin(dLng/2)**2;
-    return {miles:Math.round(R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))*1.3*10)/10};
-  } catch(e){ return null; }
+    // Use Google Maps Distance Matrix API for real drive time + distance
+    const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${encodeURIComponent(start)}&destinations=${encodeURIComponent(end)}&units=imperial&key=${MAPS_KEY}`;
+    const r = await fetch(url);
+    const data = await r.json();
+    if(data.status !== 'OK') return null;
+    const element = data.rows?.[0]?.elements?.[0];
+    if(!element || element.status !== 'OK') return null;
+    // distance.value is in meters, duration.value is in seconds
+    const miles = Math.round((element.distance.value / 1609.34) * 10) / 10;
+    const minutes = Math.round(element.duration.value / 60);
+    return { miles, minutes };
+  } catch(e){
+    // Fallback: haversine if API fails
+    try{
+      const geo = async (addr) => {
+        const r = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(addr)}&key=${MAPS_KEY}`);
+        return r.json();
+      };
+      const [r1,r2] = await Promise.all([geo(start), geo(end)]);
+      if(r1.status!=='OK'||r2.status!=='OK') return null;
+      const l1=r1.results[0].geometry.location, l2=r2.results[0].geometry.location;
+      const R=3958.8, dLat=(l2.lat-l1.lat)*Math.PI/180, dLng=(l2.lng-l1.lng)*Math.PI/180;
+      const a=Math.sin(dLat/2)**2+Math.cos(l1.lat*Math.PI/180)*Math.cos(l2.lat*Math.PI/180)*Math.sin(dLng/2)**2;
+      const miles = Math.round(R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))*1.3*10)/10;
+      const minutes = Math.round((miles/22)*60); // fallback estimate
+      return { miles, minutes };
+    } catch(e2){ return null; }
+  }
 }
 
 async function calcModalRide(){
@@ -1973,7 +1989,7 @@ async function calcModalRide(){
   const time=calcTime(result.miles,people);
   rideCalcData={miles:result.miles,co2Saved:co2,moneySaved:money,timeSaved:time,people};
   const el=document.getElementById('lr-calc');
-  el.innerHTML=`✅ ~${result.miles} miles · ${co2} lbs CO₂ saved · $${money} saved · ${time} min saved`;
+  el.innerHTML=`✅ ~${result.miles} miles · ${co2} lbs CO₂ saved · $${money} saved · ${time} min together in the car`;
   el.classList.remove('hidden');
 }
 
@@ -2169,10 +2185,10 @@ async function calcRide(){
   const mpg=currentUserData?.car?.mpg||28;
   const co2=calcCO2(result.miles,mpg,people);
   const money=calcMoney(result.miles,mpg,people);
-  const time=calcTime(result.miles,people);
-  rideCalcData={miles:result.miles,co2Saved:co2,moneySaved:money,timeSaved:time,people};
+  const time=calcTime(result.minutes,people);
+  rideCalcData={miles:result.miles,minutes:result.minutes,co2Saved:co2,moneySaved:money,timeSaved:time,people};
   const el=document.getElementById('ride-calc-result');
-  el.innerHTML=`✅ ~${result.miles} miles · <strong>${co2} lbs CO₂ saved</strong> · $${money} saved · ${time} min saved`;
+  el.innerHTML=`✅ ~${result.miles} miles · ~${result.minutes} min drive · <strong>${co2} lbs CO₂ saved</strong> · $${money} saved · ${time} min together`;
   el.classList.remove('hidden');
 }
 
