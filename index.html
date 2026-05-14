@@ -1846,9 +1846,12 @@ function loadDashboard(){
   showDash('overview');
   startMessageNotifications();
   cacheMyPhoto();
-  // Hide loading screen now that dashboard is ready
+  // Hide loading screen
   const ls = document.getElementById('auth-loading');
   if(ls) ls.style.display='none';
+  // Run post-login checks
+  setTimeout(checkWelcome, 500);
+  setTimeout(checkIfAdmin, 600);
 }
 
 // ── OVERVIEW ──
@@ -2985,6 +2988,8 @@ window.startMessageNotifications = function(){
   db.collection('conversations')
     .where('participants','array-contains',currentUser.uid)
     .onSnapshot(snap=>{
+      // Guard: user may have logged out by the time snapshot fires
+      if(!currentUser) return;
       snap.docs.forEach(d=>{
         const data = d.data();
         const lastAt = data.lastMessageAt?.toMillis?.() || 0;
@@ -3057,24 +3062,18 @@ function skipWelcome(){
 }
 
 // Show welcome for new users
-const _origLoadDash = window.loadDashboard;
-window.loadDashboard = function(){
-  _origLoadDash();
-  // Show welcome only for genuinely new users
-  setTimeout(async()=>{
-    if(!currentUser || !currentUserData) return;
-    const d = currentUserData;
-    // Consider account "new" only if: no completed welcome AND no existing activity
-    const hasExistingData = (d.totalRides > 0) || (d.partners && d.partners.length > 0) || d.car || d.zip || d.hasCompletedWelcome;
-    if(!hasExistingData){
-      const overlay = document.getElementById('welcome-overlay');
-      if(overlay) overlay.style.display='flex';
-    } else if(!d.hasCompletedWelcome) {
-      // Mark as completed for existing users so it never shows again
-      await db.collection('users').doc(currentUser.uid).update({hasCompletedWelcome:true});
-    }
-  }, 500);
-};
+// Welcome check runs after loadDashboard — defined separately to avoid chain issues
+async function checkWelcome(){
+  if(!currentUser || !currentUserData) return;
+  const d = currentUserData;
+  const hasExistingData = (d.totalRides > 0) || (d.partners && d.partners.length > 0) || d.car || d.zip || d.hasCompletedWelcome;
+  if(!hasExistingData){
+    const overlay = document.getElementById('welcome-overlay');
+    if(overlay) overlay.style.display='flex';
+  } else if(!d.hasCompletedWelcome){
+    try{ await db.collection('users').doc(currentUser.uid).update({hasCompletedWelcome:true}); } catch(e){}
+  }
+}
 
 // ── PROFILE PHOTO ──
 async function uploadProfilePhoto(input){
@@ -3286,11 +3285,7 @@ async function checkIfAdmin(){
 }
 
 // Hook into loadDashboard to check admin
-const _origLD2 = window.loadDashboard;
-window.loadDashboard = function(){
-  _origLD2();
-  setTimeout(checkIfAdmin, 600);
-};
+// Admin check runs after loadDashboard
 
 // ── EXPORT NEW FUNCTIONS ──
 window.toggleMobileNav = toggleMobileNav;
@@ -3313,7 +3308,6 @@ window.adminDeactivate = adminDeactivate;
 window.initMap=initMap;
 window.loadFriends=loadFriends;
 window.clearRequest=clearRequest;
-window.sendMsgText=sendMsgText;
 
 // ── AUTO-GENERATED EXPORTS ──
 window.showPage=showPage;
