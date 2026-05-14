@@ -284,6 +284,59 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
 .gap-1{gap:1rem}
 .w100{width:100%;justify-content:center}
 .hidden{display:none}
+
+  /* ── HAMBURGER MENU ── */
+  .hamburger { display:none; flex-direction:column; gap:5px; cursor:pointer; padding:8px; border:none; background:none; }
+  .hamburger span { width:22px; height:2px; background:var(--charcoal); border-radius:2px; display:block; transition:all .2s; }
+  .mobile-nav-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:90; }
+  .mobile-nav-overlay.open { display:block; }
+  .sidebar.mobile-open { display:block !important; position:fixed; left:0; top:64px; bottom:0; z-index:95; width:var(--sidebar); overflow-y:auto; box-shadow:var(--shadow-lg); }
+  @media(max-width:768px){ .hamburger{display:flex} }
+
+  /* ── NOTIFICATION BELL ── */
+  .notif-bell { position:relative; cursor:pointer; background:none; border:none; font-size:1.2rem; padding:6px; }
+  .notif-bell-badge { position:absolute; top:2px; right:2px; width:8px; height:8px; border-radius:50%; background:var(--red); display:none; }
+  .notif-dropdown { position:absolute; top:48px; right:1rem; width:320px; background:var(--warm-white); border:1.5px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow-lg); z-index:150; display:none; max-height:400px; overflow-y:auto; }
+  .notif-dropdown.open { display:block; }
+  .notif-item { padding:.9rem 1rem; border-bottom:1px solid var(--border); font-size:.83rem; cursor:pointer; transition:background .15s; display:flex; gap:10px; align-items:flex-start; }
+  .notif-item:hover { background:var(--green-light); }
+  .notif-item.unread { background:var(--accent-light); }
+  .notif-item:last-child { border-bottom:none; }
+  .notif-icon { font-size:1.1rem; flex-shrink:0; }
+  .notif-text { flex:1; }
+  .notif-time { font-size:.72rem; color:var(--muted); margin-top:2px; }
+  .notif-empty { padding:1.5rem; text-align:center; color:var(--muted); font-size:.875rem; }
+  .notif-header { padding:.8rem 1rem; border-bottom:1px solid var(--border); display:flex; justify-content:space-between; align-items:center; }
+  .notif-header strong { font-size:.875rem; }
+
+  /* ── WELCOME SCREEN ── */
+  .welcome-overlay { position:fixed; inset:0; background:rgba(0,0,0,.6); z-index:200; display:flex; align-items:center; justify-content:center; padding:1rem; }
+  .welcome-box { background:var(--warm-white); border-radius:20px; padding:2.5rem; max-width:520px; width:100%; box-shadow:var(--shadow-lg); animation:fadeUp .3s ease; }
+  .welcome-steps { display:flex; gap:8px; margin:1.5rem 0; }
+  .welcome-step { flex:1; height:4px; border-radius:2px; background:var(--border); }
+  .welcome-step.done { background:var(--green); }
+  .welcome-step.active { background:var(--accent); }
+
+  /* ── EMPTY STATES ── */
+  .empty-state { text-align:center; padding:3rem 1.5rem; }
+  .empty-state .empty-icon { font-size:3rem; margin-bottom:1rem; display:block; }
+  .empty-state h3 { font-family:'Fraunces',serif; font-size:1.2rem; color:var(--charcoal); margin-bottom:.5rem; }
+  .empty-state p { font-size:.875rem; color:var(--muted); margin-bottom:1.5rem; }
+
+  /* ── PROFILE PHOTO ── */
+  .avatar-upload { position:relative; display:inline-block; cursor:pointer; }
+  .avatar-upload .avatar-edit-btn { position:absolute; bottom:0; right:0; width:22px; height:22px; background:var(--green); border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:.65rem; color:white; border:2px solid white; }
+
+  /* ── REPORT BUTTON ── */
+  .report-btn { background:none; border:none; color:var(--muted); font-size:.75rem; cursor:pointer; padding:4px 8px; border-radius:6px; transition:all .15s; }
+  .report-btn:hover { background:#fde8e8; color:var(--red); }
+
+  /* ── RECURRING RIDE ── */
+  .recurring-card { background:var(--green-light); border:1.5px solid var(--green); border-radius:var(--radius); padding:1.2rem; margin-bottom:1rem; }
+
+  /* ── ADMIN PAGE ── */
+  .admin-badge { background:var(--red); color:white; padding:3px 10px; border-radius:99px; font-size:.72rem; font-weight:700; }
+
 </style>
 </head>
 <body>
@@ -650,6 +703,59 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
 </div>
 
 <!-- ══════ PAGE: DASHBOARD ══════ -->
+<!-- ══════ WELCOME OVERLAY ══════ -->
+<div id="welcome-overlay" class="welcome-overlay" style="display:none">
+  <div class="welcome-box">
+    <div id="welcome-step-1">
+      <div style="font-size:2.5rem;margin-bottom:.8rem">👋</div>
+      <h3 style="font-family:'Fraunces',serif;font-size:1.5rem;color:var(--green-dark);margin-bottom:.5rem">Welcome to Commyute!</h3>
+      <p style="color:var(--muted);font-size:.9rem;margin-bottom:1.5rem">Let's get you set up in 3 quick steps so you can start carpooling with your O'Dowd classmates.</p>
+      <div class="welcome-steps"><div class="welcome-step active"></div><div class="welcome-step"></div><div class="welcome-step"></div></div>
+      <div class="alert alert-info">📍 First, add your car so we can calculate your emissions savings accurately.</div>
+      <div id="car-fields" style="display:block">
+        <div style="display:flex;gap:10px;margin-bottom:1rem">
+          <div class="car-option selected" id="wco-model" onclick="selectWelcomeCarOpt('model')" style="flex:1;text-align:center;padding:.8rem;cursor:pointer">🚗<br><strong style="font-size:.82rem">Year / Make / Model</strong></div>
+          <div class="car-option" id="wco-mpg" onclick="selectWelcomeCarOpt('mpg')" style="flex:1;text-align:center;padding:.8rem;cursor:pointer">⛽<br><strong style="font-size:.82rem">Enter MPG manually</strong></div>
+          <div class="car-option" id="wco-none" onclick="selectWelcomeCarOpt('none')" style="flex:1;text-align:center;padding:.8rem;cursor:pointer">🎒<br><strong style="font-size:.82rem">No car — I need rides</strong></div>
+        </div>
+        <div id="wcar-model-fields">
+          <div class="form-row">
+            <div class="form-group"><label>Year</label><input type="number" id="wcar-year" placeholder="2020" min="2000" max="2026"></div>
+            <div class="form-group"><label>Make</label><input type="text" id="wcar-make" placeholder="Toyota"></div>
+          </div>
+          <div class="form-group"><label>Model</label><input type="text" id="wcar-model" placeholder="Camry"></div>
+        </div>
+        <div id="wcar-mpg-fields" class="hidden">
+          <div class="form-group"><label>MPG</label><input type="number" id="wcar-mpg" placeholder="28" min="10" max="150"></div>
+        </div>
+      </div>
+      <button class="btn btn-primary w100" onclick="welcomeNext(2)">Next →</button>
+      <a style="display:block;text-align:center;margin-top:.8rem;font-size:.8rem;color:var(--muted);cursor:pointer" onclick="skipWelcome()">Skip for now</a>
+    </div>
+    <div id="welcome-step-2" class="hidden">
+      <div style="font-size:2.5rem;margin-bottom:.8rem">📍</div>
+      <h3 style="font-family:'Fraunces',serif;font-size:1.5rem;color:var(--green-dark);margin-bottom:.5rem">Your Neighborhood</h3>
+      <p style="color:var(--muted);font-size:.9rem;margin-bottom:1.5rem">We use your ZIP code to show you on the map. Your exact address is never shared.</p>
+      <div class="welcome-steps"><div class="welcome-step done"></div><div class="welcome-step active"></div><div class="welcome-step"></div></div>
+      <div class="form-group"><label>ZIP Code</label><input type="text" id="wzipcode" placeholder="94605" maxlength="5"></div>
+      <div class="form-group"><label>Ride Preference</label>
+        <select id="wpref"><option value="both">I want to offer AND request rides</option><option value="driver">I can drive others</option><option value="rider">I need rides</option></select>
+      </div>
+      <button class="btn btn-primary w100" onclick="welcomeNext(3)">Next →</button>
+      <a style="display:block;text-align:center;margin-top:.8rem;font-size:.8rem;color:var(--muted);cursor:pointer" onclick="welcomeNext(3)">Skip</a>
+    </div>
+    <div id="welcome-step-3" class="hidden">
+      <div style="font-size:2.5rem;margin-bottom:.8rem">🏆</div>
+      <h3 style="font-family:'Fraunces',serif;font-size:1.5rem;color:var(--green-dark);margin-bottom:.5rem">Leaderboard Nickname</h3>
+      <p style="color:var(--muted);font-size:.9rem;margin-bottom:1.5rem">Want to compete with classmates on emissions saved? Set a nickname to appear on the leaderboard. Totally optional.</p>
+      <div class="welcome-steps"><div class="welcome-step done"></div><div class="welcome-step done"></div><div class="welcome-step active"></div></div>
+      <div class="form-group"><label>Public Nickname (optional)</label><input type="text" id="wnickname" placeholder="GreenEagle, EcoRider..."></div>
+      <button class="btn btn-primary w100" onclick="finishWelcome()">Go to Dashboard 🎉</button>
+      <a style="display:block;text-align:center;margin-top:.8rem;font-size:.8rem;color:var(--muted);cursor:pointer" onclick="skipWelcome()">Skip</a>
+    </div>
+  </div>
+</div>
+
 <div class="page" id="page-dashboard">
   <div class="dash-layout">
     <aside class="sidebar">
@@ -762,7 +868,7 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
           <div><h2>Available Rides 🪑</h2><p class="text-muted" style="font-size:.875rem">Classmates offering seats — request to join</p></div>
           <button class="btn btn-primary btn-sm" onclick="openPostRideModal()">+ Post Your Ride</button>
         </div>
-        <div id="available-rides-list" class="auto-grid"><p class="text-muted" style="font-size:.875rem">Loading available rides...</p></div>
+        <div id="available-rides-list" class="auto-grid"><div class="empty-state" style="grid-column:1/-1"><span class="empty-icon">🪑</span><h3>No rides posted yet</h3><p>Be the first to post an available seat for your classmates.</p><button class="btn btn-primary" onclick="openPostRideModal()">+ Post Your Ride</button></div></div>
       </div>
 
       <!-- SCHEDULE -->
@@ -771,13 +877,20 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
           <div><h2>My Schedule 🗓</h2><p class="text-muted" style="font-size:.875rem">Your confirmed rides this week</p></div>
           <button class="btn btn-primary btn-sm" onclick="openAddRideModal()">+ Log a Ride</button>
         </div>
+        <div class="recurring-card mb1">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.8rem">
+            <div><strong style="font-size:.9rem">⚡ Recurring Ride Shortcut</strong><p style="font-size:.78rem;color:var(--green-dark);margin-top:2px">Set up a weekly pattern — confirm each ride with one tap</p></div>
+            <button class="btn btn-primary btn-sm" onclick="openRecurringModal()">Set Up</button>
+          </div>
+          <div id="recurring-summary" style="font-size:.8rem;color:var(--green-dark)">No recurring rides set up yet.</div>
+        </div>
         <div class="card mb1">
           <div class="card-header"><span class="card-title">This Week</span></div>
           <div class="week-grid" id="full-week"></div>
         </div>
         <div class="card">
           <div class="card-header"><span class="card-title">Ride History</span></div>
-          <div id="ride-history"><p class="text-muted" style="font-size:.875rem;text-align:center;padding:1rem">No rides logged yet. Click "+ Log a Ride" to record your first trip.</p></div>
+          <div id="ride-history"><div class="empty-state"><span class="empty-icon">🗓</span><h3>No rides logged yet</h3><p>Log your first carpool ride to start tracking your environmental impact.</p><button class="btn btn-primary" onclick="openAddRideModal()">+ Log a Ride</button></div></div>
         </div>
       </div>
 
@@ -787,7 +900,7 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
           <div><h2>Friends &amp; Partners 👥</h2><p class="text-muted" style="font-size:.875rem">Your accepted carpool partners</p></div>
         </div>
         <div class="alert alert-info">👥 Partners are students who have accepted your ride request or whose request you accepted. You can only message partners.</div>
-        <div id="friends-list" class="auto-grid"><p class="text-muted" style="font-size:.875rem;text-align:center;padding:2rem">No partners yet.</p></div>
+        <div id="friends-list" class="auto-grid"><div class="empty-state" style="grid-column:1/-1"><span class="empty-icon">👥</span><h3>No partners yet</h3><p>Browse the neighbor map to find O'Dowd classmates near you and send your first ride request.</p><button class="btn btn-primary" onclick="showDash('map')">Open Neighbor Map</button></div></div>
       </div>
 
       <!-- MESSAGES -->
@@ -869,7 +982,11 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
         <div class="main-header"><h2>My Profile 👤</h2><button class="btn btn-outline btn-sm" onclick="openEditProfileModal()">Edit Profile</button></div>
         <div class="grid-2">
           <div class="card" style="text-align:center">
-            <div class="avatar avatar-lg" id="profile-avatar" style="margin:0 auto 1rem">?</div>
+            <div class="avatar-upload" onclick="document.getElementById('photo-upload-input').click()" title="Click to change photo">
+              <div class="avatar avatar-lg" id="profile-avatar" style="margin:0 auto 1rem">?</div>
+              <div class="avatar-edit-btn">✏️</div>
+            </div>
+            <input type="file" id="photo-upload-input" accept="image/*" onchange="uploadProfilePhoto(this)" style="display:none">
             <h3 style="font-size:1.1rem;margin-bottom:3px" id="profile-name">Loading...</h3>
             <p style="font-size:.875rem;color:var(--muted)" id="profile-school">Bishop O'Dowd High School</p>
             <div style="margin:1rem 0;display:flex;justify-content:center;gap:8px;flex-wrap:wrap">
@@ -908,6 +1025,32 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
       </div>
 
     </main>
+  </div>
+</div>
+
+<!-- ══════ PAGE: ADMIN ══════ -->
+<div class="page" id="page-admin">
+  <div style="max-width:1100px;margin:0 auto;padding:2rem">
+    <div style="display:flex;align-items:center;gap:1rem;margin-bottom:2rem">
+      <h2 style="font-family:'Fraunces',serif;font-size:1.8rem;color:var(--green-dark)">Admin Dashboard</h2>
+      <span class="admin-badge">ADMIN</span>
+    </div>
+    <div class="stats-row" id="admin-stats">
+      <div class="stat-card"><div class="stat-label">Total Students</div><div class="stat-num" id="admin-total">—</div></div>
+      <div class="stat-card"><div class="stat-label">Active Carpoolers</div><div class="stat-num" id="admin-active">—</div></div>
+      <div class="stat-card"><div class="stat-label">Total Rides Logged</div><div class="stat-num" id="admin-rides">—</div></div>
+      <div class="stat-card"><div class="stat-label">Total CO₂ Saved</div><div class="stat-num" id="admin-co2">—</div><div class="stat-unit">lbs</div></div>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header"><span class="card-title">All Students</span></div>
+        <div id="admin-users-list"><p class="text-muted" style="font-size:.875rem">Loading...</p></div>
+      </div>
+      <div class="card">
+        <div class="card-header"><span class="card-title">Reports</span></div>
+        <div id="admin-reports-list"><p class="text-muted" style="font-size:.875rem">No reports yet.</p></div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1044,6 +1187,52 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
 </div>
 
 <div class="toast hidden" id="toast"></div>
+
+<!-- Recurring Ride Modal -->
+<div class="modal-overlay" id="modal-recurring">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('modal-recurring')">✕</button>
+    <h3>Set Up Recurring Ride</h3>
+    <p>Choose your regular carpool days. You'll get a daily reminder and can confirm each ride with one tap.</p>
+    <div class="form-group"><label>Which days do you carpool?</label>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:.4rem">
+        <label style="display:flex;align-items:center;gap:5px;font-size:.85rem;background:var(--cream);padding:6px 12px;border-radius:8px;cursor:pointer"><input type="checkbox" value="Monday" class="rec-day"> Mon</label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:.85rem;background:var(--cream);padding:6px 12px;border-radius:8px;cursor:pointer"><input type="checkbox" value="Tuesday" class="rec-day"> Tue</label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:.85rem;background:var(--cream);padding:6px 12px;border-radius:8px;cursor:pointer"><input type="checkbox" value="Wednesday" class="rec-day"> Wed</label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:.85rem;background:var(--cream);padding:6px 12px;border-radius:8px;cursor:pointer"><input type="checkbox" value="Thursday" class="rec-day"> Thu</label>
+        <label style="display:flex;align-items:center;gap:5px;font-size:.85rem;background:var(--cream);padding:6px 12px;border-radius:8px;cursor:pointer"><input type="checkbox" value="Friday" class="rec-day"> Fri</label>
+      </div>
+    </div>
+    <div class="form-group"><label>Your role</label><select id="rec-role"><option value="passenger">Passenger (someone drives me)</option><option value="driver">Driver (I drive others)</option></select></div>
+    <div class="form-group"><label>Start address (private)</label><input type="text" id="rec-start" placeholder="Your pickup point"></div>
+    <div class="form-group"><label>End address</label><input type="text" id="rec-end" value="Bishop O'Dowd High School, Oakland, CA"></div>
+    <div class="form-group"><label>Number of people in car</label><input type="number" id="rec-people" min="2" max="6" value="2"></div>
+    <button class="btn btn-primary w100" onclick="saveRecurring()">Save Recurring Ride</button>
+  </div>
+</div>
+
+<!-- Report User Modal -->
+<div class="modal-overlay" id="modal-report">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('modal-report')">✕</button>
+    <h3>Report a Student</h3>
+    <p>Reports go directly to the Commyute admin for review. Thank you for helping keep our community safe.</p>
+    <input type="hidden" id="report-uid">
+    <input type="hidden" id="report-name-val">
+    <div class="form-group"><label>Reporting</label><input type="text" id="report-name-display" disabled></div>
+    <div class="form-group"><label>Reason</label>
+      <select id="report-reason">
+        <option>Inappropriate messages</option>
+        <option>Harassment or bullying</option>
+        <option>Fake account / not an O'Dowd student</option>
+        <option>Safety concern</option>
+        <option>Other</option>
+      </select>
+    </div>
+    <div class="form-group"><label>Details (optional)</label><textarea id="report-details" rows="3" placeholder="Any additional context..."></textarea></div>
+    <button class="btn btn-red w100" onclick="submitReport()">Submit Report</button>
+  </div>
+</div>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -2518,6 +2707,402 @@ if(parentCode){
   } catch(e){ console.error('Parent view error:',e); }
 }
 
+
+
+// ══════════════════════════════════════════
+// NEW FEATURES JS
+// ══════════════════════════════════════════
+
+const ADMIN_EMAIL = 'your-admin-email@bishopodowd.org'; // Replace with your actual email
+
+// ── MOBILE NAV ──
+function toggleMobileNav(){
+  const sidebar = document.querySelector('.sidebar');
+  const overlay = document.getElementById('mobile-overlay');
+  sidebar.classList.toggle('mobile-open');
+  overlay.classList.toggle('open');
+}
+function closeMobileNav(){
+  document.querySelector('.sidebar').classList.remove('mobile-open');
+  document.getElementById('mobile-overlay').classList.remove('open');
+}
+
+// ── NOTIFICATIONS ──
+let notifications = [];
+function addNotification(icon, text, action){
+  notifications.unshift({icon, text, action, time:Date.now(), read:false});
+  if(notifications.length > 20) notifications = notifications.slice(0,20);
+  renderNotifications();
+}
+function renderNotifications(){
+  const el = document.getElementById('notif-list');
+  const badge = document.getElementById('notif-bell-badge');
+  if(!el) return;
+  const unread = notifications.filter(n=>!n.read).length;
+  badge.style.display = unread > 0 ? 'block' : 'none';
+  if(!notifications.length){
+    el.innerHTML = '<div class="notif-empty">No notifications yet.</div>';
+    return;
+  }
+  el.innerHTML = notifications.map((n,i)=>{
+    const mins = Math.round((Date.now()-n.time)/60000);
+    const timeStr = mins < 1 ? 'just now' : mins < 60 ? mins+'m ago' : Math.round(mins/60)+'h ago';
+    return `<div class="notif-item ${n.read?'':'unread'}" onclick="clickNotif(${i})">
+      <span class="notif-icon">${n.icon}</span>
+      <div class="notif-text">${n.text}<div class="notif-time">${timeStr}</div></div>
+    </div>`;
+  }).join('');
+}
+function clickNotif(i){
+  notifications[i].read = true;
+  if(notifications[i].action) notifications[i].action();
+  renderNotifications();
+  closeNotifDropdown();
+}
+function toggleNotifDropdown(){
+  document.getElementById('notif-dropdown').classList.toggle('open');
+}
+function closeNotifDropdown(){
+  document.getElementById('notif-dropdown').classList.remove('open');
+}
+function markAllRead(){
+  notifications.forEach(n=>n.read=true);
+  renderNotifications();
+  closeNotifDropdown();
+}
+// Close dropdown when clicking outside
+document.addEventListener('click', e=>{
+  const bell = document.getElementById('notif-bell-btn');
+  const dropdown = document.getElementById('notif-dropdown');
+  if(bell && dropdown && !bell.contains(e.target) && !dropdown.contains(e.target)){
+    closeNotifDropdown();
+  }
+});
+
+// Override respondRequest to also add notification
+const _origRespondRequest = window.respondRequest;
+window.respondRequest = async function(reqId, fromUid, status){
+  await _origRespondRequest(reqId, fromUid, status);
+  if(status==='accepted'){
+    addNotification('🤝', 'You accepted a ride request! You can now message each other.', ()=>showDash('messages'));
+  }
+};
+
+// Override sendMsg to add notification for incoming messages
+const _origStartMsgNotif = window.startMessageNotifications;
+window.startMessageNotifications = function(){
+  if(!currentUser) return;
+  db.collection('conversations')
+    .where('participants','array-contains',currentUser.uid)
+    .onSnapshot(snap=>{
+      snap.docs.forEach(d=>{
+        const data = d.data();
+        const lastAt = data.lastMessageAt?.toMillis?.() || 0;
+        const tenSecsAgo = Date.now() - 10000;
+        const notFromMe = data.lastSenderId && data.lastSenderId !== currentUser.uid;
+        if(lastAt > tenSecsAgo && notFromMe){
+          const otherId = (data.participants||[]).find(p=>p!==currentUser.uid);
+          const otherName = data.participantNames?.[otherId] || 'Someone';
+          addNotification('💬', `New message from ${otherName}`, ()=>showDash('messages'));
+          const dot = document.getElementById('msg-dot');
+          if(dot) dot.style.display='block';
+        }
+      });
+    });
+};
+
+// ── WELCOME FLOW ──
+let welcomeCarData = null;
+function selectWelcomeCarOpt(type){
+  ['model','mpg','none'].forEach(t=>{
+    document.getElementById('wco-'+t).classList.toggle('selected', t===type);
+  });
+  document.getElementById('wcar-model-fields').classList.toggle('hidden', type!=='model');
+  document.getElementById('wcar-mpg-fields').classList.toggle('hidden', type!=='mpg');
+}
+
+async function welcomeNext(step){
+  if(step===2){
+    // Save car data from step 1
+    const selectedOpt = document.querySelector('#wco-model.selected,#wco-mpg.selected,#wco-none.selected');
+    const type = selectedOpt ? selectedOpt.id.replace('wco-','') : 'none';
+    if(type==='model'){
+      const year=document.getElementById('wcar-year').value;
+      const make=document.getElementById('wcar-make').value.trim();
+      const model=document.getElementById('wcar-model').value.trim();
+      if(year&&make&&model) welcomeCarData={method:'model',year,make,model,mpg:getMPG(year,make,model)};
+    } else if(type==='mpg'){
+      const mpg=parseFloat(document.getElementById('wcar-mpg').value);
+      if(mpg) welcomeCarData={method:'mpg',mpg};
+    }
+  }
+  if(step===3){
+    // Save zip and pref from step 2
+    const zip = document.getElementById('wzipcode').value.trim();
+    const pref = document.getElementById('wpref').value;
+    if(zip && currentUser){
+      const zone = getNeighborhood(zip);
+      await db.collection('users').doc(currentUser.uid).update({zip, neighborhoodZone:zone, ridePreference:pref});
+      currentUserData.zip=zip; currentUserData.neighborhoodZone=zone; currentUserData.ridePreference=pref;
+    }
+  }
+  document.getElementById('welcome-step-'+(step-1)).classList.add('hidden');
+  document.getElementById('welcome-step-'+step).classList.remove('hidden');
+}
+
+async function finishWelcome(){
+  if(!currentUser) return;
+  const nickname = document.getElementById('wnickname').value.trim();
+  const updates = {hasCompletedWelcome:true};
+  if(welcomeCarData) updates.car=welcomeCarData;
+  if(nickname){ updates.nickname=nickname; updates.showOnLeaderboard=true; }
+  await db.collection('users').doc(currentUser.uid).update(updates);
+  currentUserData = (await db.collection('users').doc(currentUser.uid).get()).data();
+  skipWelcome();
+  addNotification('🎉', 'Welcome to Commyute! Check the Neighbor Map to find classmates near you.', ()=>showDash('map'));
+}
+function skipWelcome(){
+  const overlay = document.getElementById('welcome-overlay');
+  if(overlay) overlay.style.display='none';
+}
+
+// Show welcome for new users
+const _origLoadDash = window.loadDashboard;
+window.loadDashboard = function(){
+  _origLoadDash();
+  // Show welcome if first time
+  setTimeout(async()=>{
+    if(currentUser && currentUserData && !currentUserData.hasCompletedWelcome){
+      const overlay = document.getElementById('welcome-overlay');
+      if(overlay) overlay.style.display='flex';
+    }
+  }, 500);
+};
+
+// ── PROFILE PHOTO ──
+async function uploadProfilePhoto(input){
+  if(!input.files[0] || !currentUser) return;
+  const file = input.files[0];
+  if(file.size > 5*1024*1024){ showToast('Photo must be under 5MB.'); return; }
+  const reader = new FileReader();
+  reader.onload = async (e)=>{
+    const dataUrl = e.target.result;
+    // Store as base64 in Firestore (fine for small profile photos)
+    await db.collection('users').doc(currentUser.uid).update({photoURL:dataUrl});
+    currentUserData.photoURL = dataUrl;
+    // Update all avatars on screen
+    document.querySelectorAll('#profile-avatar, #sb-avatar').forEach(av=>{
+      av.innerHTML = `<img src="${dataUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+    });
+    showToast('Profile photo updated! 📸');
+  };
+  reader.readAsDataURL(file);
+}
+
+// Update loadProfile to show photo if exists
+const _origLoadProfile = window.loadProfile;
+window.loadProfile = async function(){
+  await _origLoadProfile();
+  if(currentUserData?.photoURL){
+    const img = `<img src="${currentUserData.photoURL}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+    const pa = document.getElementById('profile-avatar');
+    const sa = document.getElementById('sb-avatar');
+    if(pa) pa.innerHTML=img;
+    if(sa) sa.innerHTML=img;
+  }
+};
+
+// ── REPORT USER ──
+function reportUser(uid, name){
+  document.getElementById('report-uid').value = uid;
+  document.getElementById('report-name-val').value = name;
+  document.getElementById('report-name-display').value = name;
+  openModal('modal-report');
+}
+async function submitReport(){
+  const uid = document.getElementById('report-uid').value;
+  const name = document.getElementById('report-name-val').value;
+  const reason = document.getElementById('report-reason').value;
+  const details = document.getElementById('report-details').value.trim();
+  if(!currentUser) return;
+  try{
+    await db.collection('reports').add({
+      reporterUid:currentUser.uid,
+      reporterName:currentUserData.firstName+' '+currentUserData.lastName,
+      reportedUid:uid, reportedName:name,
+      reason, details, school:SCHOOL,
+      createdAt:firebase.firestore.FieldValue.serverTimestamp(),
+      status:'pending'
+    });
+    closeModal('modal-report');
+    showToast('Report submitted. Thank you for keeping our community safe. 🛡');
+  } catch(e){ showToast('Error: '+e.message); }
+}
+
+// ── RECURRING RIDES ──
+let recurringData = null;
+function openRecurringModal(){ openModal('modal-recurring'); }
+async function saveRecurring(){
+  const days = Array.from(document.querySelectorAll('.rec-day:checked')).map(c=>c.value);
+  const role = document.getElementById('rec-role').value;
+  const start = document.getElementById('rec-start').value.trim();
+  const end = document.getElementById('rec-end').value.trim();
+  const people = parseInt(document.getElementById('rec-people').value)||2;
+  if(!days.length){ showToast('Please select at least one day.'); return; }
+  if(!start){ showToast('Please enter a start address.'); return; }
+  recurringData = {days, role, start, end, people};
+  // Save to user profile
+  await db.collection('users').doc(currentUser.uid).update({recurringRide:recurringData});
+  currentUserData.recurringRide = recurringData;
+  closeModal('modal-recurring');
+  showToast('Recurring ride saved! ⚡');
+  renderRecurringSummary();
+}
+function renderRecurringSummary(){
+  const el = document.getElementById('recurring-summary');
+  if(!el) return;
+  const r = currentUserData?.recurringRide;
+  if(!r){ el.textContent='No recurring rides set up yet.'; return; }
+  el.innerHTML = `<strong>${r.days.join(', ')}</strong> · ${r.role==='driver'?'You drive':'You ride'} · ${r.people} people
+    <button class="btn btn-outline btn-sm" style="margin-left:8px" onclick="confirmTodayRide()">✓ Confirm Today's Ride</button>`;
+}
+async function confirmTodayRide(){
+  const r = currentUserData?.recurringRide;
+  if(!r){ showToast('No recurring ride set up.'); return; }
+  const today = new Date().toLocaleDateString('en-US',{weekday:'long'});
+  if(!r.days.includes(today)){ showToast(`Your recurring ride isn't set for ${today}.`); return; }
+  // Calculate and log the ride
+  const result = await estimateDistance(r.start, r.end);
+  if(!result){ showToast('Could not calculate distance. Check your recurring ride addresses.'); return; }
+  const mpg = currentUserData?.car?.mpg||28;
+  const co2 = calcCO2(result.miles, mpg, r.people);
+  const money = calcMoney(result.miles, mpg, r.people);
+  const time = calcTime(result.minutes, r.people);
+  const date = new Date().toISOString().split('T')[0];
+  await db.collection('rides').add({
+    userId:currentUser.uid, school:SCHOOL,
+    role:r.role, miles:result.miles, minutes:result.minutes,
+    co2Saved:co2, moneySaved:money, timeSaved:time,
+    totalPeople:r.people, date, isRecurring:true,
+    createdAt:firebase.firestore.FieldValue.serverTimestamp()
+  });
+  const snap = await db.collection('users').doc(currentUser.uid).get();
+  const ud = snap.data();
+  await db.collection('users').doc(currentUser.uid).update({
+    totalRides:(ud.totalRides||0)+1,
+    totalCO2Saved:Math.round(((ud.totalCO2Saved||0)+co2)*10)/10,
+    totalMiles:Math.round(((ud.totalMiles||0)+result.miles)*10)/10,
+    totalMoneySaved:Math.round(((ud.totalMoneySaved||0)+money)*100)/100,
+    totalTimeSaved:(ud.totalTimeSaved||0)+time
+  });
+  currentUserData = (await db.collection('users').doc(currentUser.uid).get()).data();
+  showToast(`Today's ride confirmed! ${co2} lbs CO₂ saved 🌿`);
+  addNotification('✅', `Today's ride confirmed — ${co2} lbs CO₂ saved!`, ()=>showDash('impact'));
+  loadSchedule(); loadOverview();
+}
+
+// Load recurring summary when schedule opens
+const _origLoadSchedule = window.loadSchedule;
+window.loadSchedule = async function(){
+  await _origLoadSchedule();
+  renderRecurringSummary();
+};
+
+// ── ADMIN PAGE ──
+async function loadAdminPage(){
+  if(!currentUser||!currentUserData) return;
+  showPage('admin');
+  const snap = await db.collection('users').where('schoolName','==',SCHOOL).get();
+  const users = snap.docs.map(d=>({id:d.id,...d.data()}));
+
+  document.getElementById('admin-total').textContent = users.length;
+  document.getElementById('admin-active').textContent = users.filter(u=>u.totalRides>0).length;
+
+  // Total rides
+  const ridesSnap = await db.collection('rides').where('school','==',SCHOOL).get();
+  document.getElementById('admin-rides').textContent = ridesSnap.size;
+  const totalCO2 = ridesSnap.docs.reduce((sum,d)=>sum+(d.data().co2Saved||0),0);
+  document.getElementById('admin-co2').textContent = Math.round(totalCO2*10)/10;
+
+  // Users list
+  const el = document.getElementById('admin-users-list');
+  el.innerHTML = users.sort((a,b)=>b.totalRides-a.totalRides).map(u=>`
+    <div style="display:flex;align-items:center;gap:10px;padding:.7rem 0;border-bottom:1px solid var(--border)">
+      <div class="avatar" style="background:${avatarColor(u.id)};flex-shrink:0">${initials(u.firstName,u.lastName)}</div>
+      <div style="flex:1">
+        <strong style="font-size:.875rem">${u.firstName} ${u.lastName}</strong>
+        <div style="font-size:.75rem;color:var(--muted)">${u.grade} · ${u.neighborhoodZone||''} · ${u.totalRides||0} rides · ${u.totalCO2Saved||0} lbs CO₂</div>
+      </div>
+      <button class="btn btn-outline btn-sm" onclick="adminDeactivate('${u.id}','${u.firstName} ${u.lastName}')" style="color:var(--red);border-color:var(--red)">Remove</button>
+    </div>`).join('');
+
+  // Reports
+  const reportsSnap = await db.collection('reports').where('school','==',SCHOOL).get();
+  const rEl = document.getElementById('admin-reports-list');
+  if(reportsSnap.empty){ rEl.innerHTML='<p class="text-muted" style="font-size:.875rem">No reports yet.</p>'; return; }
+  rEl.innerHTML = reportsSnap.docs.map(d=>{
+    const r=d.data();
+    return `<div class="card mb1" style="font-size:.875rem">
+      <strong>Report: ${r.reportedName}</strong>
+      <div style="color:var(--muted);margin:.3rem 0">${r.reason}</div>
+      ${r.details?`<div style="background:var(--cream);padding:.5rem;border-radius:6px;margin:.3rem 0">"${r.details}"</div>`:''}
+      <div style="color:var(--muted);font-size:.75rem">Reported by ${r.reporterName} · ${fmtDate(r.createdAt)}</div>
+      <button class="btn btn-red btn-sm" style="margin-top:.5rem" onclick="adminDeactivate('${r.reportedUid}','${r.reportedName}')">Remove Student</button>
+    </div>`;
+  }).join('');
+}
+
+async function adminDeactivate(uid, name){
+  if(!confirm(`Remove ${name} from Commyute? This will deactivate their account.`)) return;
+  await db.collection('users').doc(uid).update({isActive:false});
+  showToast(`${name} has been removed.`);
+  loadAdminPage();
+}
+
+// Show admin button in nav if admin user
+const _origAuthState = auth.onAuthStateChanged.bind(auth);
+// Check admin on load
+async function checkIfAdmin(){
+  if(!currentUser||!currentUserData) return;
+  if(currentUserData.email === ADMIN_EMAIL || currentUserData.isAdmin === true){
+    // Add admin button to auth actions
+    const authActions = document.getElementById('authActions');
+    if(authActions && !document.getElementById('admin-nav-btn')){
+      const adminBtn = document.createElement('button');
+      adminBtn.id = 'admin-nav-btn';
+      adminBtn.className = 'btn btn-outline btn-sm';
+      adminBtn.innerHTML = '⚙️ Admin';
+      adminBtn.onclick = loadAdminPage;
+      authActions.insertBefore(adminBtn, authActions.firstChild);
+    }
+  }
+}
+
+// Hook into loadDashboard to check admin
+const _origLD2 = window.loadDashboard;
+window.loadDashboard = function(){
+  _origLD2();
+  setTimeout(checkIfAdmin, 600);
+};
+
+// ── EXPORT NEW FUNCTIONS ──
+window.toggleMobileNav = toggleMobileNav;
+window.closeMobileNav = closeMobileNav;
+window.toggleNotifDropdown = toggleNotifDropdown;
+window.markAllRead = markAllRead;
+window.selectWelcomeCarOpt = selectWelcomeCarOpt;
+window.welcomeNext = welcomeNext;
+window.finishWelcome = finishWelcome;
+window.skipWelcome = skipWelcome;
+window.uploadProfilePhoto = uploadProfilePhoto;
+window.reportUser = reportUser;
+window.submitReport = submitReport;
+window.openRecurringModal = openRecurringModal;
+window.saveRecurring = saveRecurring;
+window.confirmTodayRide = confirmTodayRide;
+window.loadAdminPage = loadAdminPage;
+window.adminDeactivate = adminDeactivate;
+
 </script>
 </body>
-</html>
+</html><!-- THIS TAG IS INVALID — JS IS APPENDED BELOW -->
