@@ -341,6 +341,20 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
 </head>
 <body>
 
+<!-- Loading screen shown until auth resolves -->
+<div id="auth-loading" style="position:fixed;inset:0;background:var(--cream);z-index:999;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:1rem">
+  <div class="logo" style="font-family:'Fraunces',serif;font-size:1.8rem;display:flex;align-items:center;gap:12px;color:var(--green-dark)">
+    <div class="logo-mark" style="width:44px;height:44px;background:var(--green);border-radius:50% 50% 50% 8px;display:flex;align-items:center;justify-content:center;font-size:20px">🛣</div>
+    Commyute
+  </div>
+  <div style="width:40px;height:4px;background:var(--border);border-radius:2px;overflow:hidden">
+    <div style="width:40%;height:100%;background:var(--green);border-radius:2px;animation:loadBar 1s ease infinite alternate"></div>
+  </div>
+</div>
+<style>
+@keyframes loadBar { from{width:20%} to{width:90%} }
+</style>
+
 <!-- NAV -->
 <nav>
   <div class="nav-inner">
@@ -364,10 +378,27 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
       <button class="btn btn-outline" onclick="showPage('login')">Log In</button>
       <button class="btn btn-primary" onclick="showPage('signup')">Join Free</button>
     </div>
-    <div class="nav-actions hidden" id="authActions">
-      
+    <div class="nav-actions hidden" id="authActions" style="align-items:center">
+      <button class="notif-bell" onclick="toggleNotifDropdown()" id="notif-bell-btn" title="Notifications">
+        🔔<span class="notif-bell-badge" id="notif-bell-badge" style="display:none"></span>
+      </button>
       <button class="btn btn-primary btn-sm" onclick="doLogout()">Log Out</button>
+      <button class="hamburger" onclick="toggleMobileNav()" id="hamburger-btn" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
     </div>
+
+    <!-- Notification Dropdown -->
+    <div class="notif-dropdown" id="notif-dropdown">
+      <div class="notif-header">
+        <strong>Notifications</strong>
+        <a style="font-size:.78rem;color:var(--green);cursor:pointer" onclick="markAllRead()">Mark all read</a>
+      </div>
+      <div id="notif-list"><div class="notif-empty">No notifications yet.</div></div>
+    </div>
+
+    <!-- Mobile Nav Overlay -->
+    <div class="mobile-nav-overlay" id="mobile-overlay" onclick="closeMobileNav()"></div>
   </div>
 </nav>
 
@@ -967,11 +998,13 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
           </div>
           <div class="card">
             <div class="card-title" style="margin-bottom:1rem">Your Leaderboard Status</div>
-            <p style="font-size:.875rem;color:var(--muted);margin-bottom:1rem">Set a public nickname to appear on the leaderboard.</p>
-            <div class="form-group"><label>Your Public Nickname</label><input type="text" id="lb-nickname-input" placeholder="GreenEagle, EcoRider, etc."></div>
-            <div style="display:flex;gap:8px">
-              <button class="btn btn-primary btn-sm" style="flex:1;justify-content:center" onclick="saveNickname()">Save</button>
-              <button class="btn btn-outline btn-sm" style="flex:1;justify-content:center" onclick="removeNickname()">Remove Me</button>
+            <div id="lb-my-status">
+              <p style="font-size:.875rem;color:var(--muted);margin-bottom:1rem">Set a public nickname to appear on the leaderboard. You can change or remove it anytime.</p>
+              <div class="form-group"><label>Your Public Nickname</label><input type="text" id="lb-nickname-input" placeholder="GreenEagle, EcoRider, etc."></div>
+              <div style="display:flex;gap:8px">
+                <button class="btn btn-primary btn-sm" style="flex:1;justify-content:center" onclick="saveNickname()">Save</button>
+                <button class="btn btn-outline btn-sm" style="flex:1;justify-content:center" onclick="removeNickname()">Remove Me</button>
+              </div>
             </div>
           </div>
         </div>
@@ -1187,6 +1220,18 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
 </div>
 
 <div class="toast hidden" id="toast"></div>
+
+<!-- Parent Link Modal (hidden, generated on request) -->
+<div class="modal-overlay" id="modal-parent">
+  <div class="modal-box" style="text-align:center">
+    <button class="modal-close" onclick="closeModal('modal-parent')">✕</button>
+    <h3>Parent View Link</h3>
+    <p>Share this link with your parent or guardian. They can see your schedule and carpool partners — but cannot make any changes.</p>
+    <div style="background:var(--cream);border-radius:10px;padding:1rem;margin:1rem 0;word-break:break-all;font-size:.85rem;border:1.5px solid var(--border)" id="parent-link-display">Generating link...</div>
+    <button class="btn btn-primary w100" onclick="copyParentLink()">Copy Link 📋</button>
+    <p style="font-size:.78rem;color:var(--muted);margin-top:.8rem">This link is read-only. No account needed for your parent.</p>
+  </div>
+</div>
 
 <!-- Recurring Ride Modal -->
 <div class="modal-overlay" id="modal-recurring">
@@ -1583,15 +1628,35 @@ function showDash(id){
 
 // ── AUTH STATE ──
 auth.onAuthStateChanged(async function(user){
+  const loadingScreen = document.getElementById('auth-loading');
   if(user){
-    const snap = await db.collection('users').doc(user.uid).get();
-    if(snap.exists){
-      currentUser = user;
-      currentUserData = snap.data();
-      const activePage = document.querySelector('.page.active');
-      if(activePage && ['page-login','page-signup','page-home'].includes(activePage.id)){
+    try{
+      const snap = await db.collection('users').doc(user.uid).get();
+      if(snap.exists){
+        currentUser = user;
+        currentUserData = snap.data();
+        // Always load dashboard if logged in — regardless of current page
         loadDashboard();
+      } else {
+        // User exists in auth but not in Firestore — sign them out
+        await auth.signOut();
+        if(loadingScreen) loadingScreen.style.display='none';
       }
+    } catch(e){
+      console.error('Auth state error:', e);
+      if(loadingScreen) loadingScreen.style.display='none';
+    }
+  } else {
+    // Not logged in — show home page
+    currentUser = null;
+    currentUserData = null;
+    if(loadingScreen) loadingScreen.style.display='none';
+    // Only redirect to home if on a protected page
+    const activePage = document.querySelector('.page.active');
+    if(activePage && activePage.id === 'page-dashboard'){
+      showPage('home');
+  const ls2 = document.getElementById('auth-loading');
+  if(ls2) ls2.style.display='none';
     }
   }
 });
@@ -1781,6 +1846,9 @@ function loadDashboard(){
   showDash('overview');
   startMessageNotifications();
   cacheMyPhoto();
+  // Hide loading screen now that dashboard is ready
+  const ls = document.getElementById('auth-loading');
+  if(ls) ls.style.display='none';
 }
 
 // ── OVERVIEW ──
@@ -1861,8 +1929,7 @@ async function loadPendingOverview(){
   el.innerHTML = snap.docs.slice(0,2).map(d=>{
     const r=d.data();
     return `<div class="ride-item">
-      <div>${avatarHtml(r.fromUid, r.fromName?.split(' ')[0]||'?', r.fromName?.split(' ')[1]||'')}
-      </div>
+      ${avatarHtml(r.fromUid, r.fromName?.split(' ')[0]||'?', r.fromName?.split(' ')[1]||''  , '40px', photoCache[r.fromUid]||null)}
       <div class="ride-info"><strong>${r.fromName}</strong><span>${r.compensation} · ${(r.days||[]).join(', ')}</span></div>
       <div style="display:flex;gap:5px">
         <button class="btn btn-primary btn-sm" onclick="respondRequest('${d.id}','${r.fromUid}','accepted')">✓</button>
@@ -2027,7 +2094,7 @@ async function loadRequests(){
           :'<span class="badge badge-red">✗ Declined</span>';
         return `<div class="card mb1">
           <div style="display:flex;gap:12px;align-items:center">
-            <div class="avatar" style="background:${avatarColor(r.toUid)}">${(r.toUid||'?')[0].toUpperCase()}</div>
+            ${avatarHtml(r.toUid, (r.toName||'?').split(' ')[0], (r.toName||'?').split(' ')[1]||''  , '40px', photoCache[r.toUid]||null)}
             <div style="flex:1"><strong>Request to classmate</strong> ${sb}
             <div style="font-size:.78rem;color:var(--muted)">${fmtDate(r.createdAt)} · ${r.compensation}</div></div>
             ${r.status==='declined'?`<button class="btn btn-outline btn-sm" onclick="clearRequest('${d.id}')">Clear</button>`:''}
@@ -2137,7 +2204,7 @@ async function loadAvailableRides(){
     const isPartner=(currentUserData.partners||[]).includes(r.driverUid);
     return `<div class="card">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:.8rem">
-        <div class="avatar" style="background:${avatarColor(r.driverUid)}">${(r.driverName||'?')[0]}</div>
+        ${avatarHtml(r.driverUid, (r.driverName||'?').split(' ')[0], (r.driverName||'?').split(' ')[1]||''  , '40px', photoCache[r.driverUid]||null)}
         <div><strong style="font-size:.875rem">${r.driverName}</strong>
         <div style="font-size:.75rem;color:var(--muted)">${r.driverZone}</div></div>
         <span class="badge badge-blue" style="margin-left:auto">${r.day}</span>
@@ -2545,8 +2612,8 @@ async function loadFriends(){
       const snap = await db.collection('users').doc(uid).get();
       if(!snap.exists) return '';
       const p = snap.data();
-      const col = avatarColor(uid);
-      const av = initials(p.firstName,p.lastName);
+      if(p.photoURL) photoCache[uid] = p.photoURL;
+      const avHtml = avatarHtml(uid, p.firstName, p.lastName, '56px', p.photoURL||null);
       // Check if conversation exists
       const convSnap = await db.collection('conversations')
         .where('participants','array-contains',currentUser.uid).get();
@@ -3247,6 +3314,62 @@ window.initMap=initMap;
 window.loadFriends=loadFriends;
 window.clearRequest=clearRequest;
 window.sendMsgText=sendMsgText;
+
+// ── AUTO-GENERATED EXPORTS ──
+window.showPage=showPage;
+window.showDash=showDash;
+window.doLogin=doLogin;
+window.doLogout=doLogout;
+window.doSignup=doSignup;
+window.sendRideRequest=sendRideRequest;
+window.openRequestModal=openRequestModal;
+window.openPostRideModal=openPostRideModal;
+window.postRide=postRide;
+window.openAddRideModal=openAddRideModal;
+window.confirmLogRide=confirmLogRide;
+window.calcRide=calcRide;
+window.logRide=logRide;
+window.calcModalRide=calcModalRide;
+window.saveNickname=saveNickname;
+window.removeNickname=removeNickname;
+window.saveProfile=saveProfile;
+window.saveCar=saveCar;
+window.openCarModal=openCarModal;
+window.openEditProfileModal=openEditProfileModal;
+window.clearIncomingRequest=clearIncomingRequest;
+window.generateParentCode=generateParentCode;
+window.copyParentLink=copyParentLink;
+window.suStep=suStep;
+window.handleIdUpload=handleIdUpload;
+window.toggleCarFields=toggleCarFields;
+window.selectCarOpt=selectCarOpt;
+window.selectCarOpt2=selectCarOpt2;
+window.resendVerification=resendVerification;
+window.startConversation=startConversation;
+window.escapeHtml=escapeHtml;
+window.avatarHtml=avatarHtml;
+window.fetchAndCachePhoto=fetchAndCachePhoto;
+window.cacheMyPhoto=cacheMyPhoto;
+window.doPasswordReset=doPasswordReset;
+window.closeModal=closeModal;
+window.openModal=openModal;
+window.clickNotif=clickNotif;
+window.respondRequest=respondRequest;
+window.toggleNotifDropdown=toggleNotifDropdown;
+window.toggleMobileNav=toggleMobileNav;
+window.closeMobileNav=closeMobileNav;
+window.selectWelcomeCarOpt=selectWelcomeCarOpt;
+window.welcomeNext=welcomeNext;
+window.finishWelcome=finishWelcome;
+window.skipWelcome=skipWelcome;
+window.uploadProfilePhoto=uploadProfilePhoto;
+window.reportUser=reportUser;
+window.submitReport=submitReport;
+window.openRecurringModal=openRecurringModal;
+window.saveRecurring=saveRecurring;
+window.confirmTodayRide=confirmTodayRide;
+window.loadAdminPage=loadAdminPage;
+window.adminDeactivate=adminDeactivate;
 </script>
 </body>
 </html><!-- THIS TAG IS INVALID — JS IS APPENDED BELOW -->
