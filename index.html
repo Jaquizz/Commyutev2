@@ -1058,26 +1058,26 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
 <!-- Toast -->
 <div class="toast hidden" id="toast"></div>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
-import { getFirestore, doc, setDoc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, collection, query, where, orderBy, onSnapshot, serverTimestamp, arrayUnion, arrayRemove, limit } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+<!-- Firebase Compat SDKs — global scope, no import needed -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 
+<script>
+// ── FIREBASE INIT ──
 const firebaseConfig = {
   apiKey: "AIzaSyCNpvN2Fau-uDPV3BG5q2ljA99Ytg2q6_4",
   authDomain: "commyute-13e3e.firebaseapp.com",
-  databaseURL: "https://commyute-13e3e-default-rtdb.firebaseio.com",
   projectId: "commyute-13e3e",
   storageBucket: "commyute-13e3e.firebasestorage.app",
   messagingSenderId: "104654403919",
-  appId: "1:104654403919:web:9bbe535e374362aea7ad3a",
-  measurementId: "G-GDZRVHH6KY"
+  appId: "1:104654403919:web:9bbe535e374362aea7ad3a"
 };
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
 
-const app = initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db = getFirestore(app);
-
+// ── CONSTANTS ──
 const SCHOOL = "Bishop O'Dowd High School";
 const SCHOOL_DOMAIN = "bishopodowd.org";
 const MAPS_KEY = "AIzaSyAMCCzRmBSMOlgtbFX3-f3cDQ8s_1KTFWU";
@@ -1100,69 +1100,64 @@ const ZIP_ZONES = {
   "94618":"Rockridge","94619":"Woodminster / Redwood Heights","94621":"South Oakland",
   "94702":"Berkeley","94703":"Berkeley","94704":"Berkeley","94705":"Berkeley Hills",
   "94706":"Albany","94707":"Berkeley","94708":"Berkeley Hills","94709":"North Berkeley",
-  "94710":"West Berkeley","94720":"UC Berkeley",
-  "94610":"Piedmont","94611":"Piedmont Hills",
-  "94563":"Orinda","94556":"Moraga","94523":"Pleasant Hill","94520":"Concord"
+  "94710":"West Berkeley","94563":"Orinda","94556":"Moraga","94523":"Pleasant Hill"
 };
-function getNeighborhood(zip){return ZIP_ZONES[zip]||"Oakland Area"}
+function getNeighborhood(zip){ return ZIP_ZONES[zip] || "Oakland Area"; }
 
-// ── MPG DATABASE ──
+// ── MPG LOOKUP ──
 const MPG_DB = {
-  "toyota camry":32,"toyota corolla":34,"toyota rav4":30,"toyota prius":52,"toyota highlander":24,
-  "honda civic":36,"honda accord":33,"honda crv":30,"honda pilot":24,"honda odyssey":22,
-  "ford f-150":21,"ford escape":30,"ford explorer":24,"ford mustang":25,
+  "toyota camry":32,"toyota corolla":34,"toyota rav4":30,"toyota prius":52,
+  "toyota highlander":24,"honda civic":36,"honda accord":33,"honda crv":30,
+  "honda pilot":24,"ford f-150":21,"ford escape":30,"ford explorer":24,
   "chevrolet malibu":32,"chevrolet equinox":31,"chevrolet silverado":20,
-  "tesla model 3":130,"tesla model y":125,"tesla model s":120,
-  "nissan altima":33,"nissan rogue":30,"nissan sentra":36,
+  "tesla model 3":130,"tesla model y":125,"nissan altima":33,"nissan rogue":30,
   "hyundai elantra":37,"hyundai sonata":35,"hyundai tucson":29,
-  "kia soul":30,"kia sorento":27,"kia telluride":24,
-  "subaru outback":29,"subaru forester":30,"subaru impreza":35,
-  "volkswagen jetta":34,"volkswagen tiguan":25,
-  "bmw 3 series":30,"bmw 5 series":27,"audi a4":28,
-  "mercedes c class":29,"mercedes e class":27,
-  "jeep wrangler":20,"jeep grand cherokee":22,
-  "dodge charger":23,"dodge challenger":21,
-  "ram 1500":21,"gmc sierra":21,"gmc yukon":17
+  "kia soul":30,"kia sorento":27,"subaru outback":29,"subaru forester":30,
+  "volkswagen jetta":34,"bmw 3 series":30,"audi a4":28,"jeep wrangler":20,
+  "dodge charger":23,"ram 1500":21,"gmc sierra":21
 };
 function getMPG(year, make, model){
   const key = (make+" "+model).toLowerCase().replace(/[^a-z0-9 ]/g,"");
-  for(const k of Object.keys(MPG_DB)){if(key.includes(k)||k.includes(key.split(" ").slice(0,2).join(" ")))return MPG_DB[k]}
-  return 28; // default
+  for(const k of Object.keys(MPG_DB)){
+    if(key.includes(k) || k.includes(key.split(" ").slice(0,2).join(" "))) return MPG_DB[k];
+  }
+  return 28;
 }
 
-// CO₂ per gallon of gas = 19.6 lbs
+// ── EMISSIONS CALCS ──
 function calcCO2(miles, mpg, totalPeople){
   const gallons = miles / mpg;
   const totalCO2 = gallons * 19.6;
-  const savedCO2 = totalCO2 * (1 - 1/totalPeople);
-  return Math.round(savedCO2 * 10) / 10;
+  return Math.round(totalCO2 * (1 - 1/totalPeople) * 10) / 10;
 }
-function calcMoneySaved(miles, mpg, totalPeople){
-  const gasPrice = 4.50;
-  const gasCost = (miles / mpg) * gasPrice;
-  return Math.round(gasCost * (1 - 1/totalPeople) * 100) / 100;
+function calcMoney(miles, mpg, totalPeople){
+  return Math.round((miles/mpg) * 4.50 * (1-1/totalPeople) * 100) / 100;
 }
-function calcTimeSaved(miles, totalPeople){
-  // Rough estimate: carpooling saves ~15% of commute time via HOV lanes + less traffic
-  const avgSpeed = 25; // mph urban
-  const baseTime = (miles / avgSpeed) * 60;
-  return totalPeople > 1 ? Math.round(baseTime * 0.15) : 0;
+function calcTime(miles, totalPeople){
+  return totalPeople > 1 ? Math.round((miles/25)*60*0.15) : 0;
 }
 
 // ── UTILS ──
-function showToast(msg, ms=3000){
+function showToast(msg, ms=3500){
   const t = document.getElementById('toast');
   t.textContent = msg; t.classList.remove('hidden');
   setTimeout(()=>t.classList.add('hidden'), ms);
 }
-function closeModal(id){document.getElementById(id).classList.remove('open')}
-function openModal(id){document.getElementById(id).classList.add('open')}
-function fmtDate(ts){if(!ts)return"";const d=ts.toDate?ts.toDate():new Date(ts);return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}
-function initials(first,last){return((first||"?")[0]+(last||"")[0]).toUpperCase()}
-function avatarColor(uid){const colors=["#1a6b3c","#2463a8","#7c3aed","#c0392b","#e6a020","#1abc9c","#e67e22"];return colors[(uid||"").charCodeAt(0)%colors.length]}
+function openModal(id){ document.getElementById(id).classList.add('open'); }
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+function fmtDate(ts){
+  if(!ts) return "";
+  const d = ts.toDate ? ts.toDate() : new Date(ts);
+  return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'});
+}
+function initials(first,last){ return ((first||"?")[0]+(last||"")[0]).toUpperCase(); }
+function avatarColor(uid){
+  const colors=["#1a6b3c","#2463a8","#7c3aed","#c0392b","#e6a020","#1abc9c","#e67e22"];
+  return colors[(uid||"").charCodeAt(0)%colors.length];
+}
 
 // ── PAGE ROUTING ──
-window.showPage = function(id){
+function showPage(id){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   const pg = document.getElementById('page-'+id);
   if(pg) pg.classList.add('active');
@@ -1170,9 +1165,9 @@ window.showPage = function(id){
   const nl = document.getElementById('nav-'+id);
   if(nl) nl.classList.add('active');
   window.scrollTo(0,0);
-};
+}
 
-window.showDash = function(id){
+function showDash(id){
   document.querySelectorAll('.dash-section').forEach(s=>s.classList.remove('active'));
   const ds = document.getElementById('ds-'+id);
   if(ds) ds.classList.add('active');
@@ -1188,16 +1183,15 @@ window.showDash = function(id){
   if(id==='available') loadAvailableRides();
   if(id==='profile') loadProfile();
   if(id==='overview') loadOverview();
-};
+}
 
 // ── AUTH STATE ──
-onAuthStateChanged(auth, async (user)=>{
+auth.onAuthStateChanged(async function(user){
   if(user){
-    const snap = await getDoc(doc(db,'users',user.uid));
-    if(snap.exists()){
+    const snap = await db.collection('users').doc(user.uid).get();
+    if(snap.exists){
       currentUser = user;
       currentUserData = snap.data();
-      // if on login/signup pages, redirect to dashboard
       const activePage = document.querySelector('.page.active');
       if(activePage && ['page-login','page-signup','page-home'].includes(activePage.id)){
         loadDashboard();
@@ -1206,47 +1200,46 @@ onAuthStateChanged(auth, async (user)=>{
   }
 });
 
-// ── SIGNUP ──
-window.suStep = function(n){
-  // Validate step 1 before moving to 2
+// ── SIGNUP STEPS ──
+function suStep(n){
   if(n===2){
     const email = document.getElementById('reg-email').value.trim();
     const first = document.getElementById('reg-first').value.trim();
     const last = document.getElementById('reg-last').value.trim();
     const pass = document.getElementById('reg-pass').value;
-    if(!first||!last){showToast('Please enter your full name.');return}
-    if(!email.endsWith('@'+SCHOOL_DOMAIN)){showToast('Please use your @'+SCHOOL_DOMAIN+' school email.');return}
-    if(pass.length<6){showToast('Password must be at least 6 characters.');return}
+    if(!first||!last){ showToast('Please enter your full name.'); return; }
+    if(!email.endsWith('@'+SCHOOL_DOMAIN)){ showToast('Please use your @'+SCHOOL_DOMAIN+' school email.'); return; }
+    if(pass.length<6){ showToast('Password must be at least 6 characters.'); return; }
   }
   document.getElementById('su1').style.display='none';
   document.getElementById('su2').className='toggle-section';
   document.getElementById('su3').className='toggle-section';
   for(let i=1;i<=3;i++) document.getElementById('sd'+i).classList.toggle('active',i<=n);
-  if(n===1){document.getElementById('su1').style.display='block'}
-  else if(n===2){document.getElementById('su2').className='toggle-section visible'}
-  else if(n===3){document.getElementById('su3').className='toggle-section visible'}
-};
+  if(n===1) document.getElementById('su1').style.display='block';
+  else if(n===2) document.getElementById('su2').className='toggle-section visible';
+  else if(n===3) document.getElementById('su3').className='toggle-section visible';
+}
 
-window.handleIdUpload = function(input){
+function handleIdUpload(input){
   if(input.files[0]){
-    document.getElementById('id-filename').textContent=input.files[0].name;
+    document.getElementById('id-filename').textContent = input.files[0].name;
     document.getElementById('id-preview').classList.remove('hidden');
   }
-};
+}
 
-window.toggleCarFields = function(){
+function toggleCarFields(){
   const val = document.getElementById('reg-has-car').value;
   document.getElementById('car-fields').classList.toggle('hidden', val==='no');
-};
+}
 
-window.selectCarOpt = function(type){
-  document.getElementById('car-opt-model').classList.toggle('selected',type==='model');
-  document.getElementById('car-opt-mpg').classList.toggle('selected',type==='mpg');
-  document.getElementById('car-model-fields').classList.toggle('hidden',type==='mpg');
-  document.getElementById('car-mpg-fields').classList.toggle('hidden',type==='model');
-};
+function selectCarOpt(type){
+  document.getElementById('car-opt-model').classList.toggle('selected', type==='model');
+  document.getElementById('car-opt-mpg').classList.toggle('selected', type==='mpg');
+  document.getElementById('car-model-fields').classList.toggle('hidden', type==='mpg');
+  document.getElementById('car-mpg-fields').classList.toggle('hidden', type==='model');
+}
 
-window.doSignup = async function(){
+async function doSignup(){
   const first = document.getElementById('reg-first').value.trim();
   const last = document.getElementById('reg-last').value.trim();
   const email = document.getElementById('reg-email').value.trim();
@@ -1259,28 +1252,27 @@ window.doSignup = async function(){
   const nickname = document.getElementById('reg-nickname').value.trim();
   const hasCar = document.getElementById('reg-has-car').value === 'yes';
 
-  if(!zip){showToast('Please enter your ZIP code.');return}
+  if(!zip){ showToast('Please enter your ZIP code.'); return; }
 
   let carData = null;
   if(hasCar){
-    const method = document.querySelector('input[name="car-method"]:checked')?.value||'model';
-    if(method==='model'){
-      const year=document.getElementById('car-year').value;
-      const make=document.getElementById('car-make').value.trim();
-      const model=document.getElementById('car-model').value.trim();
-      if(year&&make&&model) carData={method:'model',year,make,model,mpg:getMPG(year,make,model)};
+    const modelSelected = document.getElementById('car-opt-model').classList.contains('selected');
+    if(modelSelected){
+      const year = document.getElementById('car-year').value;
+      const make = document.getElementById('car-make').value.trim();
+      const model = document.getElementById('car-model').value.trim();
+      if(year&&make&&model) carData = {method:'model',year,make,model,mpg:getMPG(year,make,model)};
     } else {
-      const mpg=document.getElementById('car-mpg').value;
-      if(mpg) carData={method:'mpg',mpg:parseFloat(mpg)};
+      const mpg = document.getElementById('car-mpg').value;
+      if(mpg) carData = {method:'mpg', mpg:parseFloat(mpg)};
     }
   }
 
   try {
-    const cred = await createUserWithEmailAndPassword(auth, email, pass);
+    const cred = await auth.createUserWithEmailAndPassword(email, pass);
     const uid = cred.user.uid;
     const zone = getNeighborhood(zip);
-
-    await setDoc(doc(db,'users',uid),{
+    await db.collection('users').doc(uid).set({
       firstName:first, lastName:last, email, age:parseInt(age)||17, grade,
       schoolName:SCHOOL, zip, neighborhoodZone:zone,
       ridePreference:pref, compensation:comp,
@@ -1288,120 +1280,112 @@ window.doSignup = async function(){
       hasCar, car:carData,
       isActive:true, isVerified:true,
       totalCO2Saved:0, totalRides:0, totalMiles:0, totalMoneySaved:0, totalTimeSaved:0,
-      partners:[], createdAt:serverTimestamp()
+      partners:[], createdAt:firebase.firestore.FieldValue.serverTimestamp()
     });
-
     currentUser = cred.user;
-    currentUserData = (await getDoc(doc(db,'users',uid))).data();
+    currentUserData = (await db.collection('users').doc(uid).get()).data();
     openModal('modal-success');
   } catch(e){
     if(e.code==='auth/email-already-in-use') showToast('An account with this email already exists.');
     else if(e.code==='auth/weak-password') showToast('Password must be at least 6 characters.');
-    else if(e.code==='auth/invalid-email') showToast('Please use your @'+SCHOOL_DOMAIN+' email address.');
     else showToast('Signup error: '+e.message);
   }
-};
+}
 
 // ── LOGIN ──
-window.doLogin = async function(){
+async function doLogin(){
   const email = document.getElementById('login-email').value.trim();
   const pass = document.getElementById('login-pass').value;
   const btn = document.getElementById('login-btn');
   const errEl = document.getElementById('login-error');
   errEl.classList.add('hidden');
-
-  if(!email||!pass){showToast('Please fill in all fields.');return}
+  if(!email||!pass){ showToast('Please fill in all fields.'); return; }
   if(!email.endsWith('@'+SCHOOL_DOMAIN)){
-    errEl.textContent='❌ Please use your @'+SCHOOL_DOMAIN+' school email.';
+    errEl.textContent = '❌ Please use your @'+SCHOOL_DOMAIN+' school email.';
     errEl.classList.remove('hidden'); return;
   }
-
   btn.textContent='Logging in...'; btn.disabled=true;
   try {
-    const cred = await signInWithEmailAndPassword(auth, email, pass);
-    const snap = await getDoc(doc(db,'users',cred.user.uid));
-    if(!snap.exists()){showToast('Account not found. Please sign up.');return}
+    const cred = await auth.signInWithEmailAndPassword(email, pass);
+    const snap = await db.collection('users').doc(cred.user.uid).get();
+    if(!snap.exists){ showToast('Account not found. Please sign up.'); return; }
     currentUser = cred.user;
     currentUserData = snap.data();
     loadDashboard();
   } catch(e){
-    errEl.textContent = e.code==='auth/invalid-credential'?'❌ Incorrect email or password.':'❌ '+e.message;
+    errEl.textContent = (e.code==='auth/invalid-credential'||e.code==='auth/wrong-password')
+      ? '❌ Incorrect email or password.' : '❌ '+e.message;
     errEl.classList.remove('hidden');
   } finally {
     btn.textContent='Log In →'; btn.disabled=false;
   }
-};
+}
 
-window.doPasswordReset = async function(){
+async function doPasswordReset(){
   const email = document.getElementById('login-email').value.trim();
-  if(!email){showToast('Enter your email first.');return}
-  try{await sendPasswordResetEmail(auth,email);showToast('Password reset email sent!');}
-  catch(e){showToast('Error: '+e.message);}
-};
+  if(!email){ showToast('Enter your email first.'); return; }
+  try { await auth.sendPasswordResetEmail(email); showToast('Password reset email sent!'); }
+  catch(e){ showToast('Error: '+e.message); }
+}
 
-window.doLogout = async function(){
-  await signOut(auth);
+async function doLogout(){
+  await auth.signOut();
   currentUser=null; currentUserData=null; activeConvId=null;
-  if(convUnsub) convUnsub(); if(msgUnsub) msgUnsub();
+  if(convUnsub) convUnsub();
+  if(msgUnsub) msgUnsub();
   document.getElementById('guestNav').classList.remove('hidden');
   document.getElementById('authNav').classList.add('hidden');
   document.getElementById('guestActions').classList.remove('hidden');
   document.getElementById('authActions').classList.add('hidden');
   showPage('home');
-};
+}
 
 // ── LOAD DASHBOARD ──
-window.loadDashboard = function(){
+function loadDashboard(){
   if(!currentUser||!currentUserData) return;
   document.getElementById('guestNav').classList.add('hidden');
   document.getElementById('authNav').classList.remove('hidden');
   document.getElementById('guestActions').classList.add('hidden');
   document.getElementById('authActions').classList.remove('hidden');
-
   const d = currentUserData;
-  const av = initials(d.firstName,d.lastName);
-  document.getElementById('sb-avatar').textContent=av;
-  document.getElementById('sb-name').textContent=d.firstName+' '+d.lastName;
-
+  document.getElementById('sb-avatar').textContent = initials(d.firstName,d.lastName);
+  document.getElementById('sb-name').textContent = d.firstName+' '+d.lastName;
   showPage('dashboard');
   showDash('overview');
-};
+}
 
 // ── OVERVIEW ──
 async function loadOverview(){
   if(!currentUser||!currentUserData) return;
   const d = currentUserData;
   const hour = new Date().getHours();
-  const greet = hour<12?'Good morning':'hour<17?Good afternoon':'Good evening';
-  document.getElementById('greeting').textContent = (hour<12?'Good morning':hour<17?'Good afternoon':'Good evening')+', '+d.firstName+' 👋';
+  const greet = hour<12 ? 'Good morning' : hour<17 ? 'Good afternoon' : 'Good evening';
+  document.getElementById('greeting').textContent = greet+', '+d.firstName+' 👋';
   document.getElementById('overview-sub').textContent = 'Welcome to Commyute — '+SCHOOL;
-
-  // Stats
   document.getElementById('stat-rides').textContent = d.totalRides||0;
   document.getElementById('stat-co2').textContent = d.totalCO2Saved||0;
   document.getElementById('stat-money').textContent = '$'+(d.totalMoneySaved||0);
   document.getElementById('stat-time').textContent = d.totalTimeSaved||0;
-
-  // Recent rides
   loadRecentRides('recent-rides', 3);
-
-  // Partners
   loadPartners();
-
-  // Pending requests (incoming)
   loadPendingOverview();
 }
 
 async function loadRecentRides(containerId, lim){
   if(!currentUser) return;
-  const q = query(collection(db,'rides'), where('userId','==',currentUser.uid), orderBy('createdAt','desc'), limit(lim||5));
-  const snap = await getDocs(q);
+  const snap = await db.collection('rides')
+    .where('userId','==',currentUser.uid)
+    .orderBy('createdAt','desc')
+    .limit(lim||5).get();
   const el = document.getElementById(containerId);
-  if(snap.empty){el.innerHTML='<p class="text-muted" style="font-size:.875rem;text-align:center;padding:1rem">No rides logged yet.</p>';return}
+  if(snap.empty){
+    el.innerHTML='<p class="text-muted" style="font-size:.875rem;text-align:center;padding:1rem">No rides logged yet. <a style="color:var(--green);cursor:pointer" onclick="showDash(\'schedule\')">Log your first ride →</a></p>';
+    return;
+  }
   el.innerHTML = snap.docs.map(d=>{
-    const r = d.data();
+    const r=d.data();
     return `<div class="ride-item">
-      <div class="avatar" style="background:var(--green-light);color:var(--green-dark);font-size:.75rem">${r.role==='driver'?'🚗':'🎒'}</div>
+      <div style="font-size:1.3rem">${r.role==='driver'?'🚗':'🎒'}</div>
       <div class="ride-info"><strong>${r.role==='driver'?'You drove':'You rode'}</strong><span>${fmtDate(r.createdAt)} · ${r.miles||0} mi</span></div>
       <div class="ride-meta"><strong style="color:var(--green)">${r.co2Saved||0} lbs CO₂</strong>saved</div>
     </div>`;
@@ -1412,17 +1396,19 @@ async function loadPartners(){
   if(!currentUser||!currentUserData) return;
   const partners = currentUserData.partners||[];
   const el = document.getElementById('partners-list');
-  if(!partners.length){el.innerHTML='<p class="text-muted" style="font-size:.875rem;text-align:center;padding:1rem">No partners yet. <a style="color:var(--green);cursor:pointer" onclick="showDash(\'map\')">Find classmates →</a></p>';return}
+  if(!partners.length){
+    el.innerHTML='<p class="text-muted" style="font-size:.875rem;text-align:center;padding:1rem">No partners yet. <a style="color:var(--green);cursor:pointer" onclick="showDash(\'map\')">Find classmates →</a></p>';
+    return;
+  }
   const rows = await Promise.all(partners.map(async uid=>{
-    const snap = await getDoc(doc(db,'users',uid));
-    if(!snap.exists()) return '';
+    const snap = await db.collection('users').doc(uid).get();
+    if(!snap.exists) return '';
     const p = snap.data();
-    const av = initials(p.firstName,p.lastName);
-    const col = avatarColor(uid);
     return `<div style="display:flex;align-items:center;gap:10px;padding:.7rem 0;border-bottom:1px solid var(--border)">
-      <div class="avatar" style="background:${col}">${av}</div>
-      <div style="flex:1"><strong style="font-size:.875rem">${p.firstName} ${p.lastName}</strong><div style="font-size:.75rem;color:var(--muted)">${p.grade} · ${p.neighborhoodZone||''}</div></div>
-      <span class="badge badge-green" style="font-size:.68rem">Partner</span>
+      <div class="avatar" style="background:${avatarColor(uid)}">${initials(p.firstName,p.lastName)}</div>
+      <div style="flex:1"><strong style="font-size:.875rem">${p.firstName} ${p.lastName}</strong>
+      <div style="font-size:.75rem;color:var(--muted)">${p.grade} · ${p.neighborhoodZone||''}</div></div>
+      <span class="badge badge-green">Partner</span>
     </div>`;
   }));
   el.innerHTML = rows.join('') || '<p class="text-muted" style="font-size:.875rem;text-align:center;padding:1rem">No partners yet.</p>';
@@ -1430,11 +1416,15 @@ async function loadPartners(){
 
 async function loadPendingOverview(){
   if(!currentUser) return;
-  const q = query(collection(db,'rideRequests'), where('toUid','==',currentUser.uid), where('status','==','pending'));
-  const snap = await getDocs(q);
+  const snap = await db.collection('rideRequests')
+    .where('toUid','==',currentUser.uid)
+    .where('status','==','pending').get();
   const el = document.getElementById('pending-requests-overview');
   const badge = document.getElementById('pending-count-badge');
-  if(snap.empty){el.innerHTML='<p class="text-muted" style="font-size:.875rem;text-align:center;padding:1rem">No pending requests.</p>';badge.style.display='none';return}
+  if(snap.empty){
+    el.innerHTML='<p class="text-muted" style="font-size:.875rem;text-align:center;padding:1rem">No pending requests.</p>';
+    badge.style.display='none'; return;
+  }
   badge.textContent=snap.size; badge.style.display='inline-flex';
   document.getElementById('req-dot').style.display='block';
   el.innerHTML = snap.docs.slice(0,2).map(d=>{
@@ -1451,202 +1441,187 @@ async function loadPendingOverview(){
 }
 
 // ── MAP ──
-window.initMap = async function(){
+function initMap(){
   if(!currentUser||!currentUserData) return;
   if(!mapLoaded){
+    window.onMapReady = onMapReady;
     const script = document.createElement('script');
     script.src=`https://maps.googleapis.com/maps/api/js?key=${MAPS_KEY}&libraries=places,geometry&callback=onMapReady`;
     script.async=true; document.head.appendChild(script);
     mapLoaded=true;
-  } else if(window.google && window.google.maps){
-    window.onMapReady();
+  } else if(window.google&&window.google.maps&&!mapInstance){
+    onMapReady();
   }
-};
+}
 
-window.onMapReady = async function(){
-  const center = {lat:37.768,lng:-122.218}; // Oakland
+async function onMapReady(){
+  const center = {lat:37.768,lng:-122.218};
   mapInstance = new google.maps.Map(document.getElementById('map'),{
     center, zoom:12,
-    styles:[{featureType:'poi',stylers:[{visibility:'off'}]},{featureType:'transit',stylers:[{visibility:'off'}]}],
-    disableDefaultUI:false, zoomControl:true
+    styles:[{featureType:'poi',stylers:[{visibility:'off'}]}]
   });
-
-  // Load peers
-  const q = query(collection(db,'users'),
-    where('schoolName','==',SCHOOL),
-    where('isActive','==',true));
-  const snap = await getDocs(q);
+  const snap = await db.collection('users')
+    .where('schoolName','==',SCHOOL)
+    .where('isActive','==',true).get();
   const peers = snap.docs.filter(d=>d.id!==currentUser.uid);
   document.getElementById('map-count').textContent = peers.length+' students nearby';
-
   const cardsEl = document.getElementById('peer-cards');
   cardsEl.innerHTML='';
-
-  // Zone → approx lat/lng centers
   const ZONE_COORDS = {
     "Oakland Hills":{lat:37.800,lng:-122.193},"Montclair / Piedmont Ave":{lat:37.824,lng:-122.207},
-    "Piedmont Hills":{lat:37.822,lng:-122.224},"Rockridge":{lat:37.841,lng:-122.249},
-    "Grand Lake":{lat:37.810,lng:-122.236},"Temescal":{lat:37.843,lng:-122.263},
-    "Glenview / Redwood Heights":{lat:37.785,lng:-122.206},"East Oakland":{lat:37.755,lng:-122.194},
-    "West Oakland":{lat:37.812,lng:-122.289},"Downtown Oakland":{lat:37.804,lng:-122.270},
-    "Berkeley":{lat:37.872,lng:-122.273},"Berkeley Hills":{lat:37.873,lng:-122.244},
-    "North Berkeley":{lat:37.886,lng:-122.269},"Rockridge":{lat:37.841,lng:-122.249},
-    "Orinda":{lat:37.877,lng:-122.179},"Moraga":{lat:37.835,lng:-122.130},
+    "Rockridge":{lat:37.841,lng:-122.249},"Grand Lake":{lat:37.810,lng:-122.236},
+    "Temescal":{lat:37.843,lng:-122.263},"Glenview / Redwood Heights":{lat:37.785,lng:-122.206},
+    "East Oakland":{lat:37.755,lng:-122.194},"West Oakland":{lat:37.812,lng:-122.289},
+    "Downtown Oakland":{lat:37.804,lng:-122.270},"Berkeley":{lat:37.872,lng:-122.273},
+    "Berkeley Hills":{lat:37.873,lng:-122.244},"Orinda":{lat:37.877,lng:-122.179},
     "Oakland Area":{lat:37.780,lng:-122.230}
   };
-
   peers.forEach(pd=>{
-    const p = pd.data();
-    const zone = p.neighborhoodZone||'Oakland Area';
-    const base = ZONE_COORDS[zone]||center;
-    // Jitter slightly for privacy
-    const jitter = ()=>(Math.random()-0.5)*0.008;
-    const pos = {lat:base.lat+jitter(), lng:base.lng+jitter()};
-    const isPartner = (currentUserData.partners||[]).includes(pd.id);
-
-    const marker = new google.maps.Marker({
-      position:pos, map:mapInstance,
-      title:p.firstName,
+    const p=pd.data();
+    const zone=p.neighborhoodZone||'Oakland Area';
+    const base=ZONE_COORDS[zone]||center;
+    const jitter=()=>(Math.random()-0.5)*0.008;
+    const pos={lat:base.lat+jitter(),lng:base.lng+jitter()};
+    const isPartner=(currentUserData.partners||[]).includes(pd.id);
+    const marker=new google.maps.Marker({
+      position:pos,map:mapInstance,title:p.firstName,
       icon:{path:google.maps.SymbolPath.CIRCLE,scale:8,
         fillColor:isPartner?'#1a6b3c':'#2463a8',fillOpacity:.9,strokeColor:'#fff',strokeWeight:2}
     });
-
-    const info = new google.maps.InfoWindow({content:`
-      <div style="font-family:'DM Sans',sans-serif;padding:8px;min-width:180px">
-        <strong style="font-size:.9rem">${p.firstName}</strong><br>
-        <span style="font-size:.75rem;color:#666">${p.grade} · ${zone}</span><br>
-        <span style="font-size:.75rem;color:#666">${p.ridePreference==='driver'?'🚗 Can drive':p.ridePreference==='rider'?'🎒 Needs ride':'🚗🎒 Both'}</span><br>
-        <span style="font-size:.75rem;color:#666">${p.compensation}</span>
-        ${isPartner?'<br><span style="color:#1a6b3c;font-size:.75rem">✓ Your partner</span>':'<br><button onclick="openRequestModal(\''+pd.id+'\',\''+p.firstName+'\')" style="margin-top:6px;background:#1a6b3c;color:#fff;border:none;padding:4px 12px;border-radius:6px;font-size:.75rem;cursor:pointer">Request Ride</button>'}
+    const info=new google.maps.InfoWindow({content:`
+      <div style="font-family:sans-serif;padding:6px;min-width:160px">
+        <strong>${p.firstName}</strong><br>
+        <span style="font-size:.8rem;color:#666">${p.grade} · ${zone}</span><br>
+        <span style="font-size:.8rem;color:#666">${p.compensation}</span>
+        ${isPartner?'<br><span style="color:#1a6b3c;font-size:.8rem">✓ Your partner</span>'
+          :`<br><button onclick="openRequestModal('${pd.id}','${p.firstName}')" 
+            style="margin-top:5px;background:#1a6b3c;color:#fff;border:none;padding:4px 10px;border-radius:6px;font-size:.75rem;cursor:pointer">Request Ride</button>`}
       </div>`});
     marker.addListener('click',()=>info.open(mapInstance,marker));
-
-    // Peer card
-    const col = avatarColor(pd.id);
-    const av = initials(p.firstName,p.lastName);
-    const card = document.createElement('div');
+    const col=avatarColor(pd.id);
+    const card=document.createElement('div');
     card.className='peer-card';
     card.innerHTML=`
-      <div class="avatar" style="background:${col}">${av}</div>
+      <div class="avatar" style="background:${col}">${initials(p.firstName,p.lastName)}</div>
       <strong>${p.firstName}</strong>
       <span class="peer-detail">${p.grade} · ${zone}</span>
       <span class="peer-detail">${p.ridePreference==='driver'?'🚗 Driver':p.ridePreference==='rider'?'🎒 Rider':'🚗🎒 Both'}</span>
       ${isPartner
-        ? '<span class="badge badge-green">✓ Partner</span>'
-        : `<button class="btn btn-primary btn-sm" onclick="openRequestModal('${pd.id}','${p.firstName}')">Request Ride</button>`}`;
+        ?'<span class="badge badge-green">✓ Partner</span>'
+        :`<button class="btn btn-primary btn-sm" onclick="openRequestModal('${pd.id}','${p.firstName}')">Request Ride</button>`}`;
     cardsEl.appendChild(card);
   });
-};
+}
 
 // ── RIDE REQUESTS ──
-window.openRequestModal = function(uid, name){
-  document.getElementById('req-target-uid').value = uid;
-  document.getElementById('req-target-name').textContent = name;
+function openRequestModal(uid, name){
+  document.getElementById('req-target-uid').value=uid;
+  document.getElementById('req-target-name').textContent=name;
   document.getElementById('req-message').value='';
+  document.querySelectorAll('.req-day').forEach(c=>c.checked=false);
   openModal('modal-request-ride');
-};
+}
 
-window.sendRideRequest = async function(){
-  const toUid = document.getElementById('req-target-uid').value;
-  const msg = document.getElementById('req-message').value.trim();
-  const comp = document.getElementById('req-comp').value;
-  const days = Array.from(document.querySelectorAll('.req-day:checked')).map(c=>c.value);
-
-  if(!msg||msg.length<10){showToast('Please include a safety message (at least 10 characters).');return}
-  if(!days.length){showToast('Please select at least one preferred day.');return}
-
+async function sendRideRequest(){
+  const toUid=document.getElementById('req-target-uid').value;
+  const msg=document.getElementById('req-message').value.trim();
+  const comp=document.getElementById('req-comp').value;
+  const days=Array.from(document.querySelectorAll('.req-day:checked')).map(c=>c.value);
+  if(!msg||msg.length<10){ showToast('Please include a safety message (at least 10 characters).'); return; }
+  if(!days.length){ showToast('Please select at least one preferred day.'); return; }
   try{
-    await addDoc(collection(db,'rideRequests'),{
+    await db.collection('rideRequests').add({
       fromUid:currentUser.uid,
       fromName:currentUserData.firstName+' '+currentUserData.lastName,
-      toUid, school:SCHOOL,
-      message:msg, compensation:comp, days,
-      status:'pending', createdAt:serverTimestamp()
+      toUid, school:SCHOOL, message:msg, compensation:comp, days,
+      status:'pending', createdAt:firebase.firestore.FieldValue.serverTimestamp()
     });
     closeModal('modal-request-ride');
     showToast('Ride request sent! 🚗');
-  } catch(e){showToast('Error: '+e.message);}
-};
+  } catch(e){ showToast('Error: '+e.message); }
+}
 
 async function loadRequests(){
   if(!currentUser) return;
   // Incoming
-  const inQ = query(collection(db,'rideRequests'), where('toUid','==',currentUser.uid), where('school','==',SCHOOL));
-  const inSnap = await getDocs(inQ);
+  const inSnap = await db.collection('rideRequests').where('toUid','==',currentUser.uid).where('school','==',SCHOOL).get();
   const inEl = document.getElementById('incoming-requests');
-  if(inSnap.empty){inEl.innerHTML='<p class="text-muted" style="font-size:.875rem;text-align:center;padding:1rem">No incoming requests yet.</p>';}
-  else{
-    inEl.innerHTML = inSnap.docs.map(d=>{
-      const r=d.data();
-      const statusBadge = r.status==='pending'?'<span class="badge badge-amber">⏳ Pending</span>':r.status==='accepted'?'<span class="badge badge-green">✓ Accepted</span>':'<span class="badge badge-red">✗ Declined</span>';
-      return `<div class="card mb1">
-        <div style="display:flex;gap:12px;align-items:flex-start">
-          <div class="avatar" style="background:${avatarColor(r.fromUid)}">${(r.fromName||'?')[0]}</div>
-          <div style="flex:1">
-            <strong>${r.fromName}</strong> ${statusBadge}
-            <div style="font-size:.8rem;color:var(--muted);margin:.4rem 0">"${r.message}"</div>
-            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:.7rem">
-              <span class="badge badge-blue">${r.compensation}</span>
-              ${(r.days||[]).map(d=>`<span class="badge badge-amber">${d}</span>`).join('')}
+  inEl.innerHTML = inSnap.empty
+    ? '<p class="text-muted" style="font-size:.875rem;text-align:center;padding:1rem">No incoming requests yet.</p>'
+    : inSnap.docs.map(d=>{
+        const r=d.data();
+        const sb=r.status==='pending'?'<span class="badge badge-amber">⏳ Pending</span>'
+          :r.status==='accepted'?'<span class="badge badge-green">✓ Accepted</span>'
+          :'<span class="badge badge-red">✗ Declined</span>';
+        return `<div class="card mb1">
+          <div style="display:flex;gap:12px;align-items:flex-start">
+            <div class="avatar" style="background:${avatarColor(r.fromUid)}">${(r.fromName||'?')[0]}</div>
+            <div style="flex:1">
+              <strong>${r.fromName}</strong> ${sb}
+              <div style="font-size:.8rem;color:var(--muted);margin:.4rem 0;background:var(--cream);padding:.5rem;border-radius:8px">"${r.message}"</div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:.7rem">
+                <span class="badge badge-blue">${r.compensation}</span>
+                ${(r.days||[]).map(day=>`<span class="badge badge-amber">${day}</span>`).join('')}
+              </div>
+              ${r.status==='pending'?`<div style="display:flex;gap:8px">
+                <button class="btn btn-primary btn-sm" onclick="respondRequest('${d.id}','${r.fromUid}','accepted')">✓ Accept</button>
+                <button class="btn btn-outline btn-sm" onclick="respondRequest('${d.id}','${r.fromUid}','declined')">✗ Decline</button>
+              </div>`:''}
             </div>
-            ${r.status==='pending'?`<div style="display:flex;gap:8px">
-              <button class="btn btn-primary btn-sm" onclick="respondRequest('${d.id}','${r.fromUid}','accepted')">✓ Accept</button>
-              <button class="btn btn-outline btn-sm" onclick="respondRequest('${d.id}','${r.fromUid}','declined')">✗ Decline</button>
-            </div>`:''}
           </div>
-        </div>
-      </div>`;
-    }).join('');
-  }
+        </div>`;
+      }).join('');
 
   // Outgoing
-  const outQ = query(collection(db,'rideRequests'), where('fromUid','==',currentUser.uid), where('school','==',SCHOOL));
-  const outSnap = await getDocs(outQ);
+  const outSnap = await db.collection('rideRequests').where('fromUid','==',currentUser.uid).where('school','==',SCHOOL).get();
   const outEl = document.getElementById('outgoing-requests');
-  if(outSnap.empty){outEl.innerHTML='<p class="text-muted" style="font-size:.875rem;text-align:center;padding:1rem">No outgoing requests. <a style="color:var(--green);cursor:pointer" onclick="showDash(\'map\')">Find classmates →</a></p>';}
-  else{
-    outEl.innerHTML = outSnap.docs.map(d=>{
-      const r=d.data();
-      const statusBadge = r.status==='pending'?'<span class="badge badge-amber">⏳ Pending</span>':r.status==='accepted'?'<span class="badge badge-green">✓ Accepted</span>':'<span class="badge badge-red">✗ Declined</span>';
-      return `<div class="card mb1">
-        <div style="display:flex;gap:12px;align-items:center">
-          <div class="avatar" style="background:${avatarColor(r.toUid)}">${(r.toUid||'?').substring(0,1).toUpperCase()}</div>
-          <div style="flex:1"><strong>Request sent</strong> ${statusBadge}<div style="font-size:.78rem;color:var(--muted)">${fmtDate(r.createdAt)} · ${r.compensation}</div></div>
-        </div>
-      </div>`;
-    }).join('');
-  }
+  outEl.innerHTML = outSnap.empty
+    ? '<p class="text-muted" style="font-size:.875rem;text-align:center;padding:1rem">No outgoing requests. <a style="color:var(--green);cursor:pointer" onclick="showDash(\'map\')">Find classmates →</a></p>'
+    : outSnap.docs.map(d=>{
+        const r=d.data();
+        const sb=r.status==='pending'?'<span class="badge badge-amber">⏳ Pending</span>'
+          :r.status==='accepted'?'<span class="badge badge-green">✓ Accepted</span>'
+          :'<span class="badge badge-red">✗ Declined</span>';
+        return `<div class="card mb1">
+          <div style="display:flex;gap:12px;align-items:center">
+            <div class="avatar" style="background:${avatarColor(r.toUid)}">${(r.toUid||'?')[0].toUpperCase()}</div>
+            <div style="flex:1"><strong>Request to classmate</strong> ${sb}
+            <div style="font-size:.78rem;color:var(--muted)">${fmtDate(r.createdAt)} · ${r.compensation}</div></div>
+          </div>
+        </div>`;
+      }).join('');
 }
 
-window.respondRequest = async function(reqId, fromUid, status){
+async function respondRequest(reqId, fromUid, status){
   try{
-    await updateDoc(doc(db,'rideRequests',reqId),{status, respondedAt:serverTimestamp()});
+    await db.collection('rideRequests').doc(reqId).update({status, respondedAt:firebase.firestore.FieldValue.serverTimestamp()});
     if(status==='accepted'){
-      // Add as partners
-      await updateDoc(doc(db,'users',currentUser.uid),{partners:arrayUnion(fromUid)});
-      await updateDoc(doc(db,'users',fromUid),{partners:arrayUnion(currentUser.uid)});
-      // Create conversation
-      await addDoc(collection(db,'conversations'),{
+      await db.collection('users').doc(currentUser.uid).update({partners:firebase.firestore.FieldValue.arrayUnion(fromUid)});
+      await db.collection('users').doc(fromUid).update({partners:firebase.firestore.FieldValue.arrayUnion(currentUser.uid)});
+      // Get the other user's name for conversation
+      const otherSnap = await db.collection('users').doc(fromUid).get();
+      const otherName = otherSnap.exists ? otherSnap.data().firstName+' '+otherSnap.data().lastName : 'Classmate';
+      const myName = currentUserData.firstName+' '+currentUserData.lastName;
+      await db.collection('conversations').add({
         participants:[currentUser.uid, fromUid],
-        participantNames:{[currentUser.uid]:currentUserData.firstName+' '+currentUserData.lastName, [fromUid]:'Classmate'},
-        school:SCHOOL, lastMessage:'Ride request accepted!', lastMessageAt:serverTimestamp()
+        participantNames:{[currentUser.uid]:myName,[fromUid]:otherName},
+        school:SCHOOL, lastMessage:'Ride request accepted! 🎉',
+        lastMessageAt:firebase.firestore.FieldValue.serverTimestamp()
       });
-      // Refresh partner data
-      const snap = await getDoc(doc(db,'users',currentUser.uid));
+      const snap = await db.collection('users').doc(currentUser.uid).get();
       currentUserData = snap.data();
-      showToast('Request accepted! You can now message each other. 🎉');
+      showToast('Request accepted! You can now message each other 🎉');
     } else {
       showToast('Request declined.');
     }
-    loadRequests();
-    loadPendingOverview();
-    loadPartners();
-  } catch(e){showToast('Error: '+e.message);}
-};
+    loadRequests(); loadPendingOverview(); loadPartners();
+  } catch(e){ showToast('Error: '+e.message); }
+}
 
 // ── AVAILABLE RIDES ──
-window.openPostRideModal = function(){openModal('modal-post-ride')};
-window.postRide = async function(){
+function openPostRideModal(){ openModal('modal-post-ride'); }
+
+async function postRide(){
   const from=document.getElementById('pr-from').value.trim();
   const to=document.getElementById('pr-to').value.trim();
   const day=document.getElementById('pr-day').value;
@@ -1654,365 +1629,358 @@ window.postRide = async function(){
   const seats=document.getElementById('pr-seats').value;
   const comp=document.getElementById('pr-comp').value;
   const notes=document.getElementById('pr-notes').value.trim();
-  if(!from){showToast('Please enter your departure area.');return}
+  if(!from){ showToast('Please enter your departure area.'); return; }
   try{
-    await addDoc(collection(db,'availableRides'),{
+    await db.collection('availableRides').add({
       driverUid:currentUser.uid,
       driverName:currentUserData.firstName+' '+currentUserData.lastName,
       driverZone:currentUserData.neighborhoodZone||'Oakland Area',
       school:SCHOOL, from, to, day, time, seats:parseInt(seats)||1,
-      compensation:comp, notes, isActive:true, createdAt:serverTimestamp()
+      compensation:comp, notes, isActive:true,
+      createdAt:firebase.firestore.FieldValue.serverTimestamp()
     });
     closeModal('modal-post-ride');
     showToast('Ride posted! 🚗');
     loadAvailableRides();
-  } catch(e){showToast('Error: '+e.message);}
-};
+  } catch(e){ showToast('Error: '+e.message); }
+}
 
 async function loadAvailableRides(){
   if(!currentUser) return;
-  const q = query(collection(db,'availableRides'), where('school','==',SCHOOL), where('isActive','==',true), orderBy('createdAt','desc'));
-  const snap = await getDocs(q);
+  const snap = await db.collection('availableRides')
+    .where('school','==',SCHOOL)
+    .where('isActive','==',true)
+    .orderBy('createdAt','desc').get();
   const el = document.getElementById('available-rides-list');
-  if(snap.empty){el.innerHTML='<p class="text-muted" style="font-size:.875rem;grid-column:1/-1">No available rides posted yet. Be the first to post one!</p>';return}
-  el.innerHTML = snap.docs.filter(d=>d.data().driverUid!==currentUser.uid).map(d=>{
+  const others = snap.docs.filter(d=>d.data().driverUid!==currentUser.uid);
+  if(!others.length){
+    el.innerHTML='<p class="text-muted" style="font-size:.875rem;grid-column:1/-1">No rides posted yet. Be the first!</p>';
+    return;
+  }
+  el.innerHTML = others.map(d=>{
     const r=d.data();
     const isPartner=(currentUserData.partners||[]).includes(r.driverUid);
     return `<div class="card">
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:.8rem">
         <div class="avatar" style="background:${avatarColor(r.driverUid)}">${(r.driverName||'?')[0]}</div>
-        <div><strong style="font-size:.875rem">${r.driverName}</strong><div style="font-size:.75rem;color:var(--muted)">${r.driverZone}</div></div>
+        <div><strong style="font-size:.875rem">${r.driverName}</strong>
+        <div style="font-size:.75rem;color:var(--muted)">${r.driverZone}</div></div>
         <span class="badge badge-blue" style="margin-left:auto">${r.day}</span>
       </div>
       <div style="font-size:.83rem;color:var(--muted);margin-bottom:.8rem">
-        📍 ${r.from} → ${r.to}<br>
-        🕐 ${r.time} · ${r.seats} seat${r.seats>1?'s':''} · ${r.compensation}
-        ${r.notes?`<br>💬 "${r.notes}"`:''}</div>
+        📍 ${r.from} → ${r.to}<br>🕐 ${r.time} · ${r.seats} seat${r.seats>1?'s':''} · ${r.compensation}
+        ${r.notes?`<br>💬 "${r.notes}"`:''}
+      </div>
       ${isPartner
-        ? '<span class="badge badge-green">✓ Already partners</span>'
-        : `<button class="btn btn-primary btn-sm w100" onclick="openRequestModal('${r.driverUid}','${r.driverName.split(' ')[0]}')">Request Ride →</button>`}
+        ?'<span class="badge badge-green">✓ Already partners</span>'
+        :`<button class="btn btn-primary btn-sm w100" onclick="openRequestModal('${r.driverUid}','${r.driverName.split(' ')[0]}')">Request Ride →</button>`}
     </div>`;
-  }).join('')||'<p class="text-muted" style="font-size:.875rem">No rides from other students available right now.</p>';
+  }).join('');
 }
 
-// ── SCHEDULE ──
-window.openAddRideModal = function(){
-  const today = new Date().toISOString().split('T')[0];
-  document.getElementById('lr-date').value = today;
+// ── SCHEDULE & RIDE LOGGING ──
+function openAddRideModal(){
+  document.getElementById('lr-date').value = new Date().toISOString().split('T')[0];
   document.getElementById('lr-start').value='';
   document.getElementById('lr-calc').classList.add('hidden');
+  rideCalcData=null;
   openModal('modal-log-ride');
-};
-
-window.calcModalRide = async function(){
-  const start = document.getElementById('lr-start').value.trim();
-  const end = document.getElementById('lr-end').value.trim();
-  const people = parseInt(document.getElementById('lr-people').value)||2;
-  if(!start||!end){showToast('Please enter start and end.');return}
-  // Use Distance Matrix via fetch
-  const result = await estimateDistance(start, end);
-  if(!result){showToast('Could not calculate distance. Please check addresses.');return}
-  const mpg = currentUserData?.car?.mpg || 28;
-  const co2 = calcCO2(result.miles, mpg, people);
-  const money = calcMoneySaved(result.miles, mpg, people);
-  const time = calcTimeSaved(result.miles, people);
-  rideCalcData = {miles:result.miles, co2Saved:co2, moneySaved:money, timeSaved:time, people};
-  document.getElementById('lr-calc').innerHTML=`✅ ~${result.miles} miles · ${co2} lbs CO₂ saved · $${money} saved · ${time} min saved`;
-  document.getElementById('lr-calc').classList.remove('hidden');
-};
-
-async function estimateDistance(start, end){
-  // Geocode both points, then calculate straight-line × 1.3 factor
-  try{
-    const geoUrl = (addr)=>`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(addr)}&key=${MAPS_KEY}`;
-    const [r1,r2] = await Promise.all([fetch(geoUrl(start)).then(r=>r.json()), fetch(geoUrl(end)).then(r=>r.json())]);
-    if(r1.status!=='OK'||r2.status!=='OK') return null;
-    const loc1 = r1.results[0].geometry.location;
-    const loc2 = r2.results[0].geometry.location;
-    // Haversine
-    const R=3958.8, dLat=(loc2.lat-loc1.lat)*Math.PI/180, dLng=(loc2.lng-loc1.lng)*Math.PI/180;
-    const a=Math.sin(dLat/2)**2+Math.cos(loc1.lat*Math.PI/180)*Math.cos(loc2.lat*Math.PI/180)*Math.sin(dLng/2)**2;
-    const straightMiles = R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
-    return {miles:Math.round(straightMiles*1.3*10)/10}; // road factor
-  } catch(e){return null;}
 }
 
-window.confirmLogRide = async function(){
-  const start = document.getElementById('lr-start').value.trim();
-  const end = document.getElementById('lr-end').value.trim();
-  const date = document.getElementById('lr-date').value;
-  const role = document.getElementById('lr-role').value;
-  const people = parseInt(document.getElementById('lr-people').value)||2;
-  if(!start||!end||!date){showToast('Please fill in all fields.');return}
-  if(!rideCalcData) await calcModalRide();
-  if(!rideCalcData){showToast('Could not calculate trip data. Check your addresses.');return}
-
+async function estimateDistance(start, end){
   try{
-    await addDoc(collection(db,'rides'),{
+    const geo = async (addr) => {
+      const r = await fetch(`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(addr)}&key=${MAPS_KEY}`);
+      return r.json();
+    };
+    const [r1,r2] = await Promise.all([geo(start), geo(end)]);
+    if(r1.status!=='OK'||r2.status!=='OK') return null;
+    const l1=r1.results[0].geometry.location, l2=r2.results[0].geometry.location;
+    const R=3958.8, dLat=(l2.lat-l1.lat)*Math.PI/180, dLng=(l2.lng-l1.lng)*Math.PI/180;
+    const a=Math.sin(dLat/2)**2+Math.cos(l1.lat*Math.PI/180)*Math.cos(l2.lat*Math.PI/180)*Math.sin(dLng/2)**2;
+    return {miles:Math.round(R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))*1.3*10)/10};
+  } catch(e){ return null; }
+}
+
+async function calcModalRide(){
+  const start=document.getElementById('lr-start').value.trim();
+  const end=document.getElementById('lr-end').value.trim();
+  const people=parseInt(document.getElementById('lr-people').value)||2;
+  if(!start||!end){ showToast('Please enter start and end.'); return; }
+  const result=await estimateDistance(start,end);
+  if(!result){ showToast('Could not calculate distance. Try a more specific address.'); return; }
+  const mpg=currentUserData?.car?.mpg||28;
+  const co2=calcCO2(result.miles,mpg,people);
+  const money=calcMoney(result.miles,mpg,people);
+  const time=calcTime(result.miles,people);
+  rideCalcData={miles:result.miles,co2Saved:co2,moneySaved:money,timeSaved:time,people};
+  const el=document.getElementById('lr-calc');
+  el.innerHTML=`✅ ~${result.miles} miles · ${co2} lbs CO₂ saved · $${money} saved · ${time} min saved`;
+  el.classList.remove('hidden');
+}
+
+async function confirmLogRide(){
+  const start=document.getElementById('lr-start').value.trim();
+  const end=document.getElementById('lr-end').value.trim();
+  const date=document.getElementById('lr-date').value;
+  const role=document.getElementById('lr-role').value;
+  const people=parseInt(document.getElementById('lr-people').value)||2;
+  if(!start||!date){ showToast('Please fill in all fields.'); return; }
+  if(!rideCalcData){ await calcModalRide(); }
+  if(!rideCalcData){ showToast('Could not calculate trip. Check your addresses.'); return; }
+  try{
+    await db.collection('rides').add({
       userId:currentUser.uid, school:SCHOOL,
       role, miles:rideCalcData.miles, co2Saved:rideCalcData.co2Saved,
       moneySaved:rideCalcData.moneySaved, timeSaved:rideCalcData.timeSaved,
-      totalPeople:people, date, createdAt:serverTimestamp()
-      // start/end addresses NOT stored — calculated only
+      totalPeople:people, date, createdAt:firebase.firestore.FieldValue.serverTimestamp()
     });
-    // Update user totals
-    const snap = await getDoc(doc(db,'users',currentUser.uid));
-    const ud = snap.data();
-    await updateDoc(doc(db,'users',currentUser.uid),{
+    const snap=await db.collection('users').doc(currentUser.uid).get();
+    const ud=snap.data();
+    await db.collection('users').doc(currentUser.uid).update({
       totalRides:(ud.totalRides||0)+1,
       totalCO2Saved:Math.round(((ud.totalCO2Saved||0)+rideCalcData.co2Saved)*10)/10,
       totalMiles:Math.round(((ud.totalMiles||0)+rideCalcData.miles)*10)/10,
       totalMoneySaved:Math.round(((ud.totalMoneySaved||0)+rideCalcData.moneySaved)*100)/100,
       totalTimeSaved:(ud.totalTimeSaved||0)+rideCalcData.timeSaved
     });
-    currentUserData = (await getDoc(doc(db,'users',currentUser.uid))).data();
+    currentUserData=(await db.collection('users').doc(currentUser.uid).get()).data();
+    const saved=rideCalcData.co2Saved;
     rideCalcData=null;
     closeModal('modal-log-ride');
-    showToast(`Ride logged! ${rideCalcData?.co2Saved||''} lbs CO₂ saved 🌿`);
+    showToast(`Ride logged! ${saved} lbs CO₂ saved 🌿`);
     loadSchedule(); loadImpact(); loadOverview();
-  } catch(e){showToast('Error: '+e.message);}
-};
+  } catch(e){ showToast('Error: '+e.message); }
+}
 
 async function loadSchedule(){
   if(!currentUser) return;
   const days=['Monday','Tuesday','Wednesday','Thursday','Friday'];
-  const today = new Date().toLocaleDateString('en-US',{weekday:'long'});
-
-  // Build week grid from recent rides
-  const q = query(collection(db,'rides'), where('userId','==',currentUser.uid), orderBy('createdAt','desc'), limit(20));
-  const snap = await getDocs(q);
-  const ridesByDay = {};
+  const today=new Date().toLocaleDateString('en-US',{weekday:'long'});
+  const snap=await db.collection('rides').where('userId','==',currentUser.uid).orderBy('createdAt','desc').limit(20).get();
+  const ridesByDay={};
   snap.docs.forEach(d=>{
     const r=d.data();
-    const rDate = r.date ? new Date(r.date) : null;
-    if(rDate){
-      const dayName = rDate.toLocaleDateString('en-US',{weekday:'long'});
+    if(r.date){
+      const dayName=new Date(r.date+'T12:00:00').toLocaleDateString('en-US',{weekday:'long'});
       if(!ridesByDay[dayName]) ridesByDay[dayName]=r;
     }
   });
-
-  const weekEl = document.getElementById('full-week');
-  weekEl.innerHTML = days.map(day=>{
-    const isToday = day===today;
-    const r = ridesByDay[day];
+  const weekEl=document.getElementById('full-week');
+  weekEl.innerHTML=days.map(day=>{
+    const isToday=day===today;
+    const r=ridesByDay[day];
     return `<div class="sched-day ${r?'mine':''} ${isToday?'today':''}">
       <div class="day-name">${isToday?'Today':day.substring(0,3)}</div>
-      ${r?`<div class="driver-name">${r.role==='driver'?'🚗 You drove':'🎒 You rode'}</div><div style="font-size:.7rem;color:var(--muted)">${r.miles} mi</div>`
+      ${r?`<div class="driver-name">${r.role==='driver'?'🚗 Drove':'🎒 Rode'}</div><div style="font-size:.7rem;color:var(--muted)">${r.miles} mi</div>`
         :`<div class="driver-name" style="color:var(--muted);font-size:.75rem">No ride</div>`}
-      ${isToday&&!r?`<button class="btn btn-primary btn-sm" style="margin-top:6px;font-size:.7rem" onclick="openAddRideModal()">Log ride</button>`:''}
+      ${isToday&&!r?`<button class="btn btn-primary btn-sm" style="margin-top:5px;font-size:.7rem" onclick="openAddRideModal()">Log it</button>`:''}
     </div>`;
   }).join('');
-
-  // History
-  loadRecentRides('ride-history', 10);
+  loadRecentRides('ride-history',10);
 }
 
 // ── MESSAGES ──
 async function loadMessages(){
   if(!currentUser) return;
-  const q = query(collection(db,'conversations'), where('participants','array-contains',currentUser.uid), orderBy('lastMessageAt','desc'));
   if(convUnsub) convUnsub();
-  convUnsub = onSnapshot(q, snap=>{
-    const el = document.getElementById('conv-list');
-    if(snap.empty){el.innerHTML='<div class="msg-empty">No conversations yet.<br>Accept a ride request to start chatting.</div>';return}
-    el.innerHTML='';
-    snap.docs.forEach(d=>{
-      const c=d.data();
-      const otherId = c.participants.find(p=>p!==currentUser.uid);
-      const otherName = c.participantNames?.[otherId]||'Classmate';
-      const av = (otherName||'?')[0].toUpperCase();
-      const col = avatarColor(otherId);
-      const thread = document.createElement('div');
-      thread.className='msg-thread'+(d.id===activeConvId?' active':'');
-      thread.innerHTML=`<div class="avatar" style="background:${col};font-size:.8rem;width:36px;height:36px">${av}</div>
-        <div class="msg-thread-info"><strong>${otherName}</strong><span>${c.lastMessage||''}</span></div>`;
-      thread.onclick=()=>openConv(d.id, otherName, otherId);
-      el.appendChild(thread);
+  convUnsub=db.collection('conversations')
+    .where('participants','array-contains',currentUser.uid)
+    .orderBy('lastMessageAt','desc')
+    .onSnapshot(snap=>{
+      const el=document.getElementById('conv-list');
+      if(snap.empty){
+        el.innerHTML='<div class="msg-empty">No conversations yet.<br>Accept a ride request to start chatting.</div>';
+        return;
+      }
+      el.innerHTML='';
+      snap.docs.forEach(d=>{
+        const c=d.data();
+        const otherId=c.participants.find(p=>p!==currentUser.uid);
+        const otherName=c.participantNames?.[otherId]||'Classmate';
+        const thread=document.createElement('div');
+        thread.className='msg-thread'+(d.id===activeConvId?' active':'');
+        thread.innerHTML=`<div class="avatar" style="background:${avatarColor(otherId)};width:36px;height:36px;font-size:.8rem">${(otherName||'?')[0].toUpperCase()}</div>
+          <div class="msg-thread-info"><strong>${otherName}</strong><span>${c.lastMessage||''}</span></div>`;
+        thread.onclick=()=>openConv(d.id,otherName,otherId,thread);
+        el.appendChild(thread);
+      });
     });
-  });
 }
 
-function openConv(convId, otherName, otherId){
+function openConv(convId, otherName, otherId, threadEl){
   activeConvId=convId;
   document.querySelectorAll('.msg-thread').forEach(t=>t.classList.remove('active'));
-  event.currentTarget.classList.add('active');
-
-  const panel = document.getElementById('msg-chat-panel');
+  if(threadEl) threadEl.classList.add('active');
+  const panel=document.getElementById('msg-chat-panel');
   panel.innerHTML=`
     <div class="msg-header">
-      <div class="avatar" style="background:${avatarColor(otherId)};font-size:.8rem;width:36px;height:36px">${(otherName||'?')[0].toUpperCase()}</div>
+      <div class="avatar" style="background:${avatarColor(otherId)};width:36px;height:36px;font-size:.8rem">${(otherName||'?')[0].toUpperCase()}</div>
       <div><strong style="font-size:.875rem">${otherName}</strong><div style="font-size:.75rem;color:var(--muted)">O'Dowd · Carpool Partner ✓</div></div>
     </div>
-    <div class="msg-body" id="msg-body-${convId}"></div>
+    <div class="msg-body" id="msg-body-active"></div>
     <div class="msg-input-row">
-      <input type="text" id="msg-input-${convId}" placeholder="Type a message…">
+      <input type="text" id="msg-input-active" placeholder="Type a message…">
       <button class="btn btn-primary btn-sm" onclick="sendMsg('${convId}','${otherId}')">Send</button>
     </div>`;
-
-  const input = document.getElementById('msg-input-'+convId);
-  input.addEventListener('keydown',e=>{if(e.key==='Enter')sendMsg(convId,otherId)});
-
-  if(msgUnsub) msgUnsub();
-  const msgsQ = query(collection(db,'conversations',convId,'messages'), orderBy('sentAt','asc'));
-  msgUnsub = onSnapshot(msgsQ, snap=>{
-    const body = document.getElementById('msg-body-'+convId);
-    if(!body) return;
-    body.innerHTML='';
-    snap.docs.forEach(d=>{
-      const m=d.data();
-      const isMe = m.senderId===currentUser.uid;
-      const div = document.createElement('div');
-      div.className='msg-bubble '+(isMe?'me':'them');
-      div.innerHTML=`<div class="bubble-name">${isMe?'You':m.senderName}</div><div class="bubble">${m.text}</div>`;
-      body.appendChild(div);
-    });
-    body.scrollTop=body.scrollHeight;
+  document.getElementById('msg-input-active').addEventListener('keydown',e=>{
+    if(e.key==='Enter') sendMsg(convId,otherId);
   });
+  if(msgUnsub) msgUnsub();
+  msgUnsub=db.collection('conversations').doc(convId).collection('messages')
+    .orderBy('sentAt','asc')
+    .onSnapshot(snap=>{
+      const body=document.getElementById('msg-body-active');
+      if(!body) return;
+      body.innerHTML='';
+      snap.docs.forEach(d=>{
+        const m=d.data();
+        const isMe=m.senderId===currentUser.uid;
+        const div=document.createElement('div');
+        div.className='msg-bubble '+(isMe?'me':'them');
+        div.innerHTML=`<div class="bubble-name">${isMe?'You':m.senderName}</div><div class="bubble">${m.text}</div>`;
+        body.appendChild(div);
+      });
+      body.scrollTop=body.scrollHeight;
+    });
 }
 
-window.sendMsg = async function(convId, otherId){
-  const input = document.getElementById('msg-input-'+convId);
-  const text = input.value.trim();
+async function sendMsg(convId, otherId){
+  const input=document.getElementById('msg-input-active');
+  if(!input) return;
+  const text=input.value.trim();
   if(!text) return;
   try{
-    await addDoc(collection(db,'conversations',convId,'messages'),{
+    await db.collection('conversations').doc(convId).collection('messages').add({
       senderId:currentUser.uid,
       senderName:currentUserData.firstName+' '+currentUserData.lastName,
-      text, sentAt:serverTimestamp()
+      text, sentAt:firebase.firestore.FieldValue.serverTimestamp()
     });
-    await updateDoc(doc(db,'conversations',convId),{lastMessage:text, lastMessageAt:serverTimestamp()});
+    await db.collection('conversations').doc(convId).update({
+      lastMessage:text,
+      lastMessageAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
     input.value='';
-  } catch(e){showToast('Error sending: '+e.message);}
-};
+  } catch(e){ showToast('Error sending: '+e.message); }
+}
 
 // ── IMPACT ──
 async function loadImpact(){
   if(!currentUser||!currentUserData) return;
-  const d = currentUserData;
-  const co2 = d.totalCO2Saved||0;
-  const miles = d.totalMiles||0;
-  const rides = d.totalRides||0;
-  const money = d.totalMoneySaved||0;
-  const time = d.totalTimeSaved||0;
-
+  const d=currentUserData;
+  const co2=d.totalCO2Saved||0, miles=d.totalMiles||0, rides=d.totalRides||0;
+  const money=d.totalMoneySaved||0, time=d.totalTimeSaved||0;
   document.getElementById('imp-co2').textContent=co2;
   document.getElementById('imp-miles').textContent=miles;
   document.getElementById('imp-rides').textContent=rides;
   document.getElementById('imp-money').textContent='$'+money;
   document.getElementById('imp-time').textContent=time;
-
-  // Equivalents
-  const trees = Math.round(co2/48*10)/10;
-  const energy = Math.round(co2/1.5);
-  const trips = Math.round(miles/15);
+  const trees=Math.round(co2/48*10)/10;
+  const energy=Math.round(co2/1.5);
+  const trips=Math.round(miles/15);
   document.getElementById('eq-trees').textContent=trees+' trees';
   document.getElementById('eq-energy').textContent=energy+' kWh';
-  document.getElementById('eq-trips').textContent=trips+' trips offset';
-
-  const maxCO2 = 100;
-  document.getElementById('pb-trees').style.width=Math.min(co2/maxCO2*100,100)+'%';
-  document.getElementById('pb-energy').style.width=Math.min(energy/150*100,100)+'%';
+  document.getElementById('eq-trips').textContent=trips+' trips';
+  document.getElementById('pb-trees').style.width=Math.min(co2/50*100,100)+'%';
+  document.getElementById('pb-energy').style.width=Math.min(energy/100*100,100)+'%';
   document.getElementById('pb-trips').style.width=Math.min(trips/20*100,100)+'%';
-
-  // Pre-fill today's date
-  document.getElementById('ride-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('ride-date').value=new Date().toISOString().split('T')[0];
 }
 
-window.calcRide = async function(){
-  const start = document.getElementById('ride-start').value.trim();
-  const end = document.getElementById('ride-end').value.trim()||'Bishop O\'Dowd High School, Oakland, CA';
-  const people = parseInt(document.getElementById('ride-passengers').value)||2;
-  if(!start){showToast('Please enter a start address.');return}
-  const result = await estimateDistance(start, end);
-  if(!result){showToast('Could not estimate distance. Try a more specific address.');return}
-  const mpg = currentUserData?.car?.mpg||28;
-  const co2 = calcCO2(result.miles, mpg, people);
-  const money = calcMoneySaved(result.miles, mpg, people);
-  const time = calcTimeSaved(result.miles, people);
+async function calcRide(){
+  const start=document.getElementById('ride-start').value.trim();
+  const end=document.getElementById('ride-end').value.trim()||"Bishop O'Dowd High School, Oakland, CA";
+  const people=parseInt(document.getElementById('ride-passengers').value)||2;
+  if(!start){ showToast('Please enter a start address.'); return; }
+  const result=await estimateDistance(start,end);
+  if(!result){ showToast('Could not estimate distance. Try a more specific address.'); return; }
+  const mpg=currentUserData?.car?.mpg||28;
+  const co2=calcCO2(result.miles,mpg,people);
+  const money=calcMoney(result.miles,mpg,people);
+  const time=calcTime(result.miles,people);
   rideCalcData={miles:result.miles,co2Saved:co2,moneySaved:money,timeSaved:time,people};
   const el=document.getElementById('ride-calc-result');
   el.innerHTML=`✅ ~${result.miles} miles · <strong>${co2} lbs CO₂ saved</strong> · $${money} saved · ${time} min saved`;
   el.classList.remove('hidden');
-};
+}
 
-window.logRide = async function(){
-  const start = document.getElementById('ride-start').value.trim();
-  const end = document.getElementById('ride-end').value.trim()||'Bishop O\'Dowd High School, Oakland, CA';
-  const date = document.getElementById('ride-date').value;
-  const role = document.getElementById('ride-role').value;
-  const people = parseInt(document.getElementById('ride-passengers').value)||2;
-  if(!start||!date){showToast('Please fill in all fields.');return}
+async function logRide(){
+  const start=document.getElementById('ride-start').value.trim();
+  const end=document.getElementById('ride-end').value.trim()||"Bishop O'Dowd High School, Oakland, CA";
+  const date=document.getElementById('ride-date').value;
+  const role=document.getElementById('ride-role').value;
+  const people=parseInt(document.getElementById('ride-passengers').value)||2;
+  if(!start||!date){ showToast('Please fill in all fields.'); return; }
   if(!rideCalcData) await calcRide();
-  if(!rideCalcData){return}
+  if(!rideCalcData) return;
   try{
-    await addDoc(collection(db,'rides'),{
+    await db.collection('rides').add({
       userId:currentUser.uid, school:SCHOOL,
       role, miles:rideCalcData.miles, co2Saved:rideCalcData.co2Saved,
       moneySaved:rideCalcData.moneySaved, timeSaved:rideCalcData.timeSaved,
-      totalPeople:people, date, createdAt:serverTimestamp()
+      totalPeople:people, date, createdAt:firebase.firestore.FieldValue.serverTimestamp()
     });
-    const snap = await getDoc(doc(db,'users',currentUser.uid));
-    const ud = snap.data();
-    await updateDoc(doc(db,'users',currentUser.uid),{
+    const snap=await db.collection('users').doc(currentUser.uid).get();
+    const ud=snap.data();
+    await db.collection('users').doc(currentUser.uid).update({
       totalRides:(ud.totalRides||0)+1,
       totalCO2Saved:Math.round(((ud.totalCO2Saved||0)+rideCalcData.co2Saved)*10)/10,
       totalMiles:Math.round(((ud.totalMiles||0)+rideCalcData.miles)*10)/10,
       totalMoneySaved:Math.round(((ud.totalMoneySaved||0)+rideCalcData.moneySaved)*100)/100,
       totalTimeSaved:(ud.totalTimeSaved||0)+rideCalcData.timeSaved
     });
-    currentUserData=(await getDoc(doc(db,'users',currentUser.uid))).data();
+    currentUserData=(await db.collection('users').doc(currentUser.uid).get()).data();
     document.getElementById('ride-start').value='';
     document.getElementById('ride-calc-result').classList.add('hidden');
     rideCalcData=null;
     showToast('Ride logged! 🌿');
     loadImpact();
-  } catch(e){showToast('Error: '+e.message);}
-};
+  } catch(e){ showToast('Error: '+e.message); }
+}
 
 // ── LEADERBOARD ──
 async function loadLeaderboard(){
-  const q = query(collection(db,'users'),
-    where('schoolName','==',SCHOOL),
-    where('showOnLeaderboard','==',true),
-    orderBy('totalCO2Saved','desc'),
-    limit(20));
-  const snap = await getDocs(q);
-  const el = document.getElementById('leaderboard-list');
-  if(snap.empty){el.innerHTML='<p class="text-muted" style="font-size:.875rem;text-align:center;padding:1rem">No one on the leaderboard yet. Be the first to opt in!</p>';return}
-  el.innerHTML=snap.docs.map((d,i)=>{
-    const u=d.data();
-    const rankClass=i===0?'gold':i===1?'silver':i===2?'bronze':'';
-    const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
-    const isMe=d.id===currentUser?.uid;
-    return `<div class="lb-row${isMe?' mine':''}">
-      <div class="lb-rank ${rankClass}">${medal||('#'+(i+1))}</div>
-      <div class="lb-info"><strong>${u.nickname||'Anonymous'}${isMe?' (you)':''}</strong><span>${u.totalRides||0} rides · ${u.neighborhoodZone||''}</span></div>
-      <div class="lb-score">${u.totalCO2Saved||0}<br><span style="font-size:.7rem;color:var(--muted)">lbs CO₂</span></div>
-    </div>`;
-  }).join('');
-
-  // My status
-  if(currentUserData){
-    document.getElementById('lb-nickname-input').value=currentUserData.nickname||'';
+  const snap=await db.collection('users')
+    .where('schoolName','==',SCHOOL)
+    .where('showOnLeaderboard','==',true)
+    .orderBy('totalCO2Saved','desc')
+    .limit(20).get();
+  const el=document.getElementById('leaderboard-list');
+  if(snap.empty){
+    el.innerHTML='<p class="text-muted" style="font-size:.875rem;text-align:center;padding:1rem">No one on the leaderboard yet. Be the first to opt in!</p>';
+  } else {
+    el.innerHTML=snap.docs.map((d,i)=>{
+      const u=d.data();
+      const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
+      const rankClass=i===0?'gold':i===1?'silver':i===2?'bronze':'';
+      const isMe=d.id===currentUser?.uid;
+      return `<div class="lb-row">
+        <div class="lb-rank ${rankClass}">${medal||('#'+(i+1))}</div>
+        <div class="lb-info"><strong>${u.nickname||'Anonymous'}${isMe?' (you)':''}</strong>
+        <span>${u.totalRides||0} rides · ${u.neighborhoodZone||''}</span></div>
+        <div class="lb-score">${u.totalCO2Saved||0}<br><span style="font-size:.7rem;color:var(--muted)">lbs CO₂</span></div>
+      </div>`;
+    }).join('');
   }
+  if(currentUserData) document.getElementById('lb-nickname-input').value=currentUserData.nickname||'';
 }
 
-window.saveNickname = async function(){
-  const nick = document.getElementById('lb-nickname-input').value.trim();
-  if(!nick){showToast('Please enter a nickname.');return}
-  await updateDoc(doc(db,'users',currentUser.uid),{nickname:nick,showOnLeaderboard:true});
+async function saveNickname(){
+  const nick=document.getElementById('lb-nickname-input').value.trim();
+  if(!nick){ showToast('Please enter a nickname.'); return; }
+  await db.collection('users').doc(currentUser.uid).update({nickname:nick,showOnLeaderboard:true});
   currentUserData.nickname=nick; currentUserData.showOnLeaderboard=true;
-  showToast('Nickname saved! You\'re on the leaderboard 🏆');
+  showToast("You're on the leaderboard! 🏆");
   loadLeaderboard();
-};
+}
 
-window.removeNickname = async function(){
-  await updateDoc(doc(db,'users',currentUser.uid),{nickname:null,showOnLeaderboard:false});
+async function removeNickname(){
+  await db.collection('users').doc(currentUser.uid).update({nickname:null,showOnLeaderboard:false});
   currentUserData.nickname=null; currentUserData.showOnLeaderboard=false;
   document.getElementById('lb-nickname-input').value='';
   showToast('Removed from leaderboard.');
   loadLeaderboard();
-};
+}
 
 // ── PROFILE ──
 async function loadProfile(){
@@ -2032,18 +2000,17 @@ async function loadProfile(){
   document.getElementById('profile-comp-badge').textContent=d.compensation||'Free';
   document.getElementById('profile-role-badge').textContent=
     d.ridePreference==='driver'?'🚗 Driver':d.ridePreference==='rider'?'🎒 Rider':'🚗🎒 Both';
-
   if(d.car){
     const c=d.car;
     document.getElementById('pd-car').textContent=
       c.method==='model'?`${c.year} ${c.make} ${c.model} (~${c.mpg} MPG)`:`${c.mpg} MPG`;
     document.getElementById('car-details-display').innerHTML=`
-      <div class="alert alert-success">${c.method==='model'?`🚗 ${c.year} ${c.make} ${c.model} · ~${c.mpg} MPG (estimated)`:`⛽ ${c.mpg} MPG (manual entry)`}</div>
+      <div class="alert alert-success">${c.method==='model'?`🚗 ${c.year} ${c.make} ${c.model} · ~${c.mpg} MPG`:`⛽ ${c.mpg} MPG (manual)`}</div>
       <button class="btn btn-outline btn-sm" onclick="openCarModal()">Update Car</button>`;
   }
 }
 
-window.openEditProfileModal = function(){
+function openEditProfileModal(){
   if(!currentUserData) return;
   const d=currentUserData;
   document.getElementById('ep-first').value=d.firstName||'';
@@ -2054,9 +2021,9 @@ window.openEditProfileModal = function(){
   document.getElementById('ep-pref').value=d.ridePreference||'both';
   document.getElementById('ep-comp').value=d.compensation||'free';
   openModal('modal-edit-profile');
-};
+}
 
-window.saveProfile = async function(){
+async function saveProfile(){
   const first=document.getElementById('ep-first').value.trim();
   const last=document.getElementById('ep-last').value.trim();
   const age=document.getElementById('ep-age').value;
@@ -2064,135 +2031,115 @@ window.saveProfile = async function(){
   const zip=document.getElementById('ep-zip').value.trim();
   const pref=document.getElementById('ep-pref').value;
   const comp=document.getElementById('ep-comp').value;
-  if(!first||!last){showToast('Please enter your name.');return}
+  if(!first||!last){ showToast('Please enter your name.'); return; }
   const zone=getNeighborhood(zip);
-  await updateDoc(doc(db,'users',currentUser.uid),{firstName:first,lastName:last,age:parseInt(age)||17,grade,zip,neighborhoodZone:zone,ridePreference:pref,compensation:comp});
-  currentUserData=(await getDoc(doc(db,'users',currentUser.uid))).data();
+  await db.collection('users').doc(currentUser.uid).update({
+    firstName:first,lastName:last,age:parseInt(age)||17,grade,zip,neighborhoodZone:zone,ridePreference:pref,compensation:comp
+  });
+  currentUserData=(await db.collection('users').doc(currentUser.uid).get()).data();
   document.getElementById('sb-name').textContent=first+' '+last;
   closeModal('modal-edit-profile');
   showToast('Profile updated!');
   loadProfile();
-};
+}
 
 // ── CAR ──
-window.openCarModal=function(){openModal('modal-car')};
-window.selectCarOpt2=function(type){
+function openCarModal(){ openModal('modal-car'); }
+
+function selectCarOpt2(type){
   document.getElementById('co-model').classList.toggle('selected',type==='model');
   document.getElementById('co-mpg').classList.toggle('selected',type==='mpg');
   document.getElementById('car-modal-model').classList.toggle('hidden',type==='mpg');
   document.getElementById('car-modal-mpg').classList.toggle('hidden',type==='model');
-};
-window.saveCar=async function(){
+}
+
+async function saveCar(){
   const isModel=!document.getElementById('car-modal-model').classList.contains('hidden');
   let carData;
   if(isModel){
     const year=document.getElementById('cm-year').value;
     const make=document.getElementById('cm-make').value.trim();
     const model=document.getElementById('cm-model').value.trim();
-    if(!year||!make||!model){showToast('Please fill in year, make, and model.');return}
+    if(!year||!make||!model){ showToast('Please fill in year, make, and model.'); return; }
     carData={method:'model',year,make,model,mpg:getMPG(year,make,model)};
   } else {
     const mpg=parseFloat(document.getElementById('cm-mpg').value);
-    if(!mpg){showToast('Please enter your MPG.');return}
+    if(!mpg){ showToast('Please enter your MPG.'); return; }
     carData={method:'mpg',mpg};
   }
-  await updateDoc(doc(db,'users',currentUser.uid),{car:carData,hasCar:true});
-  currentUserData=(await getDoc(doc(db,'users',currentUser.uid))).data();
+  await db.collection('users').doc(currentUser.uid).update({car:carData,hasCar:true});
+  currentUserData=(await db.collection('users').doc(currentUser.uid).get()).data();
   closeModal('modal-car');
   showToast('Car saved! 🚗');
   loadProfile();
-};
+}
 
 // ── PARENT VIEW ──
-window.generateParentCode=function(){
+function generateParentCode(){
   if(!currentUser) return;
-  const link=window.location.origin+'?parent='+btoa(currentUser.uid);
+  const link=window.location.origin+window.location.pathname+'?parent='+btoa(currentUser.uid);
   document.getElementById('parent-link-display').textContent=link;
   openModal('modal-parent');
-};
-window.copyParentLink=function(){
-  const text=document.getElementById('parent-link-display').textContent;
-  navigator.clipboard.writeText(text).then(()=>showToast('Link copied! 📋'));
-};
+}
+function copyParentLink(){
+  navigator.clipboard.writeText(document.getElementById('parent-link-display').textContent)
+    .then(()=>showToast('Link copied! 📋'));
+}
 
-// Check if parent view
+// ── CHECK FOR PARENT VIEW ──
 const urlParams=new URLSearchParams(window.location.search);
 const parentCode=urlParams.get('parent');
 if(parentCode){
-  const studentUid=atob(parentCode);
-  showPage('parent');
-  (async()=>{
-    const snap=await getDoc(doc(db,'users',studentUid));
-    if(!snap.exists()){document.querySelector('.parent-wrap').innerHTML='<div class="auth-card" style="margin:2rem auto;text-align:center"><h2>Link not found</h2><p>This parent view link may have expired or be invalid.</p></div>';return}
-    const d=snap.data();
-    document.getElementById('parent-profile').innerHTML=`
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:1rem">
-        <div class="avatar" style="background:var(--green)">${initials(d.firstName,d.lastName)}</div>
-        <div><strong>${d.firstName} ${d.lastName}</strong><div style="font-size:.8rem;color:var(--muted)">${d.grade} · ${SCHOOL}</div></div>
-      </div>
-      <div class="alert alert-success">✓ Verified O'Dowd student</div>`;
-
-    const partners=d.partners||[];
-    if(partners.length){
-      const pRows=await Promise.all(partners.map(async uid=>{
-        const ps=await getDoc(doc(db,'users',uid));
-        if(!ps.exists()) return '';
-        const p=ps.data();
-        return `<div style="display:flex;align-items:center;gap:10px;padding:.6rem 0;border-bottom:1px solid var(--border)">
-          <div class="avatar" style="background:${avatarColor(uid)}">${initials(p.firstName,p.lastName)}</div>
-          <div><strong style="font-size:.875rem">${p.firstName} ${p.lastName}</strong><div style="font-size:.75rem;color:var(--muted)">${p.grade} · ${p.neighborhoodZone||''}</div></div>
-        </div>`;
-      }));
-      document.getElementById('parent-partners').innerHTML=pRows.join('');
-    }
-
-    const rQ=query(collection(db,'rides'),where('userId','==',studentUid),orderBy('createdAt','desc'),limit(5));
-    const rSnap=await getDocs(rQ);
-    if(!rSnap.empty){
-      document.getElementById('parent-rides').innerHTML=rSnap.docs.map(d=>{
-        const r=d.data();
-        return `<div class="ride-item"><div style="font-size:1.2rem">${r.role==='driver'?'🚗':'🎒'}</div><div class="ride-info"><strong>${r.role==='driver'?'Drove':'Rode'} · ${r.miles} miles</strong><span>${fmtDate(r.createdAt)}</span></div><div class="ride-meta"><strong style="color:var(--green)">${r.co2Saved} lbs CO₂</strong>saved</div></div>`;
-      }).join('');
-    }
-  })();
+  try{
+    const studentUid=atob(parentCode);
+    showPage('parent');
+    (async()=>{
+      const snap=await db.collection('users').doc(studentUid).get();
+      if(!snap.exists){
+        document.querySelector('.parent-wrap').innerHTML='<div style="text-align:center;padding:4rem"><h2>Link not found</h2><p style="color:#666;margin-top:.5rem">This parent view link may be invalid.</p></div>';
+        return;
+      }
+      const d=snap.data();
+      document.getElementById('parent-profile').innerHTML=`
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:1rem">
+          <div class="avatar" style="background:var(--green)">${initials(d.firstName,d.lastName)}</div>
+          <div><strong>${d.firstName} ${d.lastName}</strong>
+          <div style="font-size:.8rem;color:var(--muted)">${d.grade} · ${SCHOOL}</div></div>
+        </div>
+        <div class="alert alert-success">✓ Verified O'Dowd student · ${d.neighborhoodZone||''}</div>
+        <div style="margin-top:.8rem;font-size:.875rem"><strong>Total Rides:</strong> ${d.totalRides||0} &nbsp;|&nbsp; <strong>CO₂ Saved:</strong> ${d.totalCO2Saved||0} lbs</div>`;
+      const partners=d.partners||[];
+      if(partners.length){
+        const pRows=await Promise.all(partners.map(async uid=>{
+          const ps=await db.collection('users').doc(uid).get();
+          if(!ps.exists) return '';
+          const p=ps.data();
+          return `<div style="display:flex;align-items:center;gap:10px;padding:.6rem 0;border-bottom:1px solid var(--border)">
+            <div class="avatar" style="background:${avatarColor(uid)}">${initials(p.firstName,p.lastName)}</div>
+            <div><strong style="font-size:.875rem">${p.firstName} ${p.lastName}</strong>
+            <div style="font-size:.75rem;color:var(--muted)">${p.grade} · ${p.neighborhoodZone||''}</div></div>
+          </div>`;
+        }));
+        document.getElementById('parent-partners').innerHTML=pRows.join('');
+      } else {
+        document.getElementById('parent-partners').innerHTML='<p style="color:#666;font-size:.875rem">No partners yet.</p>';
+      }
+      const rSnap=await db.collection('rides').where('userId','==',studentUid).orderBy('createdAt','desc').limit(5).get();
+      if(!rSnap.empty){
+        document.getElementById('parent-rides').innerHTML=rSnap.docs.map(d=>{
+          const r=d.data();
+          return `<div class="ride-item">
+            <div style="font-size:1.2rem">${r.role==='driver'?'🚗':'🎒'}</div>
+            <div class="ride-info"><strong>${r.role==='driver'?'Drove':'Rode'} · ${r.miles} miles</strong><span>${fmtDate(r.createdAt)}</span></div>
+            <div class="ride-meta"><strong style="color:var(--green)">${r.co2Saved} lbs CO₂</strong>saved</div>
+          </div>`;
+        }).join('');
+      } else {
+        document.getElementById('parent-rides').innerHTML='<p style="color:#666;font-size:.875rem">No rides logged yet.</p>';
+      }
+    })();
+  } catch(e){ console.error('Parent view error:',e); }
 }
-
-// ── EXPOSE ALL GLOBALS so onclick= attributes work ──
-window.showPage=showPage;
-window.showDash=showDash;
-window.doLogin=doLogin;
-window.doLogout=doLogout;
-window.doSignup=doSignup;
-window.doPasswordReset=doPasswordReset;
-window.suStep=suStep;
-window.loadDashboard=loadDashboard;
-window.handleIdUpload=handleIdUpload;
-window.toggleCarFields=toggleCarFields;
-window.selectCarOpt=selectCarOpt;
-window.openRequestModal=openRequestModal;
-window.sendRideRequest=sendRideRequest;
-window.respondRequest=respondRequest;
-window.openPostRideModal=openPostRideModal;
-window.postRide=postRide;
-window.openAddRideModal=openAddRideModal;
-window.calcModalRide=calcModalRide;
-window.confirmLogRide=confirmLogRide;
-window.calcRide=calcRide;
-window.logRide=logRide;
-window.sendMsg=sendMsg;
-window.saveNickname=saveNickname;
-window.removeNickname=removeNickname;
-window.openEditProfileModal=openEditProfileModal;
-window.saveProfile=saveProfile;
-window.openCarModal=openCarModal;
-window.selectCarOpt2=selectCarOpt2;
-window.saveCar=saveCar;
-window.generateParentCode=generateParentCode;
-window.copyParentLink=copyParentLink;
-window.closeModal=closeModal;
-window.openModal=openModal;
-window.initMap=initMap;
-window.onMapReady=onMapReady;
 </script>
 </body>
 </html>
