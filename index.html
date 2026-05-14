@@ -1,0 +1,2166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Commyute — Student Carpool Network</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,500;0,9..144,700;1,9..144,400&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap" rel="stylesheet">
+<style>
+:root {
+  --green:#1a6b3c; --green-light:#d6f0e2; --green-mid:#2d9b5f; --green-dark:#0d3d22;
+  --cream:#f8f5ef; --warm-white:#fefcf8; --charcoal:#1a1a18; --muted:#6b7268;
+  --border:#ddd8cc; --accent:#e6a020; --accent-light:#fef3d8;
+  --red:#c0392b; --blue:#2463a8; --blue-light:#dbeafe;
+  --purple:#7c3aed; --purple-light:#ede9fe;
+  --shadow:0 2px 16px rgba(26,107,60,.09); --shadow-lg:0 8px 40px rgba(26,107,60,.14);
+  --radius:14px; --radius-sm:8px; --sidebar:260px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--cream);color:var(--charcoal);font-size:16px;line-height:1.65;min-height:100vh}
+
+/* NAV */
+nav{background:var(--warm-white);border-bottom:1.5px solid var(--border);position:sticky;top:0;z-index:100;padding:0 2rem}
+.nav-inner{max-width:1160px;margin:0 auto;display:flex;align-items:center;gap:1.5rem;height:64px}
+.logo{display:flex;align-items:center;gap:10px;font-family:'Fraunces',serif;font-size:1.5rem;color:var(--green-dark);text-decoration:none;flex-shrink:0}
+.logo-mark{width:36px;height:36px;background:var(--green);border-radius:50% 50% 50% 8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:16px}
+.nav-links{display:flex;align-items:center;gap:.2rem;flex:1}
+.nav-links a{color:var(--muted);text-decoration:none;font-size:.875rem;font-weight:500;padding:6px 13px;border-radius:8px;transition:all .18s;white-space:nowrap;cursor:pointer}
+.nav-links a:hover,.nav-links a.active{color:var(--green-dark);background:var(--green-light)}
+.nav-actions{display:flex;gap:8px;margin-left:auto}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 20px;border-radius:10px;font-size:.875rem;font-weight:500;font-family:inherit;cursor:pointer;border:1.5px solid transparent;transition:all .18s;text-decoration:none}
+.btn-outline{border-color:var(--border);color:var(--charcoal);background:transparent}
+.btn-outline:hover{border-color:var(--green);color:var(--green)}
+.btn-primary{background:var(--green);color:#fff;border-color:var(--green)}
+.btn-primary:hover{background:var(--green-dark);border-color:var(--green-dark)}
+.btn-accent{background:var(--accent);color:var(--charcoal);border-color:var(--accent)}
+.btn-accent:hover{background:#c8891a}
+.btn-red{background:var(--red);color:#fff;border-color:var(--red)}
+.btn-lg{padding:13px 28px;font-size:1rem;border-radius:12px}
+.btn-sm{padding:6px 14px;font-size:.8rem;border-radius:8px}
+
+/* PAGES */
+.page{display:none}
+.page.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.page.active>*{animation:fadeUp .35s ease}
+
+/* HERO */
+.hero{background:var(--warm-white);padding:5rem 2rem 4rem;text-align:center;position:relative;overflow:hidden}
+.hero::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 60% 50% at 20% 30%,rgba(26,107,60,.06) 0%,transparent 70%),radial-gradient(ellipse 50% 60% at 80% 70%,rgba(230,160,32,.07) 0%,transparent 70%);pointer-events:none}
+.hero-eyebrow{display:inline-flex;align-items:center;gap:8px;background:var(--green-light);color:var(--green-dark);padding:5px 14px;border-radius:99px;font-size:.78rem;font-weight:600;letter-spacing:.04em;margin-bottom:1.5rem}
+.hero h1{font-family:'Fraunces',serif;font-size:clamp(2.6rem,5vw,4rem);color:var(--green-dark);line-height:1.1;max-width:720px;margin:0 auto 1.2rem}
+.hero h1 em{color:var(--green-mid);font-style:italic}
+.hero p{font-size:1.05rem;color:var(--muted);max-width:540px;margin:0 auto 2.5rem}
+.hero-cta{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+.impact-band{display:flex;justify-content:center;gap:3rem;margin-top:3.5rem;flex-wrap:wrap}
+.impact-stat{text-align:center}
+.impact-stat-num{font-family:'Fraunces',serif;font-size:2.2rem;color:var(--green);display:block}
+.impact-stat-label{font-size:.82rem;color:var(--muted)}
+
+/* SECTIONS */
+.section{padding:4rem 2rem}
+.section-inner{max-width:1100px;margin:0 auto}
+.section-label{font-size:.75rem;font-weight:600;letter-spacing:.08em;color:var(--green);text-transform:uppercase;margin-bottom:.7rem}
+.section-title{font-family:'Fraunces',serif;font-size:clamp(1.8rem,3vw,2.4rem);color:var(--charcoal);margin-bottom:.8rem;line-height:1.2}
+.section-sub{color:var(--muted);font-size:.95rem;max-width:540px;margin-bottom:2.5rem}
+
+/* CARDS */
+.card{background:var(--warm-white);border:1.5px solid var(--border);border-radius:var(--radius);padding:1.5rem}
+.card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem}
+.card-title{font-size:.95rem;font-weight:600}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:1.2rem}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:1.2rem}
+.auto-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1.5rem}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:99px;font-size:.72rem;font-weight:600}
+.badge-green{background:var(--green-light);color:var(--green-dark)}
+.badge-amber{background:var(--accent-light);color:#7a4f08}
+.badge-blue{background:var(--blue-light);color:#1a3e6e}
+.badge-red{background:#fde8e8;color:#7a1a1a}
+.badge-purple{background:var(--purple-light);color:#4c1d95}
+
+/* ALERTS */
+.alert{padding:11px 15px;border-radius:10px;font-size:.85rem;margin-bottom:1.2rem;display:flex;align-items:flex-start;gap:10px}
+.alert-info{background:var(--blue-light);color:#1a3e6e;border:1px solid #bfdbfe}
+.alert-success{background:var(--green-light);color:var(--green-dark);border:1px solid #a7f3d0}
+.alert-warning{background:var(--accent-light);color:#7a4f08;border:1px solid #fde68a}
+.alert-error{background:#fde8e8;color:#7a1a1a;border:1px solid #fca5a5}
+
+/* FORMS */
+.form-group{margin-bottom:1.1rem}
+.form-group label{display:block;font-size:.83rem;font-weight:500;margin-bottom:5px;color:var(--charcoal)}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:10px;font-family:inherit;font-size:.875rem;background:#fff;color:var(--charcoal);transition:border-color .18s;outline:none}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--green)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.upload-area{border:2px dashed var(--border);border-radius:10px;padding:1.4rem;text-align:center;cursor:pointer;transition:all .18s}
+.upload-area:hover{border-color:var(--green);background:var(--green-light)}
+.upload-area .upload-icon{font-size:1.8rem;margin-bottom:.4rem}
+.upload-area p{font-size:.8rem;color:var(--muted);margin-top:.3rem}
+input[type=file]{display:none}
+.divider{height:1px;background:var(--border);margin:1.4rem 0}
+
+/* AUTH */
+.auth-wrap{min-height:calc(100vh - 64px);display:flex;align-items:center;justify-content:center;padding:3rem 1rem}
+.auth-card{background:var(--warm-white);border:1.5px solid var(--border);border-radius:20px;padding:2.5rem;width:100%;max-width:480px;box-shadow:var(--shadow-lg)}
+.auth-card h2{font-family:'Fraunces',serif;font-size:1.7rem;color:var(--green-dark);text-align:center;margin-bottom:.4rem}
+.auth-card .subtitle{text-align:center;color:var(--muted);font-size:.875rem;margin-bottom:1.8rem}
+.auth-switch{text-align:center;margin-top:1.4rem;font-size:.85rem;color:var(--muted)}
+.auth-switch a{color:var(--green);font-weight:500;cursor:pointer}
+.step-dots{display:flex;gap:8px;margin-bottom:1.8rem;justify-content:center}
+.step-dot{width:28px;height:5px;border-radius:3px;background:var(--border);transition:background .2s}
+.step-dot.active{background:var(--green)}
+.toggle-section{display:none}
+.toggle-section.visible{display:block}
+
+/* AVATAR */
+.avatar{width:40px;height:40px;border-radius:50%;background:var(--green);color:#fff;font-weight:700;display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0;overflow:hidden}
+.avatar img{width:100%;height:100%;object-fit:cover}
+.avatar-lg{width:72px;height:72px;font-size:1.4rem}
+
+/* DASHBOARD */
+.dash-layout{display:grid;grid-template-columns:var(--sidebar) 1fr;min-height:calc(100vh - 64px)}
+.sidebar{background:var(--warm-white);border-right:1.5px solid var(--border);padding:1.5rem 0}
+.sidebar-user{padding:0 1.2rem 1.3rem;border-bottom:1px solid var(--border);margin-bottom:.8rem}
+.sidebar-user-info{display:flex;align-items:center;gap:10px}
+.sidebar-user-info .uname{font-weight:600;font-size:.875rem;margin-bottom:2px}
+.sidebar-user-info .uschool{font-size:.75rem;color:var(--muted)}
+.sidebar-nav a{display:flex;align-items:center;gap:10px;padding:9px 1.3rem;color:var(--muted);text-decoration:none;font-size:.85rem;font-weight:500;transition:all .15s;cursor:pointer}
+.sidebar-nav a:hover,.sidebar-nav a.active{color:var(--green-dark);background:var(--green-light)}
+.sidebar-nav a .sn-icon{font-size:1rem;width:20px;text-align:center}
+.sidebar-section-label{padding:1rem 1.3rem .3rem;font-size:.7rem;font-weight:600;letter-spacing:.07em;color:var(--muted);text-transform:uppercase}
+.notif-dot{width:7px;height:7px;border-radius:50%;background:var(--red);margin-left:auto;flex-shrink:0}
+.main-content{background:var(--cream);padding:2rem 2.5rem;overflow-y:auto}
+.main-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.8rem;flex-wrap:wrap;gap:1rem}
+.main-header h2{font-family:'Fraunces',serif;font-size:1.8rem;color:var(--green-dark)}
+.dash-section{display:none}
+.dash-section.active{display:block}
+
+/* STATS */
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:1rem;margin-bottom:1.8rem}
+.stat-card{background:var(--warm-white);border:1.5px solid var(--border);border-radius:var(--radius);padding:1.2rem 1.4rem}
+.stat-card .stat-label{font-size:.75rem;color:var(--muted);font-weight:500;margin-bottom:.4rem}
+.stat-card .stat-num{font-family:'Fraunces',serif;font-size:1.9rem;color:var(--green)}
+.stat-card .stat-unit{font-size:.75rem;color:var(--muted)}
+
+/* MAP */
+.map-container{border-radius:var(--radius);overflow:hidden;height:380px;border:1.5px solid var(--border)}
+#map{width:100%;height:100%}
+
+/* MESSAGING */
+.msg-layout{display:grid;grid-template-columns:280px 1fr;border:1.5px solid var(--border);border-radius:var(--radius);overflow:hidden;background:var(--warm-white);height:520px}
+.msg-list{border-right:1.5px solid var(--border);overflow-y:auto}
+.msg-thread{padding:13px 15px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;display:flex;gap:11px;align-items:flex-start}
+.msg-thread:hover,.msg-thread.active{background:var(--green-light)}
+.msg-thread-info{flex:1;min-width:0}
+.msg-thread-info strong{display:block;font-size:.85rem;font-weight:600}
+.msg-thread-info span{font-size:.75rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.msg-chat{display:flex;flex-direction:column}
+.msg-header{padding:.9rem 1.3rem;border-bottom:1.5px solid var(--border);display:flex;align-items:center;gap:11px}
+.msg-body{flex:1;overflow-y:auto;padding:1.3rem;display:flex;flex-direction:column;gap:12px}
+.msg-bubble{max-width:75%}
+.msg-bubble.them{align-self:flex-start}
+.msg-bubble.me{align-self:flex-end}
+.bubble{padding:9px 14px;border-radius:16px;font-size:.85rem;line-height:1.55}
+.msg-bubble.them .bubble{background:var(--cream);border:1px solid var(--border)}
+.msg-bubble.me .bubble{background:var(--green);color:#fff}
+.bubble-name{font-size:.72rem;color:var(--muted);margin-bottom:3px}
+.msg-bubble.me .bubble-name{text-align:right}
+.msg-input-row{padding:.9rem 1.3rem;border-top:1.5px solid var(--border);display:flex;gap:9px}
+.msg-input-row input{flex:1;padding:9px 13px;border:1.5px solid var(--border);border-radius:10px;font-family:inherit;font-size:.85rem;outline:none}
+.msg-input-row input:focus{border-color:var(--green)}
+.msg-empty{display:flex;align-items:center;justify-content:center;flex:1;color:var(--muted);font-size:.875rem;text-align:center;padding:2rem}
+
+/* SCHEDULE */
+.week-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.sched-day{background:var(--warm-white);border:1.5px solid var(--border);border-radius:10px;padding:.9rem;text-align:center}
+.sched-day.mine{border-color:var(--green);background:var(--green-light)}
+.sched-day.today{border-color:var(--blue);background:var(--blue-light)}
+.sched-day .day-name{font-size:.7rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.5rem}
+.sched-day .driver-name{font-size:.82rem;font-weight:600;color:var(--charcoal);margin-bottom:.3rem}
+
+/* LEADERBOARD */
+.lb-row{display:flex;align-items:center;gap:1rem;padding:.9rem 1rem;border-bottom:1px solid var(--border);transition:background .15s}
+.lb-row:hover{background:var(--green-light)}
+.lb-row:last-child{border-bottom:none}
+.lb-rank{font-family:'Fraunces',serif;font-size:1.2rem;color:var(--muted);width:32px;text-align:center;flex-shrink:0}
+.lb-rank.gold{color:#d4a017}
+.lb-rank.silver{color:#9ca3af}
+.lb-rank.bronze{color:#cd7c32}
+.lb-info{flex:1}
+.lb-info strong{font-size:.875rem}
+.lb-info span{font-size:.75rem;color:var(--muted);display:block}
+.lb-score{font-family:'Fraunces',serif;font-size:1.1rem;color:var(--green);text-align:right}
+
+/* PROGRESS */
+.progress{height:5px;border-radius:3px;background:var(--border);overflow:hidden;margin-top:.4rem}
+.progress-bar{height:100%;background:var(--green);border-radius:3px;transition:width .6s ease}
+
+/* MODAL */
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center;padding:1rem}
+.modal-overlay.open{display:flex}
+.modal-box{background:#fff;border-radius:20px;padding:2rem;max-width:480px;width:100%;box-shadow:var(--shadow-lg);animation:fadeUp .25s ease;max-height:90vh;overflow-y:auto}
+.modal-box h3{font-family:'Fraunces',serif;font-size:1.4rem;color:var(--green-dark);margin-bottom:.4rem}
+.modal-box p{font-size:.875rem;color:var(--muted);margin-bottom:1.2rem}
+.modal-close{float:right;background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--muted)}
+
+/* RIDE ITEM */
+.ride-item{display:flex;align-items:center;gap:.9rem;padding:.9rem 0;border-bottom:1px solid var(--border)}
+.ride-item:last-child{border-bottom:none}
+.ride-info{flex:1;min-width:0}
+.ride-info strong{display:block;font-size:.875rem;font-weight:600}
+.ride-info span{font-size:.78rem;color:var(--muted)}
+.ride-meta{text-align:right;font-size:.78rem;color:var(--muted)}
+.ride-meta strong{display:block;font-size:.85rem;color:var(--charcoal)}
+
+/* WHY/HOW PAGES */
+.why-dark{background:var(--green-dark);color:#fff;padding:5rem 2rem}
+.why-dark .section-label{color:var(--accent)}
+.why-dark .section-title{color:#fff}
+.why-dark .section-sub{color:rgba(255,255,255,.7)}
+.impact-card-dark{background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:var(--radius);padding:1.8rem}
+.impact-card-dark h3{font-size:.95rem;font-weight:600;margin-bottom:.4rem}
+.impact-card-dark p{font-size:.83rem;color:rgba(255,255,255,.65);line-height:1.65}
+.impact-big{font-family:'Fraunces',serif;font-size:1.9rem;color:var(--accent);display:block;margin-bottom:.3rem}
+
+/* FEATURE CARDS */
+.feature-card{background:var(--warm-white);border:1.5px solid var(--border);border-radius:var(--radius);padding:1.8rem;transition:transform .2s,box-shadow .2s}
+.feature-card:hover{transform:translateY(-3px);box-shadow:var(--shadow-lg)}
+.feature-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;margin-bottom:.9rem}
+
+/* STEP CARDS */
+.step-card{background:var(--warm-white);border:1.5px solid var(--border);border-radius:var(--radius);padding:1.6rem;transition:transform .2s,box-shadow .2s}
+.step-card:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+.step-num{width:34px;height:34px;border-radius:50%;background:var(--green);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem;margin-bottom:.9rem}
+
+/* PEER CARD */
+.peer-card{background:var(--warm-white);border:1.5px solid var(--border);border-radius:var(--radius);padding:1.2rem;display:flex;flex-direction:column;align-items:center;text-align:center;gap:.6rem;transition:transform .18s,box-shadow .18s}
+.peer-card:hover{transform:translateY(-2px);box-shadow:var(--shadow)}
+.peer-card strong{font-size:.875rem}
+.peer-card .peer-detail{font-size:.75rem;color:var(--muted)}
+
+/* CAR FORM */
+.car-option{border:1.5px solid var(--border);border-radius:10px;padding:1rem;cursor:pointer;transition:all .18s}
+.car-option.selected{border-color:var(--green);background:var(--green-light)}
+.car-option input[type=radio]{display:none}
+
+/* PARENT VIEW */
+.parent-wrap{min-height:100vh;background:var(--cream);padding:2rem}
+.parent-header{background:var(--green-dark);color:#fff;padding:1.5rem 2rem;border-radius:var(--radius);margin-bottom:2rem;display:flex;align-items:center;justify-content:space-between}
+
+/* TOAST */
+.toast{position:fixed;bottom:2rem;right:2rem;background:var(--charcoal);color:#fff;padding:12px 20px;border-radius:10px;font-size:.875rem;z-index:300;animation:fadeUp .3s ease;max-width:320px}
+
+/* FOOTER */
+footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 2rem}
+.footer-inner{max-width:1100px;margin:0 auto}
+.footer-top{display:grid;grid-template-columns:1.5fr repeat(3,1fr);gap:2rem;padding-bottom:2rem;border-bottom:1px solid rgba(255,255,255,.1)}
+.footer-brand .logo{color:#fff;margin-bottom:.8rem}
+.footer-brand p{font-size:.83rem;line-height:1.65}
+.footer-col h4{color:#fff;font-size:.82rem;font-weight:600;margin-bottom:.9rem;letter-spacing:.04em}
+.footer-col a{display:block;color:rgba(255,255,255,.5);font-size:.82rem;text-decoration:none;margin-bottom:.45rem;transition:color .15s;cursor:pointer}
+.footer-col a:hover{color:var(--green-mid)}
+.footer-bottom{padding-top:1.3rem;display:flex;justify-content:space-between;align-items:center;font-size:.78rem;flex-wrap:wrap;gap:.8rem}
+
+/* RESPONSIVE */
+@media(max-width:768px){
+  .dash-layout{grid-template-columns:1fr}
+  .sidebar{display:none}
+  .grid-2,.grid-3,.grid-4,.form-row{grid-template-columns:1fr}
+  .footer-top{grid-template-columns:1fr 1fr}
+  .msg-layout{grid-template-columns:1fr}
+  .week-grid{grid-template-columns:repeat(3,1fr)}
+}
+
+/* UTILS */
+.text-muted{color:var(--muted)}
+.text-green{color:var(--green)}
+.mt1{margin-top:1rem}
+.mb1{margin-bottom:1rem}
+.centered{text-align:center}
+.flex-center{display:flex;align-items:center;justify-content:center}
+.gap-1{gap:1rem}
+.w100{width:100%;justify-content:center}
+.hidden{display:none}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-inner">
+    <a class="logo" onclick="showPage('home')">
+      <div class="logo-mark">🛣</div>
+      Commyute
+    </a>
+    <div class="nav-links" id="guestNav">
+      <a onclick="showPage('home')" id="nav-home" class="active">Home</a>
+      <a onclick="showPage('why')" id="nav-why">Why Carpool?</a>
+      <a onclick="showPage('how')" id="nav-how">How It Works</a>
+      <a onclick="showPage('safety')" id="nav-safety">Safety</a>
+    </div>
+    <div class="nav-links hidden" id="authNav">
+      <a onclick="showDash('overview')" class="active">Dashboard</a>
+      <a onclick="showDash('map')">Neighbor Map</a>
+      <a onclick="showDash('messages')">Messages</a>
+      <a onclick="showDash('impact')">My Impact</a>
+    </div>
+    <div class="nav-actions" id="guestActions">
+      <button class="btn btn-outline" onclick="showPage('login')">Log In</button>
+      <button class="btn btn-primary" onclick="showPage('signup')">Join Free</button>
+    </div>
+    <div class="nav-actions hidden" id="authActions">
+      <button class="btn btn-outline btn-sm" onclick="generateParentCode()">👨‍👩‍👧 Parent View</button>
+      <button class="btn btn-primary btn-sm" onclick="doLogout()">Log Out</button>
+    </div>
+  </div>
+</nav>
+
+<!-- ══════ PAGE: HOME ══════ -->
+<div class="page active" id="page-home">
+  <section class="hero">
+    <span class="hero-eyebrow">🌱 Bishop O'Dowd High School</span>
+    <h1>Carpool smarter.<br><em>Arrive together.</em></h1>
+    <p>Connect with verified O'Dowd classmates near you. Save money, cut emissions, and turn your commute into a conversation.</p>
+    <div class="hero-cta">
+      <button class="btn btn-primary btn-lg" onclick="showPage('signup')">Get Started — It's Free</button>
+      <button class="btn btn-outline btn-lg" onclick="showPage('why')">Why Carpool?</button>
+    </div>
+    <div class="impact-band">
+      <div class="impact-stat"><span class="impact-stat-num">4.6</span><span class="impact-stat-label">metric tons CO₂/car/year</span></div>
+      <div class="impact-stat"><span class="impact-stat-num">54 hrs</span><span class="impact-stat-label">lost to traffic annually</span></div>
+      <div class="impact-stat"><span class="impact-stat-num">$1,200+</span><span class="impact-stat-label">saved per carpooling student</span></div>
+      <div class="impact-stat"><span class="impact-stat-num">40%</span><span class="impact-stat-label">traffic drop if 10% carpool</span></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-inner">
+      <div class="section-label">How it works</div>
+      <h2 class="section-title">Riding together has never been easier</h2>
+      <p class="section-sub">Set up in minutes. Match with O'Dowd classmates. Start saving the planet — and your wallet.</p>
+      <div class="auto-grid">
+        <div class="step-card"><div class="step-num">1</div><h3 style="font-size:.95rem;margin-bottom:.4rem">Create Your Account</h3><p style="font-size:.83rem;color:var(--muted)">Sign up with your O'Dowd school email (@bishopodowd.org) and upload your student ID for verification.</p></div>
+        <div class="step-card"><div class="step-num">2</div><h3 style="font-size:.95rem;margin-bottom:.4rem">Find Nearby Classmates</h3><p style="font-size:.83rem;color:var(--muted)">Browse an interactive map showing O'Dowd students by neighborhood — Oakland Hills, Piedmont, and more.</p></div>
+        <div class="step-card"><div class="step-num">3</div><h3 style="font-size:.95rem;margin-bottom:.4rem">Request or Post a Ride</h3><p style="font-size:.83rem;color:var(--muted)">Post an available seat or request a ride. Include a message and agree on compensation — free, cash, or baked goods 🍪.</p></div>
+        <div class="step-card"><div class="step-num">4</div><h3 style="font-size:.95rem;margin-bottom:.4rem">Build Your Schedule</h3><p style="font-size:.83rem;color:var(--muted)">Set up a rotating weekly schedule. Confirm each ride as it happens to track your real impact.</p></div>
+        <div class="step-card"><div class="step-num">5</div><h3 style="font-size:.95rem;margin-bottom:.4rem">Track Your Impact</h3><p style="font-size:.83rem;color:var(--muted)">Log your car, routes, and rides. Watch your CO₂ savings, time saved, and money saved grow in real time.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" style="background:var(--warm-white)">
+    <div class="section-inner">
+      <div class="section-label">Features</div>
+      <h2 class="section-title">Built for O'Dowd students</h2>
+      <div class="auto-grid">
+        <div class="feature-card"><div class="feature-icon" style="background:#d6f0e2">📍</div><h3 style="font-size:.95rem;margin-bottom:.4rem">Neighborhood Map</h3><p style="font-size:.83rem;color:var(--muted)">Interactive Google Maps showing classmates by area — Oakland Hills, Piedmont, Montclair, and more. No exact addresses.</p></div>
+        <div class="feature-card"><div class="feature-icon" style="background:#fef3d8">💬</div><h3 style="font-size:.95rem;margin-bottom:.4rem">Safe Messaging</h3><p style="font-size:.83rem;color:var(--muted)">Chat only with students you've matched with. Every request includes a safety message so you know who you're riding with.</p></div>
+        <div class="feature-card"><div class="feature-icon" style="background:#dbeafe">🗓</div><h3 style="font-size:.95rem;margin-bottom:.4rem">Ride Scheduler</h3><p style="font-size:.83rem;color:var(--muted)">Build a recurring schedule with quick confirmation for each ride. One tap to log it actually happened.</p></div>
+        <div class="feature-card"><div class="feature-icon" style="background:#fde8e8">🚗</div><h3 style="font-size:.95rem;margin-bottom:.4rem">Car Emissions Tracker</h3><p style="font-size:.83rem;color:var(--muted)">Enter your car's year, make, and model. We calculate real MPG-based emissions saved on every trip automatically.</p></div>
+        <div class="feature-card"><div class="feature-icon" style="background:#ede9fe">🏆</div><h3 style="font-size:.95rem;margin-bottom:.4rem">Leaderboard</h3><p style="font-size:.83rem;color:var(--muted)">Compete with classmates on emissions saved. Opt in with a nickname to appear on the school leaderboard.</p></div>
+        <div class="feature-card"><div class="feature-icon" style="background:#d6f0e2">👨‍👩‍👧</div><h3 style="font-size:.95rem;margin-bottom:.4rem">Parent View</h3><p style="font-size:.83rem;color:var(--muted)">Share a read-only link with your parent or guardian so they can see your carpool schedule and partners — safely.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="why-dark">
+    <div class="section-inner">
+      <div class="section-label">The bigger picture</div>
+      <h2 class="section-title" style="color:#fff">Small rides, massive impact</h2>
+      <p class="section-sub">Here's what the data actually says about carpooling and why it matters right now.</p>
+      <div class="auto-grid" style="margin-top:1.5rem">
+        <div class="impact-card-dark"><span class="impact-big">29%</span><h3>of US emissions from transportation</h3><p>Personal vehicles are the single largest source of greenhouse gas emissions in the US. Every shared ride directly cuts that number.</p></div>
+        <div class="impact-card-dark"><span class="impact-big">4.6 tons</span><h3>CO₂ per car per year</h3><p>The average car emits 4.6 metric tons of CO₂ annually. Sharing your ride with one other person cuts your contribution in half immediately.</p></div>
+        <div class="impact-card-dark"><span class="impact-big">$1,200+</span><h3>saved annually per student</h3><p>Gas, parking, and wear costs add up fast. Carpooling 3 days a week can save a student over $1,200 per year — real money.</p></div>
+        <div class="impact-card-dark"><span class="impact-big">40%</span><h3>less congestion possible</h3><p>Research shows if just 10% more commuters carpooled, rush-hour congestion could drop by 40%. That's less time sitting in traffic for everyone.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section" style="text-align:center">
+    <div class="section-inner">
+      <h2 class="section-title">Ready to ride smarter?</h2>
+      <p class="section-sub" style="margin:0 auto 2rem">Join your O'Dowd classmates already saving money, building friendships, and protecting the planet — one ride at a time.</p>
+      <button class="btn btn-primary btn-lg" onclick="showPage('signup')">Create Your Free Account →</button>
+    </div>
+  </section>
+
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-top">
+        <div class="footer-brand">
+          <div class="logo" style="color:#fff;display:flex;align-items:center;gap:10px;font-family:'Fraunces',serif;font-size:1.3rem;margin-bottom:.8rem"><div class="logo-mark">🛣</div>Commyute</div>
+          <p>A student carpool platform built for Bishop O'Dowd High School — reducing emissions, cutting costs, and building community one ride at a time.</p>
+        </div>
+        <div class="footer-col"><h4>Platform</h4><a onclick="showPage('how')">How It Works</a><a onclick="showPage('why')">Why Carpool?</a><a onclick="showPage('safety')">Safety</a><a onclick="showPage('signup')">Sign Up</a></div>
+        <div class="footer-col"><h4>Students</h4><a onclick="showPage('signup')">Find Carpool Partners</a><a onclick="showPage('signup')">Schedule Rides</a><a onclick="showPage('signup')">Track Impact</a><a onclick="showPage('signup')">Leaderboard</a></div>
+        <div class="footer-col"><h4>Info</h4><a>Privacy Policy</a><a>Terms of Service</a><a>About Commyute</a><a>Contact</a></div>
+      </div>
+      <div class="footer-bottom"><span>© 2025 Commyute · Bishop O'Dowd High School</span><span>🌿 Ride together. Arrive greener.</span></div>
+    </div>
+  </footer>
+</div>
+
+<!-- ══════ PAGE: WHY CARPOOL ══════ -->
+<div class="page" id="page-why">
+  <section class="hero" style="padding:3.5rem 2rem 2.5rem">
+    <span class="hero-eyebrow">🌍 Environmental Impact</span>
+    <h1>Why <em>Carpooling Matters</em></h1>
+    <p>The science is clear. Fewer cars on the road saves the planet, saves your wallet, and saves your sanity.</p>
+  </section>
+  <section class="section">
+    <div class="section-inner">
+      <div class="grid-2" style="align-items:center;margin-bottom:3rem">
+        <div>
+          <div class="section-label">Carbon Emissions</div>
+          <h2 class="section-title">Cars are a major climate problem</h2>
+          <p style="color:var(--muted);line-height:1.8;margin-bottom:1rem">Transportation accounts for about <strong>29% of total U.S. greenhouse gas emissions</strong> — making it the single largest contributor to climate change. Personal vehicles make up the vast majority.</p>
+          <p style="color:var(--muted);line-height:1.8">The average passenger car emits <strong>4.6 metric tons of CO₂ per year</strong>. Carpooling with just one other person cuts your per-person emissions in half. Four people? Down to 25%.</p>
+        </div>
+        <div class="card">
+          <div class="section-label">Did you know?</div>
+          <div style="display:flex;flex-direction:column;gap:1rem;margin-top:.8rem">
+            <div style="display:flex;gap:1rem;align-items:flex-start"><span style="font-size:1.4rem;flex-shrink:0">🚗</span><div><strong>1 car → 1 person</strong><br><span style="color:var(--muted);font-size:.83rem">Average car occupancy during school rush: 1.09 people. Almost every car has an empty seat.</span></div></div>
+            <div style="display:flex;gap:1rem;align-items:flex-start"><span style="font-size:1.4rem;flex-shrink:0">🌱</span><div><strong>2 people = 50% fewer emissions</strong><br><span style="color:var(--muted);font-size:.83rem">It's that simple. One passenger immediately halves per-person carbon output.</span></div></div>
+            <div style="display:flex;gap:1rem;align-items:flex-start"><span style="font-size:1.4rem;flex-shrink:0">⛽</span><div><strong>$1,800/year on gas</strong><br><span style="color:var(--muted);font-size:.83rem">Average teen driver gas spend. Carpooling 3 days a week slashes that by over 60%.</span></div></div>
+            <div style="display:flex;gap:1rem;align-items:flex-start"><span style="font-size:1.4rem;flex-shrink:0">⏱</span><div><strong>54 hours lost to traffic yearly</strong><br><span style="color:var(--muted);font-size:.83rem">Fewer cars = faster roads for everyone. Carpooling compounds its own benefit.</span></div></div>
+          </div>
+        </div>
+      </div>
+      <div style="text-align:center;padding:2rem 0">
+        <h2 class="section-title">Ready to be part of the solution?</h2>
+        <p style="color:var(--muted);margin-bottom:1.5rem">Every ride shared is a vote for a cleaner, less congested Oakland.</p>
+        <button class="btn btn-primary btn-lg" onclick="showPage('signup')">Join Commyute Free →</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ══════ PAGE: HOW IT WORKS ══════ -->
+<div class="page" id="page-how">
+  <section class="hero" style="padding:3.5rem 2rem 2.5rem">
+    <span class="hero-eyebrow">📖 Getting Started</span>
+    <h1>How <em>Commyute Works</em></h1>
+    <p>From signup to your first ride — everything you need to know.</p>
+  </section>
+  <section class="section">
+    <div class="section-inner" style="max-width:720px">
+      <div style="display:flex;flex-direction:column;gap:2.2rem">
+        <div style="display:flex;gap:1.4rem;align-items:flex-start"><div class="step-num" style="flex-shrink:0;margin-top:3px">1</div><div><h3 style="margin-bottom:.5rem">Sign up with your O'Dowd email</h3><p style="color:var(--muted);font-size:.875rem;line-height:1.75">Use your @bishopodowd.org school email. Upload a photo of your student ID. This is how we keep the community Bishop O'Dowd students only — no parents, no outsiders.</p></div></div>
+        <div style="display:flex;gap:1.4rem;align-items:flex-start"><div class="step-num" style="flex-shrink:0;margin-top:3px">2</div><div><h3 style="margin-bottom:.5rem">Set your neighborhood and car</h3><p style="color:var(--muted);font-size:.875rem;line-height:1.75">Enter your ZIP code — we place you in a neighborhood zone (like Oakland Hills or Piedmont) on the map. Add your car's year, make, and model so we can calculate real emissions savings.</p></div></div>
+        <div style="display:flex;gap:1.4rem;align-items:flex-start"><div class="step-num" style="flex-shrink:0;margin-top:3px">3</div><div><h3 style="margin-bottom:.5rem">Find classmates on the map</h3><p style="color:var(--muted);font-size:.875rem;line-height:1.75">Browse an interactive Google Map showing O'Dowd students by neighborhood zone. No exact addresses — just general areas so you know who lives nearby.</p></div></div>
+        <div style="display:flex;gap:1.4rem;align-items:flex-start"><div class="step-num" style="flex-shrink:0;margin-top:3px">4</div><div><h3 style="margin-bottom:.5rem">Request or post a ride</h3><p style="color:var(--muted);font-size:.875rem;line-height:1.75">Post an available seat in your car, or request a ride from someone. Every request includes a required safety message so both parties know who they're riding with. Choose compensation: free, cash, or baked goods.</p></div></div>
+        <div style="display:flex;gap:1.4rem;align-items:flex-start"><div class="step-num" style="flex-shrink:0;margin-top:3px">5</div><div><h3 style="margin-bottom:.5rem">Build your schedule</h3><p style="color:var(--muted);font-size:.875rem;line-height:1.75">Set up recurring rides for each day of the week. After each ride, confirm it happened with one tap. This logs the trip, updates your emissions tracker, and keeps the leaderboard accurate.</p></div></div>
+        <div style="display:flex;gap:1.4rem;align-items:flex-start"><div class="step-num" style="flex-shrink:0;margin-top:3px">6</div><div><h3 style="margin-bottom:.5rem">Track your impact and compete</h3><p style="color:var(--muted);font-size:.875rem;line-height:1.75">Every confirmed ride updates your personal impact stats — CO₂ saved, money saved, time saved. Opt into the leaderboard with a nickname to compete with O'Dowd classmates on emissions saved.</p></div></div>
+      </div>
+      <div class="divider"></div>
+      <div class="card" style="text-align:center;background:var(--green-light)">
+        <h3 style="color:var(--green-dark);margin-bottom:.6rem;font-family:'Fraunces',serif">Compensation Options</h3>
+        <div class="grid-3" style="margin-top:1rem">
+          <div class="card"><div style="font-size:1.8rem;margin-bottom:.4rem">🆓</div><strong style="font-size:.875rem">Free</strong><p style="font-size:.75rem;color:var(--muted);margin-top:.3rem">Neighbors helping neighbors. No money, just goodwill.</p></div>
+          <div class="card"><div style="font-size:1.8rem;margin-bottom:.4rem">💵</div><strong style="font-size:.875rem">Cash</strong><p style="font-size:.75rem;color:var(--muted);margin-top:.3rem">Agree on a small gas contribution. Set your own rate.</p></div>
+          <div class="card"><div style="font-size:1.8rem;margin-bottom:.4rem">🍪</div><strong style="font-size:.875rem">Baked Goods</strong><p style="font-size:.75rem;color:var(--muted);margin-top:.3rem">The most delicious way to commute to school.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ══════ PAGE: SAFETY ══════ -->
+<div class="page" id="page-safety">
+  <section class="hero" style="padding:3.5rem 2rem 2.5rem">
+    <span class="hero-eyebrow">🔒 Your Safety First</span>
+    <h1>Built with <em>Safety at Its Core</em></h1>
+    <p>Every feature of Commyute is designed to keep Bishop O'Dowd students safe.</p>
+  </section>
+  <section class="section">
+    <div class="section-inner">
+      <div class="grid-2" style="margin-bottom:2.5rem;align-items:start">
+        <div>
+          <div class="section-label">Verification</div>
+          <h2 class="section-title">O'Dowd students only</h2>
+          <div style="display:flex;flex-direction:column;gap:.8rem;margin-top:1rem">
+            <div class="alert alert-success">✅ School email verification (@bishopodowd.org required)</div>
+            <div class="alert alert-success">✅ Student ID photo upload on signup</div>
+            <div class="alert alert-success">✅ Administrator verification — coming soon</div>
+          </div>
+          <p style="color:var(--muted);font-size:.875rem;margin-top:1.2rem;line-height:1.75">Only students with a verified Bishop O'Dowd email can access the platform. No parents, no outsiders, no anonymous accounts. Real names are required — tied to your school identity.</p>
+        </div>
+        <div>
+          <div class="section-label">Privacy</div>
+          <h2 class="section-title">Your exact location stays private</h2>
+          <p style="color:var(--muted);font-size:.875rem;margin-top:1rem;line-height:1.75">Commyute only stores your neighborhood zone — not your street or house number. The map shows approximate areas (like "Oakland Hills" or "Piedmont"), not addresses.</p>
+          <br><p style="color:var(--muted);font-size:.875rem;line-height:1.75">Exact pickup locations are shared only between confirmed carpool partners via private messaging — never on the public map.</p>
+          <div class="alert alert-warning" style="margin-top:1.2rem">👨‍👩‍👧 Parents can request a read-only view of their student's schedule and carpool partners via a shareable code generated from the student's profile.</div>
+        </div>
+      </div>
+      <div class="section-label">Community Rules</div>
+      <h2 class="section-title">Our safety commitments</h2>
+      <div class="auto-grid" style="margin-top:1.2rem">
+        <div class="card"><strong>🏫 O'Dowd Only</strong><p style="font-size:.83rem;color:var(--muted);margin-top:.4rem">Only verified Bishop O'Dowd students can join. Every account is tied to a real school email.</p></div>
+        <div class="card"><strong>💬 Ride-Gated Messaging</strong><p style="font-size:.83rem;color:var(--muted);margin-top:.4rem">You can only message students you've sent or received a carpool request with. No unsolicited contact.</p></div>
+        <div class="card"><strong>📝 Safety Message Required</strong><p style="font-size:.83rem;color:var(--muted);margin-top:.4rem">Every ride request includes a required message so both parties know who they're riding with before accepting.</p></div>
+        <div class="card"><strong>📛 Real Names Only</strong><p style="font-size:.83rem;color:var(--muted);margin-top:.4rem">No anonymous profiles. All users register with their real name tied to their school email and student ID.</p></div>
+        <div class="card"><strong>🚩 Report & Block</strong><p style="font-size:.83rem;color:var(--muted);margin-top:.4rem">Any user can report or block another. Reports are reviewed by the Commyute admin.</p></div>
+        <div class="card"><strong>👁 Parent Read-Only</strong><p style="font-size:.83rem;color:var(--muted);margin-top:.4rem">Students can share a view-only link with parents showing their schedule and group members. Parents can't interact.</p></div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ══════ PAGE: SIGN UP ══════ -->
+<div class="page" id="page-signup">
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <div style="text-align:center;margin-bottom:1.5rem">
+        <div class="logo" style="justify-content:center;font-family:'Fraunces',serif;font-size:1.3rem;display:flex;align-items:center;gap:10px;color:var(--green-dark);margin-bottom:.3rem"><div class="logo-mark">🛣</div>Commyute</div>
+      </div>
+      <div class="step-dots"><div class="step-dot active" id="sd1"></div><div class="step-dot" id="sd2"></div><div class="step-dot" id="sd3"></div></div>
+
+      <!-- Step 1 -->
+      <div id="su1">
+        <h2>Create your account</h2>
+        <p class="subtitle">Step 1 of 3 — Personal info</p>
+        <div class="alert alert-info">ℹ️ Commyute is for Bishop O'Dowd High School students only. You must use your @bishopodowd.org email.</div>
+        <div class="form-row">
+          <div class="form-group"><label>First Name</label><input type="text" id="reg-first" placeholder="Alex"></div>
+          <div class="form-group"><label>Last Name</label><input type="text" id="reg-last" placeholder="Johnson"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Age</label><input type="number" id="reg-age" min="14" max="19" placeholder="17"></div>
+          <div class="form-group"><label>Grade</label><select id="reg-grade"><option value="">Select grade</option><option>9th (Freshman)</option><option>10th (Sophomore)</option><option>11th (Junior)</option><option>12th (Senior)</option></select></div>
+        </div>
+        <div class="form-group"><label>School Email (@bishopodowd.org)</label><input type="email" id="reg-email" placeholder="alex.johnson@bishopodowd.org"></div>
+        <div class="form-group"><label>Password (min. 6 characters)</label><input type="password" id="reg-pass" placeholder="Create a strong password"></div>
+        <button class="btn btn-primary w100" onclick="suStep(2)">Continue →</button>
+      </div>
+
+      <!-- Step 2 -->
+      <div id="su2" class="toggle-section">
+        <h2>Student ID verification</h2>
+        <p class="subtitle">Step 2 of 3 — Upload your ID</p>
+        <div class="form-group"><label>Upload Student ID Photo</label>
+          <div class="upload-area" onclick="document.getElementById('id-file').click()" id="id-upload-area">
+            <div class="upload-icon">🪪</div>
+            <strong style="font-size:.875rem">Click to upload your Bishop O'Dowd student ID</strong>
+            <p>JPG, PNG, or PDF — max 10MB. Only visible to you and the administrator.</p>
+          </div>
+          <input type="file" id="id-file" accept=".jpg,.jpeg,.png,.pdf" onchange="handleIdUpload(this)">
+        </div>
+        <div id="id-preview" class="hidden" style="margin-bottom:1rem">
+          <div class="alert alert-success">✅ <span id="id-filename">ID uploaded</span></div>
+        </div>
+        <div class="form-group"><label>ZIP Code (for neighborhood map)</label><input type="text" id="reg-zip" placeholder="94605" maxlength="5"></div>
+        <div class="form-group"><label>I want to…</label><select id="reg-pref"><option value="both">Offer rides AND request rides</option><option value="driver">Only offer rides (I'm a driver)</option><option value="rider">Only request rides</option></select></div>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-outline" style="flex:1;justify-content:center" onclick="suStep(1)">← Back</button>
+          <button class="btn btn-primary" style="flex:2;justify-content:center" onclick="suStep(3)">Continue →</button>
+        </div>
+      </div>
+
+      <!-- Step 3 -->
+      <div id="su3" class="toggle-section">
+        <h2>Your car & preferences</h2>
+        <p class="subtitle">Step 3 of 3 — Vehicle & compensation</p>
+        <div class="form-group"><label>Do you have a car to drive?</label>
+          <select id="reg-has-car" onchange="toggleCarFields()">
+            <option value="no">No — I'm looking for rides</option>
+            <option value="yes">Yes — I can drive</option>
+          </select>
+        </div>
+        <div id="car-fields" class="hidden">
+          <div class="form-group"><label>How do you want to enter your car?</label>
+            <div style="display:flex;gap:10px;margin-bottom:.8rem">
+              <div class="car-option selected" id="car-opt-model" onclick="selectCarOpt('model')" style="flex:1;text-align:center;padding:.8rem">
+                <input type="radio" name="car-method" value="model" checked>
+                🚗<br><strong style="font-size:.82rem">Year / Make / Model</strong>
+              </div>
+              <div class="car-option" id="car-opt-mpg" onclick="selectCarOpt('mpg')" style="flex:1;text-align:center;padding:.8rem">
+                <input type="radio" name="car-method" value="mpg">
+                ⛽<br><strong style="font-size:.82rem">Enter MPG manually</strong>
+              </div>
+            </div>
+          </div>
+          <div id="car-model-fields">
+            <div class="form-row">
+              <div class="form-group"><label>Year</label><input type="number" id="car-year" placeholder="2019" min="2000" max="2026"></div>
+              <div class="form-group"><label>Make</label><input type="text" id="car-make" placeholder="Toyota"></div>
+            </div>
+            <div class="form-group"><label>Model</label><input type="text" id="car-model" placeholder="Camry"></div>
+          </div>
+          <div id="car-mpg-fields" class="hidden">
+            <div class="form-group"><label>Your car's MPG (city/highway average)</label><input type="number" id="car-mpg" placeholder="32" min="10" max="150"></div>
+          </div>
+        </div>
+        <div class="form-group"><label>Preferred compensation</label>
+          <select id="reg-comp">
+            <option value="free">Free — I'm happy to help</option>
+            <option value="cash">Cash contribution</option>
+            <option value="baked">Baked goods 🍪</option>
+            <option value="open">Open to anything</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Leaderboard nickname (optional — leave blank to stay private)</label><input type="text" id="reg-nickname" placeholder="GreenEagle or leave blank"></div>
+        <div class="alert alert-warning">⏳ Your account will be active immediately. Administrator verification will be added soon for an extra layer of safety.</div>
+        <div style="display:flex;gap:10px">
+          <button class="btn btn-outline" style="flex:1;justify-content:center" onclick="suStep(2)">← Back</button>
+          <button class="btn btn-primary" style="flex:2;justify-content:center" onclick="doSignup()">Create Account 🎉</button>
+        </div>
+      </div>
+
+      <div class="auth-switch">Already have an account? <a onclick="showPage('login')">Log In</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ PAGE: LOGIN ══════ -->
+<div class="page" id="page-login">
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <div style="text-align:center;margin-bottom:1.5rem">
+        <div class="logo" style="justify-content:center;font-family:'Fraunces',serif;font-size:1.3rem;display:flex;align-items:center;gap:10px;color:var(--green-dark)"><div class="logo-mark">🛣</div>Commyute</div>
+      </div>
+      <h2>Welcome back!</h2>
+      <p class="subtitle">Log in to your carpool dashboard</p>
+      <div id="login-error" class="alert alert-error hidden"></div>
+      <div class="form-group"><label>School Email</label><input type="email" id="login-email" placeholder="alex.johnson@bishopodowd.org"></div>
+      <div class="form-group"><label>Password</label><input type="password" id="login-pass" placeholder="••••••••"></div>
+      <button class="btn btn-primary w100" onclick="doLogin()" id="login-btn">Log In →</button>
+      <div style="text-align:center;margin-top:.8rem"><a style="font-size:.8rem;color:var(--muted);cursor:pointer" onclick="doPasswordReset()">Forgot password?</a></div>
+      <div class="auth-switch">New to Commyute? <a onclick="showPage('signup')">Create an account</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ PAGE: PENDING ══════ -->
+<div class="page" id="page-pending">
+  <div class="auth-wrap">
+    <div class="auth-card" style="text-align:center">
+      <div style="font-size:3rem;margin-bottom:1rem">⏳</div>
+      <h2>You're in!</h2>
+      <p class="subtitle">Your account has been created</p>
+      <div class="alert alert-success">✅ Account created successfully<br>✅ School email verified<br>⏳ Administrator verification coming soon</div>
+      <p style="font-size:.875rem;color:var(--muted);margin:1rem 0">You can start using Commyute right now. Administrator verification will be added as an extra layer of safety soon.</p>
+      <button class="btn btn-primary w100" onclick="loadDashboard()">Go to Dashboard →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ PAGE: DASHBOARD ══════ -->
+<div class="page" id="page-dashboard">
+  <div class="dash-layout">
+    <aside class="sidebar">
+      <div class="sidebar-user">
+        <div class="sidebar-user-info">
+          <div class="avatar" id="sb-avatar">?</div>
+          <div><div class="uname" id="sb-name">Loading...</div><div class="uschool">Bishop O'Dowd ✓</div></div>
+        </div>
+      </div>
+      <div class="sidebar-section-label">Main</div>
+      <nav class="sidebar-nav">
+        <a onclick="showDash('overview')" id="dnav-overview" class="active"><span class="sn-icon">🏠</span>Overview</a>
+        <a onclick="showDash('map')" id="dnav-map"><span class="sn-icon">📍</span>Neighbor Map</a>
+        <a onclick="showDash('requests')" id="dnav-requests"><span class="sn-icon">🚗</span>Ride Requests<span class="notif-dot" id="req-dot" style="display:none"></span></a>
+        <a onclick="showDash('available')" id="dnav-available"><span class="sn-icon">🪑</span>Available Rides</a>
+        <a onclick="showDash('schedule')" id="dnav-schedule"><span class="sn-icon">🗓</span>My Schedule</a>
+        <a onclick="showDash('messages')" id="dnav-messages"><span class="sn-icon">💬</span>Messages<span class="notif-dot" id="msg-dot" style="display:none"></span></a>
+      </nav>
+      <div class="sidebar-section-label">Insights</div>
+      <nav class="sidebar-nav">
+        <a onclick="showDash('impact')" id="dnav-impact"><span class="sn-icon">🌿</span>My Impact</a>
+        <a onclick="showDash('leaderboard')" id="dnav-leaderboard"><span class="sn-icon">🏆</span>Leaderboard</a>
+        <a onclick="showDash('profile')" id="dnav-profile"><span class="sn-icon">👤</span>My Profile</a>
+      </nav>
+      <div class="sidebar-section-label">Account</div>
+      <nav class="sidebar-nav">
+        <a onclick="generateParentCode()"><span class="sn-icon">👨‍👩‍👧</span>Parent View</a>
+        <a onclick="doLogout()"><span class="sn-icon">🚪</span>Log Out</a>
+      </nav>
+    </aside>
+
+    <main class="main-content">
+
+      <!-- OVERVIEW -->
+      <div class="dash-section active" id="ds-overview">
+        <div class="main-header">
+          <div><h2 id="greeting">Good morning! 👋</h2><p class="text-muted" style="font-size:.875rem" id="overview-sub">Welcome to Commyute</p></div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-outline btn-sm" onclick="showDash('available')">Browse Rides</button>
+            <button class="btn btn-primary btn-sm" onclick="openPostRideModal()">+ Post a Ride</button>
+          </div>
+        </div>
+        <div id="overview-alert"></div>
+        <div class="stats-row" id="overview-stats">
+          <div class="stat-card"><div class="stat-label">Rides This Month</div><div class="stat-num" id="stat-rides">0</div></div>
+          <div class="stat-card"><div class="stat-label">CO₂ Saved</div><div class="stat-num" id="stat-co2">0</div><div class="stat-unit">lbs</div></div>
+          <div class="stat-card"><div class="stat-label">Money Saved</div><div class="stat-num" id="stat-money">$0</div></div>
+          <div class="stat-card"><div class="stat-label">Time Saved</div><div class="stat-num" id="stat-time">0</div><div class="stat-unit">min</div></div>
+        </div>
+        <div class="grid-2">
+          <div>
+            <div class="card mb1">
+              <div class="card-header"><span class="card-title">This Week's Schedule</span><a style="font-size:.8rem;color:var(--green);cursor:pointer" onclick="showDash('schedule')">View all →</a></div>
+              <div class="week-grid" id="overview-week">
+                <div class="sched-day"><div class="day-name">Mon</div><div class="driver-name" style="color:var(--muted);font-size:.75rem">No ride</div></div>
+                <div class="sched-day"><div class="day-name">Tue</div><div class="driver-name" style="color:var(--muted);font-size:.75rem">No ride</div></div>
+                <div class="sched-day today"><div class="day-name">Today</div><div class="driver-name" style="color:var(--muted);font-size:.75rem">No ride</div></div>
+                <div class="sched-day"><div class="day-name">Thu</div><div class="driver-name" style="color:var(--muted);font-size:.75rem">No ride</div></div>
+                <div class="sched-day"><div class="day-name">Fri</div><div class="driver-name" style="color:var(--muted);font-size:.75rem">No ride</div></div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-header"><span class="card-title">Recent Rides</span></div>
+              <div id="recent-rides"><p class="text-muted" style="font-size:.875rem;text-align:center;padding:1rem">No rides logged yet. <a style="color:var(--green);cursor:pointer" onclick="showDash('schedule')">Log your first ride →</a></p></div>
+            </div>
+          </div>
+          <div>
+            <div class="card mb1">
+              <div class="card-header"><span class="card-title">Pending Requests</span><span class="badge badge-red" id="pending-count-badge" style="display:none">0</span></div>
+              <div id="pending-requests-overview"><p class="text-muted" style="font-size:.875rem;text-align:center;padding:1rem">No pending requests.</p></div>
+            </div>
+            <div class="card">
+              <div class="card-header"><span class="card-title">My Carpool Partners</span></div>
+              <div id="partners-list"><p class="text-muted" style="font-size:.875rem;text-align:center;padding:1rem">No partners yet. <a style="color:var(--green);cursor:pointer" onclick="showDash('map')">Find classmates →</a></p></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- MAP -->
+      <div class="dash-section" id="ds-map">
+        <div class="main-header">
+          <div><h2>Neighbor Map 📍</h2><p class="text-muted" style="font-size:.875rem">Verified O'Dowd students near you — neighborhood level only</p></div>
+          <span class="badge badge-green" id="map-count">Loading...</span>
+        </div>
+        <div class="alert alert-info">🔒 Only approximate neighborhood zones are shown. Exact addresses are never displayed. Click a pin to request a ride.</div>
+        <div class="map-container mb1"><div id="map"></div></div>
+        <div id="peer-cards" class="auto-grid"></div>
+      </div>
+
+      <!-- RIDE REQUESTS -->
+      <div class="dash-section" id="ds-requests">
+        <div class="main-header"><h2>Ride Requests 🚗</h2></div>
+        <div class="grid-2">
+          <div>
+            <div class="card-title mb1">Incoming Requests</div>
+            <div id="incoming-requests"><p class="text-muted" style="font-size:.875rem;text-align:center;padding:1rem">No incoming requests yet.</p></div>
+          </div>
+          <div>
+            <div class="card-title mb1">Your Outgoing Requests</div>
+            <div id="outgoing-requests"><p class="text-muted" style="font-size:.875rem;text-align:center;padding:1rem">No outgoing requests yet. <a style="color:var(--green);cursor:pointer" onclick="showDash('map')">Find classmates →</a></p></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AVAILABLE RIDES -->
+      <div class="dash-section" id="ds-available">
+        <div class="main-header">
+          <div><h2>Available Rides 🪑</h2><p class="text-muted" style="font-size:.875rem">Classmates offering seats — request to join</p></div>
+          <button class="btn btn-primary btn-sm" onclick="openPostRideModal()">+ Post Your Ride</button>
+        </div>
+        <div id="available-rides-list" class="auto-grid"><p class="text-muted" style="font-size:.875rem">Loading available rides...</p></div>
+      </div>
+
+      <!-- SCHEDULE -->
+      <div class="dash-section" id="ds-schedule">
+        <div class="main-header">
+          <div><h2>My Schedule 🗓</h2><p class="text-muted" style="font-size:.875rem">Your recurring carpool rides this week</p></div>
+          <button class="btn btn-primary btn-sm" onclick="openAddRideModal()">+ Log a Ride</button>
+        </div>
+        <div class="card mb1">
+          <div class="card-header"><span class="card-title">This Week</span></div>
+          <div class="week-grid" id="full-week"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Ride History</span></div>
+          <div id="ride-history"><p class="text-muted" style="font-size:.875rem;text-align:center;padding:1rem">No rides logged yet. Click "+ Log a Ride" to record your first trip.</p></div>
+        </div>
+      </div>
+
+      <!-- MESSAGES -->
+      <div class="dash-section" id="ds-messages">
+        <div class="main-header"><h2>Messages 💬</h2><p class="text-muted" style="font-size:.875rem">Only between confirmed carpool partners</p></div>
+        <div class="msg-layout" id="msg-layout">
+          <div class="msg-list" id="conv-list"><div class="msg-empty">No conversations yet.<br>Accept a ride request to start chatting.</div></div>
+          <div class="msg-chat" id="msg-chat-panel">
+            <div class="msg-empty">Select a conversation to start messaging.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- IMPACT -->
+      <div class="dash-section" id="ds-impact">
+        <div class="main-header">
+          <div><h2>My Green Impact 🌿</h2><p class="text-muted" style="font-size:.875rem">Based on your actual confirmed rides and car data</p></div>
+          <button class="btn btn-primary btn-sm" onclick="openAddRideModal()">+ Log a Ride</button>
+        </div>
+        <div class="stats-row">
+          <div class="stat-card" style="border-top:3px solid var(--green)"><div class="stat-label">Total CO₂ Saved</div><div class="stat-num" id="imp-co2">0</div><div class="stat-unit">lbs of CO₂</div></div>
+          <div class="stat-card" style="border-top:3px solid var(--accent)"><div class="stat-label">Total Miles Shared</div><div class="stat-num" id="imp-miles">0</div><div class="stat-unit">miles</div></div>
+          <div class="stat-card" style="border-top:3px solid var(--blue)"><div class="stat-label">Total Rides</div><div class="stat-num" id="imp-rides">0</div><div class="stat-unit">trips</div></div>
+          <div class="stat-card" style="border-top:3px solid var(--purple)"><div class="stat-label">Money Saved</div><div class="stat-num" id="imp-money">$0</div></div>
+          <div class="stat-card" style="border-top:3px solid #e67e22"><div class="stat-label">Time Saved</div><div class="stat-num" id="imp-time">0</div><div class="stat-unit">minutes</div></div>
+        </div>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-title" style="margin-bottom:1.2rem">Environmental Equivalents</div>
+            <div style="display:flex;flex-direction:column;gap:1rem">
+              <div><div style="display:flex;justify-content:space-between;font-size:.85rem;margin-bottom:3px"><span>🌳 Trees planted equivalent</span><strong id="eq-trees">0</strong></div><div class="progress"><div class="progress-bar" id="pb-trees" style="width:0%"></div></div></div>
+              <div><div style="display:flex;justify-content:space-between;font-size:.85rem;margin-bottom:3px"><span>⚡ Energy saved</span><strong id="eq-energy">0 kWh</strong></div><div class="progress"><div class="progress-bar" id="pb-energy" style="width:0%"></div></div></div>
+              <div><div style="display:flex;justify-content:space-between;font-size:.85rem;margin-bottom:3px"><span>🚗 Car trips offset</span><strong id="eq-trips">0</strong></div><div class="progress"><div class="progress-bar" id="pb-trips" style="width:0%"></div></div></div>
+            </div>
+            <div class="alert alert-info" style="margin-top:1.2rem;font-size:.8rem">📊 Stats are calculated from your actual confirmed rides, your car's MPG, and the distance of each trip.</div>
+          </div>
+          <div class="card">
+            <div class="card-title" style="margin-bottom:1rem">Log a New Ride</div>
+            <p style="font-size:.83rem;color:var(--muted);margin-bottom:1rem">Enter your start and end points to calculate emissions saved. Only you can see your route details.</p>
+            <div class="form-group"><label>Start Address (private — only you see this)</label><input type="text" id="ride-start" placeholder="Your home address or neighborhood"></div>
+            <div class="form-group"><label>End Address</label><input type="text" id="ride-end" placeholder="Bishop O'Dowd High School, Oakland"></div>
+            <div class="form-group"><label>Date of Ride</label><input type="date" id="ride-date"></div>
+            <div class="form-group"><label>Were you the driver or passenger?</label><select id="ride-role"><option value="passenger">Passenger (someone drove me)</option><option value="driver">Driver (I drove others)</option></select></div>
+            <div class="form-group" id="passengers-field"><label>Number of passengers (including you)</label><input type="number" id="ride-passengers" min="2" max="6" value="2" placeholder="2"></div>
+            <div id="ride-calc-result" class="hidden alert alert-success"></div>
+            <div style="display:flex;gap:8px;margin-top:.5rem">
+              <button class="btn btn-outline btn-sm" style="flex:1;justify-content:center" onclick="calcRide()">Calculate →</button>
+              <button class="btn btn-primary btn-sm" style="flex:2;justify-content:center" onclick="logRide()">Confirm & Log Ride ✓</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- LEADERBOARD -->
+      <div class="dash-section" id="ds-leaderboard">
+        <div class="main-header">
+          <div><h2>Leaderboard 🏆</h2><p class="text-muted" style="font-size:.875rem">Bishop O'Dowd — ranked by CO₂ saved</p></div>
+        </div>
+        <div class="alert alert-info">🏆 Only students who opted in with a nickname appear here. Your exact stats are never shown — just your rank and CO₂ saved.</div>
+        <div class="grid-2">
+          <div class="card">
+            <div class="card-header"><span class="card-title">Top Emissions Savers — O'Dowd</span></div>
+            <div id="leaderboard-list"><p class="text-muted" style="font-size:.875rem;text-align:center;padding:1rem">Loading leaderboard...</p></div>
+          </div>
+          <div class="card">
+            <div class="card-title" style="margin-bottom:1rem">Your Leaderboard Status</div>
+            <div id="lb-my-status">
+              <p style="font-size:.875rem;color:var(--muted);margin-bottom:1rem">Want to appear on the leaderboard? Set a public nickname below. You can change or remove it anytime.</p>
+              <div class="form-group"><label>Your Public Nickname</label><input type="text" id="lb-nickname-input" placeholder="GreenEagle, EcoRider, etc."></div>
+              <div style="display:flex;gap:8px">
+                <button class="btn btn-primary btn-sm" style="flex:1;justify-content:center" onclick="saveNickname()">Save Nickname</button>
+                <button class="btn btn-outline btn-sm" style="flex:1;justify-content:center" onclick="removeNickname()">Remove Me</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PROFILE -->
+      <div class="dash-section" id="ds-profile">
+        <div class="main-header"><h2>My Profile 👤</h2><button class="btn btn-outline btn-sm" onclick="openEditProfileModal()">Edit Profile</button></div>
+        <div class="grid-2">
+          <div class="card" style="text-align:center">
+            <div class="avatar avatar-lg" id="profile-avatar" style="margin:0 auto 1rem">?</div>
+            <h3 style="font-size:1.1rem;margin-bottom:3px" id="profile-name">Loading...</h3>
+            <p style="font-size:.875rem;color:var(--muted)" id="profile-school">Bishop O'Dowd High School</p>
+            <div style="margin:1rem 0;display:flex;justify-content:center;gap:8px;flex-wrap:wrap">
+              <span class="badge badge-green">✓ Verified</span>
+              <span class="badge badge-blue" id="profile-role-badge">Student</span>
+              <span class="badge badge-amber" id="profile-comp-badge">Free</span>
+            </div>
+            <div class="divider"></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;text-align:center">
+              <div><div style="font-weight:700;color:var(--green);font-family:'Fraunces',serif;font-size:1.3rem" id="profile-stat-rides">0</div><div style="font-size:.75rem;color:var(--muted)">Rides</div></div>
+              <div><div style="font-weight:700;color:var(--green);font-family:'Fraunces',serif;font-size:1.3rem" id="profile-stat-co2">0</div><div style="font-size:.75rem;color:var(--muted)">lbs CO₂</div></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title" style="margin-bottom:1.2rem">Account Details</div>
+            <div style="display:flex;flex-direction:column;gap:.9rem">
+              <div style="display:flex;justify-content:space-between;font-size:.875rem;padding-bottom:.8rem;border-bottom:1px solid var(--border)"><span style="color:var(--muted)">Full Name</span><strong id="pd-name">—</strong></div>
+              <div style="display:flex;justify-content:space-between;font-size:.875rem;padding-bottom:.8rem;border-bottom:1px solid var(--border)"><span style="color:var(--muted)">Age</span><strong id="pd-age">—</strong></div>
+              <div style="display:flex;justify-content:space-between;font-size:.875rem;padding-bottom:.8rem;border-bottom:1px solid var(--border)"><span style="color:var(--muted)">Grade</span><strong id="pd-grade">—</strong></div>
+              <div style="display:flex;justify-content:space-between;font-size:.875rem;padding-bottom:.8rem;border-bottom:1px solid var(--border)"><span style="color:var(--muted)">Email</span><strong id="pd-email">—</strong></div>
+              <div style="display:flex;justify-content:space-between;font-size:.875rem;padding-bottom:.8rem;border-bottom:1px solid var(--border)"><span style="color:var(--muted)">Neighborhood Zone</span><strong id="pd-zone">—</strong></div>
+              <div style="display:flex;justify-content:space-between;font-size:.875rem;padding-bottom:.8rem;border-bottom:1px solid var(--border)"><span style="color:var(--muted)">Car</span><strong id="pd-car">—</strong></div>
+              <div style="display:flex;justify-content:space-between;font-size:.875rem"><span style="color:var(--muted)">Leaderboard Nickname</span><strong id="pd-nickname">Private</strong></div>
+            </div>
+            <div class="divider"></div>
+            <button class="btn btn-outline btn-sm w100" onclick="generateParentCode()">Generate Parent View Link 👨‍👩‍👧</button>
+          </div>
+        </div>
+        <div class="card mt1">
+          <div class="card-title" style="margin-bottom:1rem">My Car Details</div>
+          <div id="car-details-display">
+            <p class="text-muted" style="font-size:.875rem">No car added yet.</p>
+            <button class="btn btn-primary btn-sm mt1" onclick="openCarModal()">+ Add My Car</button>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- ══════ PAGE: PARENT VIEW ══════ -->
+<div class="page" id="page-parent">
+  <div class="parent-wrap">
+    <div class="parent-header">
+      <div><h2 style="font-family:'Fraunces',serif;font-size:1.5rem">Commyute — Parent View</h2><p style="font-size:.875rem;opacity:.75">Read-only access. You cannot make changes to your student's account.</p></div>
+      <span class="badge badge-amber">👁 View Only</span>
+    </div>
+    <div class="grid-2">
+      <div class="card"><div class="card-title" style="margin-bottom:1rem">Student Profile</div><div id="parent-profile"><p class="text-muted">Loading...</p></div></div>
+      <div class="card"><div class="card-title" style="margin-bottom:1rem">This Week's Schedule</div><div id="parent-schedule"><p class="text-muted">Loading...</p></div></div>
+    </div>
+    <div class="card mt1"><div class="card-title" style="margin-bottom:1rem">Carpool Partners</div><div id="parent-partners"><p class="text-muted">Loading...</p></div></div>
+    <div class="card mt1"><div class="card-title" style="margin-bottom:1rem">Recent Rides</div><div id="parent-rides"><p class="text-muted">Loading...</p></div></div>
+  </div>
+</div>
+
+<!-- ══════ MODALS ══════ -->
+
+<!-- Signup Success -->
+<div class="modal-overlay" id="modal-success">
+  <div class="modal-box" style="text-align:center">
+    <div style="font-size:3rem;margin-bottom:1rem">🎉</div>
+    <h3>Welcome to Commyute!</h3>
+    <p>Your account has been created. You can start finding carpool partners right away.</p>
+    <button class="btn btn-primary w100" onclick="closeModal('modal-success');loadDashboard()">Go to Dashboard →</button>
+  </div>
+</div>
+
+<!-- Post a Ride -->
+<div class="modal-overlay" id="modal-post-ride">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('modal-post-ride')">✕</button>
+    <h3>Post an Available Ride</h3>
+    <p>Let classmates know you have a seat available.</p>
+    <div class="form-group"><label>Departure Area (general — no exact address)</label><input type="text" id="pr-from" placeholder="e.g. Oakland Hills, Piedmont"></div>
+    <div class="form-group"><label>Destination</label><input type="text" id="pr-to" placeholder="Bishop O'Dowd High School" value="Bishop O'Dowd High School"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Day</label><select id="pr-day"><option>Monday</option><option>Tuesday</option><option>Wednesday</option><option>Thursday</option><option>Friday</option></select></div>
+      <div class="form-group"><label>Pickup Time</label><input type="time" id="pr-time" value="07:30"></div>
+    </div>
+    <div class="form-group"><label>Seats Available</label><input type="number" id="pr-seats" min="1" max="5" value="1"></div>
+    <div class="form-group"><label>Compensation</label><select id="pr-comp"><option value="free">Free</option><option value="cash">Cash contribution</option><option value="baked">Baked goods 🍪</option><option value="open">Open to anything</option></select></div>
+    <div class="form-group"><label>Notes (optional)</label><textarea id="pr-notes" rows="2" placeholder="Any details for riders..."></textarea></div>
+    <button class="btn btn-primary w100" onclick="postRide()">Post Ride 🚗</button>
+  </div>
+</div>
+
+<!-- Request Ride -->
+<div class="modal-overlay" id="modal-request-ride">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('modal-request-ride')">✕</button>
+    <h3>Request a Ride</h3>
+    <p>Send a ride request to <strong id="req-target-name">this student</strong>. A safety message is required.</p>
+    <input type="hidden" id="req-target-uid">
+    <div class="form-group"><label>Safety Message (required — introduce yourself and your route)</label><textarea id="req-message" rows="3" placeholder="Hi! I'm [name], I live in [neighborhood] and I'm heading to O'Dowd. I'm looking for a ride on [days]. Happy to contribute [compensation]. Please let me know if this works!"></textarea></div>
+    <div class="form-row">
+      <div class="form-group"><label>Preferred Days</label>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;margin-top:.3rem">
+          <label style="display:flex;align-items:center;gap:4px;font-size:.8rem"><input type="checkbox" value="Monday" class="req-day">Mon</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:.8rem"><input type="checkbox" value="Tuesday" class="req-day">Tue</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:.8rem"><input type="checkbox" value="Wednesday" class="req-day">Wed</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:.8rem"><input type="checkbox" value="Thursday" class="req-day">Thu</label>
+          <label style="display:flex;align-items:center;gap:4px;font-size:.8rem"><input type="checkbox" value="Friday" class="req-day">Fri</label>
+        </div>
+      </div>
+      <div class="form-group"><label>Compensation</label><select id="req-comp"><option value="free">Free</option><option value="cash">Cash</option><option value="baked">Baked goods 🍪</option><option value="open">Open to anything</option></select></div>
+    </div>
+    <button class="btn btn-primary w100" onclick="sendRideRequest()">Send Request →</button>
+  </div>
+</div>
+
+<!-- Log a Ride (shortcut) -->
+<div class="modal-overlay" id="modal-log-ride">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('modal-log-ride')">✕</button>
+    <h3>Log a Ride</h3>
+    <p>Record that a ride actually happened. Your route details are private.</p>
+    <div class="form-group"><label>Start (private)</label><input type="text" id="lr-start" placeholder="Your home or pickup point"></div>
+    <div class="form-group"><label>End</label><input type="text" id="lr-end" placeholder="Bishop O'Dowd High School, Oakland" value="Bishop O'Dowd High School, Oakland, CA"></div>
+    <div class="form-row">
+      <div class="form-group"><label>Date</label><input type="date" id="lr-date"></div>
+      <div class="form-group"><label>Role</label><select id="lr-role"><option value="passenger">Passenger</option><option value="driver">Driver</option></select></div>
+    </div>
+    <div class="form-group"><label>Total people in car (including driver)</label><input type="number" id="lr-people" min="2" max="6" value="2"></div>
+    <div id="lr-calc" class="alert alert-success hidden"></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-outline" style="flex:1;justify-content:center" onclick="calcModalRide()">Estimate →</button>
+      <button class="btn btn-primary" style="flex:2;justify-content:center" onclick="confirmLogRide()">Confirm Ride ✓</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Car -->
+<div class="modal-overlay" id="modal-car">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('modal-car')">✕</button>
+    <h3>Add Your Car</h3>
+    <p>This lets us calculate accurate emissions saved on your rides.</p>
+    <div style="display:flex;gap:10px;margin-bottom:1rem">
+      <div class="car-option selected" id="co-model" onclick="selectCarOpt2('model')" style="flex:1;text-align:center;padding:.8rem;cursor:pointer">
+        🚗<br><strong style="font-size:.82rem">Year / Make / Model</strong>
+      </div>
+      <div class="car-option" id="co-mpg" onclick="selectCarOpt2('mpg')" style="flex:1;text-align:center;padding:.8rem;cursor:pointer">
+        ⛽<br><strong style="font-size:.82rem">Enter MPG manually</strong>
+      </div>
+    </div>
+    <div id="car-modal-model">
+      <div class="form-row">
+        <div class="form-group"><label>Year</label><input type="number" id="cm-year" placeholder="2020" min="2000" max="2026"></div>
+        <div class="form-group"><label>Make</label><input type="text" id="cm-make" placeholder="Toyota"></div>
+      </div>
+      <div class="form-group"><label>Model</label><input type="text" id="cm-model" placeholder="Camry"></div>
+    </div>
+    <div id="car-modal-mpg" class="hidden">
+      <div class="form-group"><label>MPG (city/highway average)</label><input type="number" id="cm-mpg" placeholder="32" min="10" max="150"></div>
+    </div>
+    <button class="btn btn-primary w100" onclick="saveCar()">Save Car</button>
+  </div>
+</div>
+
+<!-- Edit Profile -->
+<div class="modal-overlay" id="modal-edit-profile">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('modal-edit-profile')">✕</button>
+    <h3>Edit Profile</h3>
+    <div class="form-row">
+      <div class="form-group"><label>First Name</label><input type="text" id="ep-first"></div>
+      <div class="form-group"><label>Last Name</label><input type="text" id="ep-last"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Age</label><input type="number" id="ep-age" min="14" max="19"></div>
+      <div class="form-group"><label>Grade</label><select id="ep-grade"><option>9th (Freshman)</option><option>10th (Sophomore)</option><option>11th (Junior)</option><option>12th (Senior)</option></select></div>
+    </div>
+    <div class="form-group"><label>ZIP Code</label><input type="text" id="ep-zip" maxlength="5"></div>
+    <div class="form-group"><label>Ride Preference</label><select id="ep-pref"><option value="both">Offer & Request</option><option value="driver">Driver only</option><option value="rider">Rider only</option></select></div>
+    <div class="form-group"><label>Compensation Preference</label><select id="ep-comp"><option value="free">Free</option><option value="cash">Cash</option><option value="baked">Baked goods</option><option value="open">Open</option></select></div>
+    <button class="btn btn-primary w100" onclick="saveProfile()">Save Changes</button>
+  </div>
+</div>
+
+<!-- Parent Code -->
+<div class="modal-overlay" id="modal-parent">
+  <div class="modal-box" style="text-align:center">
+    <button class="modal-close" onclick="closeModal('modal-parent')">✕</button>
+    <h3>Parent View Link</h3>
+    <p>Share this link with your parent or guardian. They can see your schedule and carpool partners — but cannot make any changes.</p>
+    <div style="background:var(--cream);border-radius:10px;padding:1rem;margin:1rem 0;word-break:break-all;font-size:.85rem;border:1.5px solid var(--border)" id="parent-link-display">Generating link...</div>
+    <button class="btn btn-primary w100" onclick="copyParentLink()">Copy Link 📋</button>
+    <p style="font-size:.78rem;color:var(--muted);margin-top:.8rem">This link only shows read-only info. No account needed for your parent.</p>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast hidden" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, doc, setDoc, getDoc, getDocs, addDoc, updateDoc, deleteDoc, collection, query, where, orderBy, onSnapshot, serverTimestamp, arrayUnion, arrayRemove, limit } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCNpvN2Fau-uDPV3BG5q2ljA99Ytg2q6_4",
+  authDomain: "commyute-13e3e.firebaseapp.com",
+  databaseURL: "https://commyute-13e3e-default-rtdb.firebaseio.com",
+  projectId: "commyute-13e3e",
+  storageBucket: "commyute-13e3e.firebasestorage.app",
+  messagingSenderId: "104654403919",
+  appId: "1:104654403919:web:9bbe535e374362aea7ad3a",
+  measurementId: "G-GDZRVHH6KY"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const SCHOOL = "Bishop O'Dowd High School";
+const SCHOOL_DOMAIN = "bishopodowd.org";
+const MAPS_KEY = "AIzaSyAMCCzRmBSMOlgtbFX3-f3cDQ8s_1KTFWU";
+
+let currentUser = null;
+let currentUserData = null;
+let activeConvId = null;
+let convUnsub = null;
+let msgUnsub = null;
+let rideCalcData = null;
+let mapInstance = null;
+let mapLoaded = false;
+
+// ── ZIP → NEIGHBORHOOD ──
+const ZIP_ZONES = {
+  "94601":"East Oakland","94602":"Glenview / Redwood Heights","94603":"East Oakland",
+  "94605":"Oakland Hills","94606":"San Antonio","94607":"West Oakland",
+  "94608":"Emeryville / North Oakland","94609":"Temescal","94610":"Grand Lake",
+  "94611":"Montclair / Piedmont Ave","94612":"Downtown Oakland","94613":"Upper Fruitvale",
+  "94618":"Rockridge","94619":"Woodminster / Redwood Heights","94621":"South Oakland",
+  "94702":"Berkeley","94703":"Berkeley","94704":"Berkeley","94705":"Berkeley Hills",
+  "94706":"Albany","94707":"Berkeley","94708":"Berkeley Hills","94709":"North Berkeley",
+  "94710":"West Berkeley","94720":"UC Berkeley",
+  "94610":"Piedmont","94611":"Piedmont Hills",
+  "94563":"Orinda","94556":"Moraga","94523":"Pleasant Hill","94520":"Concord"
+};
+function getNeighborhood(zip){return ZIP_ZONES[zip]||"Oakland Area"}
+
+// ── MPG DATABASE ──
+const MPG_DB = {
+  "toyota camry":32,"toyota corolla":34,"toyota rav4":30,"toyota prius":52,"toyota highlander":24,
+  "honda civic":36,"honda accord":33,"honda crv":30,"honda pilot":24,"honda odyssey":22,
+  "ford f-150":21,"ford escape":30,"ford explorer":24,"ford mustang":25,
+  "chevrolet malibu":32,"chevrolet equinox":31,"chevrolet silverado":20,
+  "tesla model 3":130,"tesla model y":125,"tesla model s":120,
+  "nissan altima":33,"nissan rogue":30,"nissan sentra":36,
+  "hyundai elantra":37,"hyundai sonata":35,"hyundai tucson":29,
+  "kia soul":30,"kia sorento":27,"kia telluride":24,
+  "subaru outback":29,"subaru forester":30,"subaru impreza":35,
+  "volkswagen jetta":34,"volkswagen tiguan":25,
+  "bmw 3 series":30,"bmw 5 series":27,"audi a4":28,
+  "mercedes c class":29,"mercedes e class":27,
+  "jeep wrangler":20,"jeep grand cherokee":22,
+  "dodge charger":23,"dodge challenger":21,
+  "ram 1500":21,"gmc sierra":21,"gmc yukon":17
+};
+function getMPG(year, make, model){
+  const key = (make+" "+model).toLowerCase().replace(/[^a-z0-9 ]/g,"");
+  for(const k of Object.keys(MPG_DB)){if(key.includes(k)||k.includes(key.split(" ").slice(0,2).join(" ")))return MPG_DB[k]}
+  return 28; // default
+}
+
+// CO₂ per gallon of gas = 19.6 lbs
+function calcCO2(miles, mpg, totalPeople){
+  const gallons = miles / mpg;
+  const totalCO2 = gallons * 19.6;
+  const savedCO2 = totalCO2 * (1 - 1/totalPeople);
+  return Math.round(savedCO2 * 10) / 10;
+}
+function calcMoneySaved(miles, mpg, totalPeople){
+  const gasPrice = 4.50;
+  const gasCost = (miles / mpg) * gasPrice;
+  return Math.round(gasCost * (1 - 1/totalPeople) * 100) / 100;
+}
+function calcTimeSaved(miles, totalPeople){
+  // Rough estimate: carpooling saves ~15% of commute time via HOV lanes + less traffic
+  const avgSpeed = 25; // mph urban
+  const baseTime = (miles / avgSpeed) * 60;
+  return totalPeople > 1 ? Math.round(baseTime * 0.15) : 0;
+}
+
+// ── UTILS ──
+function showToast(msg, ms=3000){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.remove('hidden');
+  setTimeout(()=>t.classList.add('hidden'), ms);
+}
+function closeModal(id){document.getElementById(id).classList.remove('open')}
+function openModal(id){document.getElementById(id).classList.add('open')}
+function fmtDate(ts){if(!ts)return"";const d=ts.toDate?ts.toDate():new Date(ts);return d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}
+function initials(first,last){return((first||"?")[0]+(last||"")[0]).toUpperCase()}
+function avatarColor(uid){const colors=["#1a6b3c","#2463a8","#7c3aed","#c0392b","#e6a020","#1abc9c","#e67e22"];return colors[(uid||"").charCodeAt(0)%colors.length]}
+
+// ── PAGE ROUTING ──
+window.showPage = function(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  const pg = document.getElementById('page-'+id);
+  if(pg) pg.classList.add('active');
+  document.querySelectorAll('.nav-links a').forEach(a=>a.classList.remove('active'));
+  const nl = document.getElementById('nav-'+id);
+  if(nl) nl.classList.add('active');
+  window.scrollTo(0,0);
+};
+
+window.showDash = function(id){
+  document.querySelectorAll('.dash-section').forEach(s=>s.classList.remove('active'));
+  const ds = document.getElementById('ds-'+id);
+  if(ds) ds.classList.add('active');
+  document.querySelectorAll('.sidebar-nav a').forEach(a=>a.classList.remove('active'));
+  const dn = document.getElementById('dnav-'+id);
+  if(dn) dn.classList.add('active');
+  if(id==='map') initMap();
+  if(id==='impact') loadImpact();
+  if(id==='leaderboard') loadLeaderboard();
+  if(id==='messages') loadMessages();
+  if(id==='requests') loadRequests();
+  if(id==='schedule') loadSchedule();
+  if(id==='available') loadAvailableRides();
+  if(id==='profile') loadProfile();
+  if(id==='overview') loadOverview();
+};
+
+// ── AUTH STATE ──
+onAuthStateChanged(auth, async (user)=>{
+  if(user){
+    const snap = await getDoc(doc(db,'users',user.uid));
+    if(snap.exists()){
+      currentUser = user;
+      currentUserData = snap.data();
+      // if on login/signup pages, redirect to dashboard
+      const activePage = document.querySelector('.page.active');
+      if(activePage && ['page-login','page-signup','page-home'].includes(activePage.id)){
+        loadDashboard();
+      }
+    }
+  }
+});
+
+// ── SIGNUP ──
+window.suStep = function(n){
+  // Validate step 1 before moving to 2
+  if(n===2){
+    const email = document.getElementById('reg-email').value.trim();
+    const first = document.getElementById('reg-first').value.trim();
+    const last = document.getElementById('reg-last').value.trim();
+    const pass = document.getElementById('reg-pass').value;
+    if(!first||!last){showToast('Please enter your full name.');return}
+    if(!email.endsWith('@'+SCHOOL_DOMAIN)){showToast('Please use your @'+SCHOOL_DOMAIN+' school email.');return}
+    if(pass.length<6){showToast('Password must be at least 6 characters.');return}
+  }
+  document.getElementById('su1').style.display='none';
+  document.getElementById('su2').className='toggle-section';
+  document.getElementById('su3').className='toggle-section';
+  for(let i=1;i<=3;i++) document.getElementById('sd'+i).classList.toggle('active',i<=n);
+  if(n===1){document.getElementById('su1').style.display='block'}
+  else if(n===2){document.getElementById('su2').className='toggle-section visible'}
+  else if(n===3){document.getElementById('su3').className='toggle-section visible'}
+};
+
+window.handleIdUpload = function(input){
+  if(input.files[0]){
+    document.getElementById('id-filename').textContent=input.files[0].name;
+    document.getElementById('id-preview').classList.remove('hidden');
+  }
+};
+
+window.toggleCarFields = function(){
+  const val = document.getElementById('reg-has-car').value;
+  document.getElementById('car-fields').classList.toggle('hidden', val==='no');
+};
+
+window.selectCarOpt = function(type){
+  document.getElementById('car-opt-model').classList.toggle('selected',type==='model');
+  document.getElementById('car-opt-mpg').classList.toggle('selected',type==='mpg');
+  document.getElementById('car-model-fields').classList.toggle('hidden',type==='mpg');
+  document.getElementById('car-mpg-fields').classList.toggle('hidden',type==='model');
+};
+
+window.doSignup = async function(){
+  const first = document.getElementById('reg-first').value.trim();
+  const last = document.getElementById('reg-last').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const pass = document.getElementById('reg-pass').value;
+  const age = document.getElementById('reg-age').value;
+  const grade = document.getElementById('reg-grade').value;
+  const zip = document.getElementById('reg-zip').value.trim();
+  const pref = document.getElementById('reg-pref').value;
+  const comp = document.getElementById('reg-comp').value;
+  const nickname = document.getElementById('reg-nickname').value.trim();
+  const hasCar = document.getElementById('reg-has-car').value === 'yes';
+
+  if(!zip){showToast('Please enter your ZIP code.');return}
+
+  let carData = null;
+  if(hasCar){
+    const method = document.querySelector('input[name="car-method"]:checked')?.value||'model';
+    if(method==='model'){
+      const year=document.getElementById('car-year').value;
+      const make=document.getElementById('car-make').value.trim();
+      const model=document.getElementById('car-model').value.trim();
+      if(year&&make&&model) carData={method:'model',year,make,model,mpg:getMPG(year,make,model)};
+    } else {
+      const mpg=document.getElementById('car-mpg').value;
+      if(mpg) carData={method:'mpg',mpg:parseFloat(mpg)};
+    }
+  }
+
+  try {
+    const cred = await createUserWithEmailAndPassword(auth, email, pass);
+    const uid = cred.user.uid;
+    const zone = getNeighborhood(zip);
+
+    await setDoc(doc(db,'users',uid),{
+      firstName:first, lastName:last, email, age:parseInt(age)||17, grade,
+      schoolName:SCHOOL, zip, neighborhoodZone:zone,
+      ridePreference:pref, compensation:comp,
+      nickname:nickname||null, showOnLeaderboard:!!nickname,
+      hasCar, car:carData,
+      isActive:true, isVerified:true,
+      totalCO2Saved:0, totalRides:0, totalMiles:0, totalMoneySaved:0, totalTimeSaved:0,
+      partners:[], createdAt:serverTimestamp()
+    });
+
+    currentUser = cred.user;
+    currentUserData = (await getDoc(doc(db,'users',uid))).data();
+    openModal('modal-success');
+  } catch(e){
+    if(e.code==='auth/email-already-in-use') showToast('An account with this email already exists.');
+    else if(e.code==='auth/weak-password') showToast('Password must be at least 6 characters.');
+    else if(e.code==='auth/invalid-email') showToast('Please use your @'+SCHOOL_DOMAIN+' email address.');
+    else showToast('Signup error: '+e.message);
+  }
+};
+
+// ── LOGIN ──
+window.doLogin = async function(){
+  const email = document.getElementById('login-email').value.trim();
+  const pass = document.getElementById('login-pass').value;
+  const btn = document.getElementById('login-btn');
+  const errEl = document.getElementById('login-error');
+  errEl.classList.add('hidden');
+
+  if(!email||!pass){showToast('Please fill in all fields.');return}
+  if(!email.endsWith('@'+SCHOOL_DOMAIN)){
+    errEl.textContent='❌ Please use your @'+SCHOOL_DOMAIN+' school email.';
+    errEl.classList.remove('hidden'); return;
+  }
+
+  btn.textContent='Logging in...'; btn.disabled=true;
+  try {
+    const cred = await signInWithEmailAndPassword(auth, email, pass);
+    const snap = await getDoc(doc(db,'users',cred.user.uid));
+    if(!snap.exists()){showToast('Account not found. Please sign up.');return}
+    currentUser = cred.user;
+    currentUserData = snap.data();
+    loadDashboard();
+  } catch(e){
+    errEl.textContent = e.code==='auth/invalid-credential'?'❌ Incorrect email or password.':'❌ '+e.message;
+    errEl.classList.remove('hidden');
+  } finally {
+    btn.textContent='Log In →'; btn.disabled=false;
+  }
+};
+
+window.doPasswordReset = async function(){
+  const email = document.getElementById('login-email').value.trim();
+  if(!email){showToast('Enter your email first.');return}
+  try{await sendPasswordResetEmail(auth,email);showToast('Password reset email sent!');}
+  catch(e){showToast('Error: '+e.message);}
+};
+
+window.doLogout = async function(){
+  await signOut(auth);
+  currentUser=null; currentUserData=null; activeConvId=null;
+  if(convUnsub) convUnsub(); if(msgUnsub) msgUnsub();
+  document.getElementById('guestNav').classList.remove('hidden');
+  document.getElementById('authNav').classList.add('hidden');
+  document.getElementById('guestActions').classList.remove('hidden');
+  document.getElementById('authActions').classList.add('hidden');
+  showPage('home');
+};
+
+// ── LOAD DASHBOARD ──
+window.loadDashboard = function(){
+  if(!currentUser||!currentUserData) return;
+  document.getElementById('guestNav').classList.add('hidden');
+  document.getElementById('authNav').classList.remove('hidden');
+  document.getElementById('guestActions').classList.add('hidden');
+  document.getElementById('authActions').classList.remove('hidden');
+
+  const d = currentUserData;
+  const av = initials(d.firstName,d.lastName);
+  document.getElementById('sb-avatar').textContent=av;
+  document.getElementById('sb-name').textContent=d.firstName+' '+d.lastName;
+
+  showPage('dashboard');
+  showDash('overview');
+};
+
+// ── OVERVIEW ──
+async function loadOverview(){
+  if(!currentUser||!currentUserData) return;
+  const d = currentUserData;
+  const hour = new Date().getHours();
+  const greet = hour<12?'Good morning':'hour<17?Good afternoon':'Good evening';
+  document.getElementById('greeting').textContent = (hour<12?'Good morning':hour<17?'Good afternoon':'Good evening')+', '+d.firstName+' 👋';
+  document.getElementById('overview-sub').textContent = 'Welcome to Commyute — '+SCHOOL;
+
+  // Stats
+  document.getElementById('stat-rides').textContent = d.totalRides||0;
+  document.getElementById('stat-co2').textContent = d.totalCO2Saved||0;
+  document.getElementById('stat-money').textContent = '$'+(d.totalMoneySaved||0);
+  document.getElementById('stat-time').textContent = d.totalTimeSaved||0;
+
+  // Recent rides
+  loadRecentRides('recent-rides', 3);
+
+  // Partners
+  loadPartners();
+
+  // Pending requests (incoming)
+  loadPendingOverview();
+}
+
+async function loadRecentRides(containerId, lim){
+  if(!currentUser) return;
+  const q = query(collection(db,'rides'), where('userId','==',currentUser.uid), orderBy('createdAt','desc'), limit(lim||5));
+  const snap = await getDocs(q);
+  const el = document.getElementById(containerId);
+  if(snap.empty){el.innerHTML='<p class="text-muted" style="font-size:.875rem;text-align:center;padding:1rem">No rides logged yet.</p>';return}
+  el.innerHTML = snap.docs.map(d=>{
+    const r = d.data();
+    return `<div class="ride-item">
+      <div class="avatar" style="background:var(--green-light);color:var(--green-dark);font-size:.75rem">${r.role==='driver'?'🚗':'🎒'}</div>
+      <div class="ride-info"><strong>${r.role==='driver'?'You drove':'You rode'}</strong><span>${fmtDate(r.createdAt)} · ${r.miles||0} mi</span></div>
+      <div class="ride-meta"><strong style="color:var(--green)">${r.co2Saved||0} lbs CO₂</strong>saved</div>
+    </div>`;
+  }).join('');
+}
+
+async function loadPartners(){
+  if(!currentUser||!currentUserData) return;
+  const partners = currentUserData.partners||[];
+  const el = document.getElementById('partners-list');
+  if(!partners.length){el.innerHTML='<p class="text-muted" style="font-size:.875rem;text-align:center;padding:1rem">No partners yet. <a style="color:var(--green);cursor:pointer" onclick="showDash(\'map\')">Find classmates →</a></p>';return}
+  const rows = await Promise.all(partners.map(async uid=>{
+    const snap = await getDoc(doc(db,'users',uid));
+    if(!snap.exists()) return '';
+    const p = snap.data();
+    const av = initials(p.firstName,p.lastName);
+    const col = avatarColor(uid);
+    return `<div style="display:flex;align-items:center;gap:10px;padding:.7rem 0;border-bottom:1px solid var(--border)">
+      <div class="avatar" style="background:${col}">${av}</div>
+      <div style="flex:1"><strong style="font-size:.875rem">${p.firstName} ${p.lastName}</strong><div style="font-size:.75rem;color:var(--muted)">${p.grade} · ${p.neighborhoodZone||''}</div></div>
+      <span class="badge badge-green" style="font-size:.68rem">Partner</span>
+    </div>`;
+  }));
+  el.innerHTML = rows.join('') || '<p class="text-muted" style="font-size:.875rem;text-align:center;padding:1rem">No partners yet.</p>';
+}
+
+async function loadPendingOverview(){
+  if(!currentUser) return;
+  const q = query(collection(db,'rideRequests'), where('toUid','==',currentUser.uid), where('status','==','pending'));
+  const snap = await getDocs(q);
+  const el = document.getElementById('pending-requests-overview');
+  const badge = document.getElementById('pending-count-badge');
+  if(snap.empty){el.innerHTML='<p class="text-muted" style="font-size:.875rem;text-align:center;padding:1rem">No pending requests.</p>';badge.style.display='none';return}
+  badge.textContent=snap.size; badge.style.display='inline-flex';
+  document.getElementById('req-dot').style.display='block';
+  el.innerHTML = snap.docs.slice(0,2).map(d=>{
+    const r=d.data();
+    return `<div class="ride-item">
+      <div class="avatar" style="background:${avatarColor(r.fromUid)};font-size:.8rem">${(r.fromName||'?')[0]}</div>
+      <div class="ride-info"><strong>${r.fromName}</strong><span>${r.compensation} · ${(r.days||[]).join(', ')}</span></div>
+      <div style="display:flex;gap:5px">
+        <button class="btn btn-primary btn-sm" onclick="respondRequest('${d.id}','${r.fromUid}','accepted')">✓</button>
+        <button class="btn btn-outline btn-sm" onclick="respondRequest('${d.id}','${r.fromUid}','declined')">✗</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── MAP ──
+window.initMap = async function(){
+  if(!currentUser||!currentUserData) return;
+  if(!mapLoaded){
+    const script = document.createElement('script');
+    script.src=`https://maps.googleapis.com/maps/api/js?key=${MAPS_KEY}&libraries=places,geometry&callback=onMapReady`;
+    script.async=true; document.head.appendChild(script);
+    mapLoaded=true;
+  } else if(window.google && window.google.maps){
+    window.onMapReady();
+  }
+};
+
+window.onMapReady = async function(){
+  const center = {lat:37.768,lng:-122.218}; // Oakland
+  mapInstance = new google.maps.Map(document.getElementById('map'),{
+    center, zoom:12,
+    styles:[{featureType:'poi',stylers:[{visibility:'off'}]},{featureType:'transit',stylers:[{visibility:'off'}]}],
+    disableDefaultUI:false, zoomControl:true
+  });
+
+  // Load peers
+  const q = query(collection(db,'users'),
+    where('schoolName','==',SCHOOL),
+    where('isActive','==',true));
+  const snap = await getDocs(q);
+  const peers = snap.docs.filter(d=>d.id!==currentUser.uid);
+  document.getElementById('map-count').textContent = peers.length+' students nearby';
+
+  const cardsEl = document.getElementById('peer-cards');
+  cardsEl.innerHTML='';
+
+  // Zone → approx lat/lng centers
+  const ZONE_COORDS = {
+    "Oakland Hills":{lat:37.800,lng:-122.193},"Montclair / Piedmont Ave":{lat:37.824,lng:-122.207},
+    "Piedmont Hills":{lat:37.822,lng:-122.224},"Rockridge":{lat:37.841,lng:-122.249},
+    "Grand Lake":{lat:37.810,lng:-122.236},"Temescal":{lat:37.843,lng:-122.263},
+    "Glenview / Redwood Heights":{lat:37.785,lng:-122.206},"East Oakland":{lat:37.755,lng:-122.194},
+    "West Oakland":{lat:37.812,lng:-122.289},"Downtown Oakland":{lat:37.804,lng:-122.270},
+    "Berkeley":{lat:37.872,lng:-122.273},"Berkeley Hills":{lat:37.873,lng:-122.244},
+    "North Berkeley":{lat:37.886,lng:-122.269},"Rockridge":{lat:37.841,lng:-122.249},
+    "Orinda":{lat:37.877,lng:-122.179},"Moraga":{lat:37.835,lng:-122.130},
+    "Oakland Area":{lat:37.780,lng:-122.230}
+  };
+
+  peers.forEach(pd=>{
+    const p = pd.data();
+    const zone = p.neighborhoodZone||'Oakland Area';
+    const base = ZONE_COORDS[zone]||center;
+    // Jitter slightly for privacy
+    const jitter = ()=>(Math.random()-0.5)*0.008;
+    const pos = {lat:base.lat+jitter(), lng:base.lng+jitter()};
+    const isPartner = (currentUserData.partners||[]).includes(pd.id);
+
+    const marker = new google.maps.Marker({
+      position:pos, map:mapInstance,
+      title:p.firstName,
+      icon:{path:google.maps.SymbolPath.CIRCLE,scale:8,
+        fillColor:isPartner?'#1a6b3c':'#2463a8',fillOpacity:.9,strokeColor:'#fff',strokeWeight:2}
+    });
+
+    const info = new google.maps.InfoWindow({content:`
+      <div style="font-family:'DM Sans',sans-serif;padding:8px;min-width:180px">
+        <strong style="font-size:.9rem">${p.firstName}</strong><br>
+        <span style="font-size:.75rem;color:#666">${p.grade} · ${zone}</span><br>
+        <span style="font-size:.75rem;color:#666">${p.ridePreference==='driver'?'🚗 Can drive':p.ridePreference==='rider'?'🎒 Needs ride':'🚗🎒 Both'}</span><br>
+        <span style="font-size:.75rem;color:#666">${p.compensation}</span>
+        ${isPartner?'<br><span style="color:#1a6b3c;font-size:.75rem">✓ Your partner</span>':'<br><button onclick="openRequestModal(\''+pd.id+'\',\''+p.firstName+'\')" style="margin-top:6px;background:#1a6b3c;color:#fff;border:none;padding:4px 12px;border-radius:6px;font-size:.75rem;cursor:pointer">Request Ride</button>'}
+      </div>`});
+    marker.addListener('click',()=>info.open(mapInstance,marker));
+
+    // Peer card
+    const col = avatarColor(pd.id);
+    const av = initials(p.firstName,p.lastName);
+    const card = document.createElement('div');
+    card.className='peer-card';
+    card.innerHTML=`
+      <div class="avatar" style="background:${col}">${av}</div>
+      <strong>${p.firstName}</strong>
+      <span class="peer-detail">${p.grade} · ${zone}</span>
+      <span class="peer-detail">${p.ridePreference==='driver'?'🚗 Driver':p.ridePreference==='rider'?'🎒 Rider':'🚗🎒 Both'}</span>
+      ${isPartner
+        ? '<span class="badge badge-green">✓ Partner</span>'
+        : `<button class="btn btn-primary btn-sm" onclick="openRequestModal('${pd.id}','${p.firstName}')">Request Ride</button>`}`;
+    cardsEl.appendChild(card);
+  });
+};
+
+// ── RIDE REQUESTS ──
+window.openRequestModal = function(uid, name){
+  document.getElementById('req-target-uid').value = uid;
+  document.getElementById('req-target-name').textContent = name;
+  document.getElementById('req-message').value='';
+  openModal('modal-request-ride');
+};
+
+window.sendRideRequest = async function(){
+  const toUid = document.getElementById('req-target-uid').value;
+  const msg = document.getElementById('req-message').value.trim();
+  const comp = document.getElementById('req-comp').value;
+  const days = Array.from(document.querySelectorAll('.req-day:checked')).map(c=>c.value);
+
+  if(!msg||msg.length<10){showToast('Please include a safety message (at least 10 characters).');return}
+  if(!days.length){showToast('Please select at least one preferred day.');return}
+
+  try{
+    await addDoc(collection(db,'rideRequests'),{
+      fromUid:currentUser.uid,
+      fromName:currentUserData.firstName+' '+currentUserData.lastName,
+      toUid, school:SCHOOL,
+      message:msg, compensation:comp, days,
+      status:'pending', createdAt:serverTimestamp()
+    });
+    closeModal('modal-request-ride');
+    showToast('Ride request sent! 🚗');
+  } catch(e){showToast('Error: '+e.message);}
+};
+
+async function loadRequests(){
+  if(!currentUser) return;
+  // Incoming
+  const inQ = query(collection(db,'rideRequests'), where('toUid','==',currentUser.uid), where('school','==',SCHOOL));
+  const inSnap = await getDocs(inQ);
+  const inEl = document.getElementById('incoming-requests');
+  if(inSnap.empty){inEl.innerHTML='<p class="text-muted" style="font-size:.875rem;text-align:center;padding:1rem">No incoming requests yet.</p>';}
+  else{
+    inEl.innerHTML = inSnap.docs.map(d=>{
+      const r=d.data();
+      const statusBadge = r.status==='pending'?'<span class="badge badge-amber">⏳ Pending</span>':r.status==='accepted'?'<span class="badge badge-green">✓ Accepted</span>':'<span class="badge badge-red">✗ Declined</span>';
+      return `<div class="card mb1">
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div class="avatar" style="background:${avatarColor(r.fromUid)}">${(r.fromName||'?')[0]}</div>
+          <div style="flex:1">
+            <strong>${r.fromName}</strong> ${statusBadge}
+            <div style="font-size:.8rem;color:var(--muted);margin:.4rem 0">"${r.message}"</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:.7rem">
+              <span class="badge badge-blue">${r.compensation}</span>
+              ${(r.days||[]).map(d=>`<span class="badge badge-amber">${d}</span>`).join('')}
+            </div>
+            ${r.status==='pending'?`<div style="display:flex;gap:8px">
+              <button class="btn btn-primary btn-sm" onclick="respondRequest('${d.id}','${r.fromUid}','accepted')">✓ Accept</button>
+              <button class="btn btn-outline btn-sm" onclick="respondRequest('${d.id}','${r.fromUid}','declined')">✗ Decline</button>
+            </div>`:''}
+          </div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  // Outgoing
+  const outQ = query(collection(db,'rideRequests'), where('fromUid','==',currentUser.uid), where('school','==',SCHOOL));
+  const outSnap = await getDocs(outQ);
+  const outEl = document.getElementById('outgoing-requests');
+  if(outSnap.empty){outEl.innerHTML='<p class="text-muted" style="font-size:.875rem;text-align:center;padding:1rem">No outgoing requests. <a style="color:var(--green);cursor:pointer" onclick="showDash(\'map\')">Find classmates →</a></p>';}
+  else{
+    outEl.innerHTML = outSnap.docs.map(d=>{
+      const r=d.data();
+      const statusBadge = r.status==='pending'?'<span class="badge badge-amber">⏳ Pending</span>':r.status==='accepted'?'<span class="badge badge-green">✓ Accepted</span>':'<span class="badge badge-red">✗ Declined</span>';
+      return `<div class="card mb1">
+        <div style="display:flex;gap:12px;align-items:center">
+          <div class="avatar" style="background:${avatarColor(r.toUid)}">${(r.toUid||'?').substring(0,1).toUpperCase()}</div>
+          <div style="flex:1"><strong>Request sent</strong> ${statusBadge}<div style="font-size:.78rem;color:var(--muted)">${fmtDate(r.createdAt)} · ${r.compensation}</div></div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+}
+
+window.respondRequest = async function(reqId, fromUid, status){
+  try{
+    await updateDoc(doc(db,'rideRequests',reqId),{status, respondedAt:serverTimestamp()});
+    if(status==='accepted'){
+      // Add as partners
+      await updateDoc(doc(db,'users',currentUser.uid),{partners:arrayUnion(fromUid)});
+      await updateDoc(doc(db,'users',fromUid),{partners:arrayUnion(currentUser.uid)});
+      // Create conversation
+      await addDoc(collection(db,'conversations'),{
+        participants:[currentUser.uid, fromUid],
+        participantNames:{[currentUser.uid]:currentUserData.firstName+' '+currentUserData.lastName, [fromUid]:'Classmate'},
+        school:SCHOOL, lastMessage:'Ride request accepted!', lastMessageAt:serverTimestamp()
+      });
+      // Refresh partner data
+      const snap = await getDoc(doc(db,'users',currentUser.uid));
+      currentUserData = snap.data();
+      showToast('Request accepted! You can now message each other. 🎉');
+    } else {
+      showToast('Request declined.');
+    }
+    loadRequests();
+    loadPendingOverview();
+    loadPartners();
+  } catch(e){showToast('Error: '+e.message);}
+};
+
+// ── AVAILABLE RIDES ──
+window.openPostRideModal = function(){openModal('modal-post-ride')};
+window.postRide = async function(){
+  const from=document.getElementById('pr-from').value.trim();
+  const to=document.getElementById('pr-to').value.trim();
+  const day=document.getElementById('pr-day').value;
+  const time=document.getElementById('pr-time').value;
+  const seats=document.getElementById('pr-seats').value;
+  const comp=document.getElementById('pr-comp').value;
+  const notes=document.getElementById('pr-notes').value.trim();
+  if(!from){showToast('Please enter your departure area.');return}
+  try{
+    await addDoc(collection(db,'availableRides'),{
+      driverUid:currentUser.uid,
+      driverName:currentUserData.firstName+' '+currentUserData.lastName,
+      driverZone:currentUserData.neighborhoodZone||'Oakland Area',
+      school:SCHOOL, from, to, day, time, seats:parseInt(seats)||1,
+      compensation:comp, notes, isActive:true, createdAt:serverTimestamp()
+    });
+    closeModal('modal-post-ride');
+    showToast('Ride posted! 🚗');
+    loadAvailableRides();
+  } catch(e){showToast('Error: '+e.message);}
+};
+
+async function loadAvailableRides(){
+  if(!currentUser) return;
+  const q = query(collection(db,'availableRides'), where('school','==',SCHOOL), where('isActive','==',true), orderBy('createdAt','desc'));
+  const snap = await getDocs(q);
+  const el = document.getElementById('available-rides-list');
+  if(snap.empty){el.innerHTML='<p class="text-muted" style="font-size:.875rem;grid-column:1/-1">No available rides posted yet. Be the first to post one!</p>';return}
+  el.innerHTML = snap.docs.filter(d=>d.data().driverUid!==currentUser.uid).map(d=>{
+    const r=d.data();
+    const isPartner=(currentUserData.partners||[]).includes(r.driverUid);
+    return `<div class="card">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:.8rem">
+        <div class="avatar" style="background:${avatarColor(r.driverUid)}">${(r.driverName||'?')[0]}</div>
+        <div><strong style="font-size:.875rem">${r.driverName}</strong><div style="font-size:.75rem;color:var(--muted)">${r.driverZone}</div></div>
+        <span class="badge badge-blue" style="margin-left:auto">${r.day}</span>
+      </div>
+      <div style="font-size:.83rem;color:var(--muted);margin-bottom:.8rem">
+        📍 ${r.from} → ${r.to}<br>
+        🕐 ${r.time} · ${r.seats} seat${r.seats>1?'s':''} · ${r.compensation}
+        ${r.notes?`<br>💬 "${r.notes}"`:''}</div>
+      ${isPartner
+        ? '<span class="badge badge-green">✓ Already partners</span>'
+        : `<button class="btn btn-primary btn-sm w100" onclick="openRequestModal('${r.driverUid}','${r.driverName.split(' ')[0]}')">Request Ride →</button>`}
+    </div>`;
+  }).join('')||'<p class="text-muted" style="font-size:.875rem">No rides from other students available right now.</p>';
+}
+
+// ── SCHEDULE ──
+window.openAddRideModal = function(){
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('lr-date').value = today;
+  document.getElementById('lr-start').value='';
+  document.getElementById('lr-calc').classList.add('hidden');
+  openModal('modal-log-ride');
+};
+
+window.calcModalRide = async function(){
+  const start = document.getElementById('lr-start').value.trim();
+  const end = document.getElementById('lr-end').value.trim();
+  const people = parseInt(document.getElementById('lr-people').value)||2;
+  if(!start||!end){showToast('Please enter start and end.');return}
+  // Use Distance Matrix via fetch
+  const result = await estimateDistance(start, end);
+  if(!result){showToast('Could not calculate distance. Please check addresses.');return}
+  const mpg = currentUserData?.car?.mpg || 28;
+  const co2 = calcCO2(result.miles, mpg, people);
+  const money = calcMoneySaved(result.miles, mpg, people);
+  const time = calcTimeSaved(result.miles, people);
+  rideCalcData = {miles:result.miles, co2Saved:co2, moneySaved:money, timeSaved:time, people};
+  document.getElementById('lr-calc').innerHTML=`✅ ~${result.miles} miles · ${co2} lbs CO₂ saved · $${money} saved · ${time} min saved`;
+  document.getElementById('lr-calc').classList.remove('hidden');
+};
+
+async function estimateDistance(start, end){
+  // Geocode both points, then calculate straight-line × 1.3 factor
+  try{
+    const geoUrl = (addr)=>`https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(addr)}&key=${MAPS_KEY}`;
+    const [r1,r2] = await Promise.all([fetch(geoUrl(start)).then(r=>r.json()), fetch(geoUrl(end)).then(r=>r.json())]);
+    if(r1.status!=='OK'||r2.status!=='OK') return null;
+    const loc1 = r1.results[0].geometry.location;
+    const loc2 = r2.results[0].geometry.location;
+    // Haversine
+    const R=3958.8, dLat=(loc2.lat-loc1.lat)*Math.PI/180, dLng=(loc2.lng-loc1.lng)*Math.PI/180;
+    const a=Math.sin(dLat/2)**2+Math.cos(loc1.lat*Math.PI/180)*Math.cos(loc2.lat*Math.PI/180)*Math.sin(dLng/2)**2;
+    const straightMiles = R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
+    return {miles:Math.round(straightMiles*1.3*10)/10}; // road factor
+  } catch(e){return null;}
+}
+
+window.confirmLogRide = async function(){
+  const start = document.getElementById('lr-start').value.trim();
+  const end = document.getElementById('lr-end').value.trim();
+  const date = document.getElementById('lr-date').value;
+  const role = document.getElementById('lr-role').value;
+  const people = parseInt(document.getElementById('lr-people').value)||2;
+  if(!start||!end||!date){showToast('Please fill in all fields.');return}
+  if(!rideCalcData) await calcModalRide();
+  if(!rideCalcData){showToast('Could not calculate trip data. Check your addresses.');return}
+
+  try{
+    await addDoc(collection(db,'rides'),{
+      userId:currentUser.uid, school:SCHOOL,
+      role, miles:rideCalcData.miles, co2Saved:rideCalcData.co2Saved,
+      moneySaved:rideCalcData.moneySaved, timeSaved:rideCalcData.timeSaved,
+      totalPeople:people, date, createdAt:serverTimestamp()
+      // start/end addresses NOT stored — calculated only
+    });
+    // Update user totals
+    const snap = await getDoc(doc(db,'users',currentUser.uid));
+    const ud = snap.data();
+    await updateDoc(doc(db,'users',currentUser.uid),{
+      totalRides:(ud.totalRides||0)+1,
+      totalCO2Saved:Math.round(((ud.totalCO2Saved||0)+rideCalcData.co2Saved)*10)/10,
+      totalMiles:Math.round(((ud.totalMiles||0)+rideCalcData.miles)*10)/10,
+      totalMoneySaved:Math.round(((ud.totalMoneySaved||0)+rideCalcData.moneySaved)*100)/100,
+      totalTimeSaved:(ud.totalTimeSaved||0)+rideCalcData.timeSaved
+    });
+    currentUserData = (await getDoc(doc(db,'users',currentUser.uid))).data();
+    rideCalcData=null;
+    closeModal('modal-log-ride');
+    showToast(`Ride logged! ${rideCalcData?.co2Saved||''} lbs CO₂ saved 🌿`);
+    loadSchedule(); loadImpact(); loadOverview();
+  } catch(e){showToast('Error: '+e.message);}
+};
+
+async function loadSchedule(){
+  if(!currentUser) return;
+  const days=['Monday','Tuesday','Wednesday','Thursday','Friday'];
+  const today = new Date().toLocaleDateString('en-US',{weekday:'long'});
+
+  // Build week grid from recent rides
+  const q = query(collection(db,'rides'), where('userId','==',currentUser.uid), orderBy('createdAt','desc'), limit(20));
+  const snap = await getDocs(q);
+  const ridesByDay = {};
+  snap.docs.forEach(d=>{
+    const r=d.data();
+    const rDate = r.date ? new Date(r.date) : null;
+    if(rDate){
+      const dayName = rDate.toLocaleDateString('en-US',{weekday:'long'});
+      if(!ridesByDay[dayName]) ridesByDay[dayName]=r;
+    }
+  });
+
+  const weekEl = document.getElementById('full-week');
+  weekEl.innerHTML = days.map(day=>{
+    const isToday = day===today;
+    const r = ridesByDay[day];
+    return `<div class="sched-day ${r?'mine':''} ${isToday?'today':''}">
+      <div class="day-name">${isToday?'Today':day.substring(0,3)}</div>
+      ${r?`<div class="driver-name">${r.role==='driver'?'🚗 You drove':'🎒 You rode'}</div><div style="font-size:.7rem;color:var(--muted)">${r.miles} mi</div>`
+        :`<div class="driver-name" style="color:var(--muted);font-size:.75rem">No ride</div>`}
+      ${isToday&&!r?`<button class="btn btn-primary btn-sm" style="margin-top:6px;font-size:.7rem" onclick="openAddRideModal()">Log ride</button>`:''}
+    </div>`;
+  }).join('');
+
+  // History
+  loadRecentRides('ride-history', 10);
+}
+
+// ── MESSAGES ──
+async function loadMessages(){
+  if(!currentUser) return;
+  const q = query(collection(db,'conversations'), where('participants','array-contains',currentUser.uid), orderBy('lastMessageAt','desc'));
+  if(convUnsub) convUnsub();
+  convUnsub = onSnapshot(q, snap=>{
+    const el = document.getElementById('conv-list');
+    if(snap.empty){el.innerHTML='<div class="msg-empty">No conversations yet.<br>Accept a ride request to start chatting.</div>';return}
+    el.innerHTML='';
+    snap.docs.forEach(d=>{
+      const c=d.data();
+      const otherId = c.participants.find(p=>p!==currentUser.uid);
+      const otherName = c.participantNames?.[otherId]||'Classmate';
+      const av = (otherName||'?')[0].toUpperCase();
+      const col = avatarColor(otherId);
+      const thread = document.createElement('div');
+      thread.className='msg-thread'+(d.id===activeConvId?' active':'');
+      thread.innerHTML=`<div class="avatar" style="background:${col};font-size:.8rem;width:36px;height:36px">${av}</div>
+        <div class="msg-thread-info"><strong>${otherName}</strong><span>${c.lastMessage||''}</span></div>`;
+      thread.onclick=()=>openConv(d.id, otherName, otherId);
+      el.appendChild(thread);
+    });
+  });
+}
+
+function openConv(convId, otherName, otherId){
+  activeConvId=convId;
+  document.querySelectorAll('.msg-thread').forEach(t=>t.classList.remove('active'));
+  event.currentTarget.classList.add('active');
+
+  const panel = document.getElementById('msg-chat-panel');
+  panel.innerHTML=`
+    <div class="msg-header">
+      <div class="avatar" style="background:${avatarColor(otherId)};font-size:.8rem;width:36px;height:36px">${(otherName||'?')[0].toUpperCase()}</div>
+      <div><strong style="font-size:.875rem">${otherName}</strong><div style="font-size:.75rem;color:var(--muted)">O'Dowd · Carpool Partner ✓</div></div>
+    </div>
+    <div class="msg-body" id="msg-body-${convId}"></div>
+    <div class="msg-input-row">
+      <input type="text" id="msg-input-${convId}" placeholder="Type a message…">
+      <button class="btn btn-primary btn-sm" onclick="sendMsg('${convId}','${otherId}')">Send</button>
+    </div>`;
+
+  const input = document.getElementById('msg-input-'+convId);
+  input.addEventListener('keydown',e=>{if(e.key==='Enter')sendMsg(convId,otherId)});
+
+  if(msgUnsub) msgUnsub();
+  const msgsQ = query(collection(db,'conversations',convId,'messages'), orderBy('sentAt','asc'));
+  msgUnsub = onSnapshot(msgsQ, snap=>{
+    const body = document.getElementById('msg-body-'+convId);
+    if(!body) return;
+    body.innerHTML='';
+    snap.docs.forEach(d=>{
+      const m=d.data();
+      const isMe = m.senderId===currentUser.uid;
+      const div = document.createElement('div');
+      div.className='msg-bubble '+(isMe?'me':'them');
+      div.innerHTML=`<div class="bubble-name">${isMe?'You':m.senderName}</div><div class="bubble">${m.text}</div>`;
+      body.appendChild(div);
+    });
+    body.scrollTop=body.scrollHeight;
+  });
+}
+
+window.sendMsg = async function(convId, otherId){
+  const input = document.getElementById('msg-input-'+convId);
+  const text = input.value.trim();
+  if(!text) return;
+  try{
+    await addDoc(collection(db,'conversations',convId,'messages'),{
+      senderId:currentUser.uid,
+      senderName:currentUserData.firstName+' '+currentUserData.lastName,
+      text, sentAt:serverTimestamp()
+    });
+    await updateDoc(doc(db,'conversations',convId),{lastMessage:text, lastMessageAt:serverTimestamp()});
+    input.value='';
+  } catch(e){showToast('Error sending: '+e.message);}
+};
+
+// ── IMPACT ──
+async function loadImpact(){
+  if(!currentUser||!currentUserData) return;
+  const d = currentUserData;
+  const co2 = d.totalCO2Saved||0;
+  const miles = d.totalMiles||0;
+  const rides = d.totalRides||0;
+  const money = d.totalMoneySaved||0;
+  const time = d.totalTimeSaved||0;
+
+  document.getElementById('imp-co2').textContent=co2;
+  document.getElementById('imp-miles').textContent=miles;
+  document.getElementById('imp-rides').textContent=rides;
+  document.getElementById('imp-money').textContent='$'+money;
+  document.getElementById('imp-time').textContent=time;
+
+  // Equivalents
+  const trees = Math.round(co2/48*10)/10;
+  const energy = Math.round(co2/1.5);
+  const trips = Math.round(miles/15);
+  document.getElementById('eq-trees').textContent=trees+' trees';
+  document.getElementById('eq-energy').textContent=energy+' kWh';
+  document.getElementById('eq-trips').textContent=trips+' trips offset';
+
+  const maxCO2 = 100;
+  document.getElementById('pb-trees').style.width=Math.min(co2/maxCO2*100,100)+'%';
+  document.getElementById('pb-energy').style.width=Math.min(energy/150*100,100)+'%';
+  document.getElementById('pb-trips').style.width=Math.min(trips/20*100,100)+'%';
+
+  // Pre-fill today's date
+  document.getElementById('ride-date').value = new Date().toISOString().split('T')[0];
+}
+
+window.calcRide = async function(){
+  const start = document.getElementById('ride-start').value.trim();
+  const end = document.getElementById('ride-end').value.trim()||'Bishop O\'Dowd High School, Oakland, CA';
+  const people = parseInt(document.getElementById('ride-passengers').value)||2;
+  if(!start){showToast('Please enter a start address.');return}
+  const result = await estimateDistance(start, end);
+  if(!result){showToast('Could not estimate distance. Try a more specific address.');return}
+  const mpg = currentUserData?.car?.mpg||28;
+  const co2 = calcCO2(result.miles, mpg, people);
+  const money = calcMoneySaved(result.miles, mpg, people);
+  const time = calcTimeSaved(result.miles, people);
+  rideCalcData={miles:result.miles,co2Saved:co2,moneySaved:money,timeSaved:time,people};
+  const el=document.getElementById('ride-calc-result');
+  el.innerHTML=`✅ ~${result.miles} miles · <strong>${co2} lbs CO₂ saved</strong> · $${money} saved · ${time} min saved`;
+  el.classList.remove('hidden');
+};
+
+window.logRide = async function(){
+  const start = document.getElementById('ride-start').value.trim();
+  const end = document.getElementById('ride-end').value.trim()||'Bishop O\'Dowd High School, Oakland, CA';
+  const date = document.getElementById('ride-date').value;
+  const role = document.getElementById('ride-role').value;
+  const people = parseInt(document.getElementById('ride-passengers').value)||2;
+  if(!start||!date){showToast('Please fill in all fields.');return}
+  if(!rideCalcData) await calcRide();
+  if(!rideCalcData){return}
+  try{
+    await addDoc(collection(db,'rides'),{
+      userId:currentUser.uid, school:SCHOOL,
+      role, miles:rideCalcData.miles, co2Saved:rideCalcData.co2Saved,
+      moneySaved:rideCalcData.moneySaved, timeSaved:rideCalcData.timeSaved,
+      totalPeople:people, date, createdAt:serverTimestamp()
+    });
+    const snap = await getDoc(doc(db,'users',currentUser.uid));
+    const ud = snap.data();
+    await updateDoc(doc(db,'users',currentUser.uid),{
+      totalRides:(ud.totalRides||0)+1,
+      totalCO2Saved:Math.round(((ud.totalCO2Saved||0)+rideCalcData.co2Saved)*10)/10,
+      totalMiles:Math.round(((ud.totalMiles||0)+rideCalcData.miles)*10)/10,
+      totalMoneySaved:Math.round(((ud.totalMoneySaved||0)+rideCalcData.moneySaved)*100)/100,
+      totalTimeSaved:(ud.totalTimeSaved||0)+rideCalcData.timeSaved
+    });
+    currentUserData=(await getDoc(doc(db,'users',currentUser.uid))).data();
+    document.getElementById('ride-start').value='';
+    document.getElementById('ride-calc-result').classList.add('hidden');
+    rideCalcData=null;
+    showToast('Ride logged! 🌿');
+    loadImpact();
+  } catch(e){showToast('Error: '+e.message);}
+};
+
+// ── LEADERBOARD ──
+async function loadLeaderboard(){
+  const q = query(collection(db,'users'),
+    where('schoolName','==',SCHOOL),
+    where('showOnLeaderboard','==',true),
+    orderBy('totalCO2Saved','desc'),
+    limit(20));
+  const snap = await getDocs(q);
+  const el = document.getElementById('leaderboard-list');
+  if(snap.empty){el.innerHTML='<p class="text-muted" style="font-size:.875rem;text-align:center;padding:1rem">No one on the leaderboard yet. Be the first to opt in!</p>';return}
+  el.innerHTML=snap.docs.map((d,i)=>{
+    const u=d.data();
+    const rankClass=i===0?'gold':i===1?'silver':i===2?'bronze':'';
+    const medal=i===0?'🥇':i===1?'🥈':i===2?'🥉':'';
+    const isMe=d.id===currentUser?.uid;
+    return `<div class="lb-row${isMe?' mine':''}">
+      <div class="lb-rank ${rankClass}">${medal||('#'+(i+1))}</div>
+      <div class="lb-info"><strong>${u.nickname||'Anonymous'}${isMe?' (you)':''}</strong><span>${u.totalRides||0} rides · ${u.neighborhoodZone||''}</span></div>
+      <div class="lb-score">${u.totalCO2Saved||0}<br><span style="font-size:.7rem;color:var(--muted)">lbs CO₂</span></div>
+    </div>`;
+  }).join('');
+
+  // My status
+  if(currentUserData){
+    document.getElementById('lb-nickname-input').value=currentUserData.nickname||'';
+  }
+}
+
+window.saveNickname = async function(){
+  const nick = document.getElementById('lb-nickname-input').value.trim();
+  if(!nick){showToast('Please enter a nickname.');return}
+  await updateDoc(doc(db,'users',currentUser.uid),{nickname:nick,showOnLeaderboard:true});
+  currentUserData.nickname=nick; currentUserData.showOnLeaderboard=true;
+  showToast('Nickname saved! You\'re on the leaderboard 🏆');
+  loadLeaderboard();
+};
+
+window.removeNickname = async function(){
+  await updateDoc(doc(db,'users',currentUser.uid),{nickname:null,showOnLeaderboard:false});
+  currentUserData.nickname=null; currentUserData.showOnLeaderboard=false;
+  document.getElementById('lb-nickname-input').value='';
+  showToast('Removed from leaderboard.');
+  loadLeaderboard();
+};
+
+// ── PROFILE ──
+async function loadProfile(){
+  if(!currentUser||!currentUserData) return;
+  const d=currentUserData;
+  const av=initials(d.firstName,d.lastName);
+  document.getElementById('profile-avatar').textContent=av;
+  document.getElementById('profile-name').textContent=d.firstName+' '+d.lastName;
+  document.getElementById('profile-stat-rides').textContent=d.totalRides||0;
+  document.getElementById('profile-stat-co2').textContent=d.totalCO2Saved||0;
+  document.getElementById('pd-name').textContent=d.firstName+' '+d.lastName;
+  document.getElementById('pd-age').textContent=d.age||'—';
+  document.getElementById('pd-grade').textContent=d.grade||'—';
+  document.getElementById('pd-email').textContent=d.email||'—';
+  document.getElementById('pd-zone').textContent=d.neighborhoodZone||'—';
+  document.getElementById('pd-nickname').textContent=d.nickname||'Private';
+  document.getElementById('profile-comp-badge').textContent=d.compensation||'Free';
+  document.getElementById('profile-role-badge').textContent=
+    d.ridePreference==='driver'?'🚗 Driver':d.ridePreference==='rider'?'🎒 Rider':'🚗🎒 Both';
+
+  if(d.car){
+    const c=d.car;
+    document.getElementById('pd-car').textContent=
+      c.method==='model'?`${c.year} ${c.make} ${c.model} (~${c.mpg} MPG)`:`${c.mpg} MPG`;
+    document.getElementById('car-details-display').innerHTML=`
+      <div class="alert alert-success">${c.method==='model'?`🚗 ${c.year} ${c.make} ${c.model} · ~${c.mpg} MPG (estimated)`:`⛽ ${c.mpg} MPG (manual entry)`}</div>
+      <button class="btn btn-outline btn-sm" onclick="openCarModal()">Update Car</button>`;
+  }
+}
+
+window.openEditProfileModal = function(){
+  if(!currentUserData) return;
+  const d=currentUserData;
+  document.getElementById('ep-first').value=d.firstName||'';
+  document.getElementById('ep-last').value=d.lastName||'';
+  document.getElementById('ep-age').value=d.age||'';
+  document.getElementById('ep-grade').value=d.grade||'9th (Freshman)';
+  document.getElementById('ep-zip').value=d.zip||'';
+  document.getElementById('ep-pref').value=d.ridePreference||'both';
+  document.getElementById('ep-comp').value=d.compensation||'free';
+  openModal('modal-edit-profile');
+};
+
+window.saveProfile = async function(){
+  const first=document.getElementById('ep-first').value.trim();
+  const last=document.getElementById('ep-last').value.trim();
+  const age=document.getElementById('ep-age').value;
+  const grade=document.getElementById('ep-grade').value;
+  const zip=document.getElementById('ep-zip').value.trim();
+  const pref=document.getElementById('ep-pref').value;
+  const comp=document.getElementById('ep-comp').value;
+  if(!first||!last){showToast('Please enter your name.');return}
+  const zone=getNeighborhood(zip);
+  await updateDoc(doc(db,'users',currentUser.uid),{firstName:first,lastName:last,age:parseInt(age)||17,grade,zip,neighborhoodZone:zone,ridePreference:pref,compensation:comp});
+  currentUserData=(await getDoc(doc(db,'users',currentUser.uid))).data();
+  document.getElementById('sb-name').textContent=first+' '+last;
+  closeModal('modal-edit-profile');
+  showToast('Profile updated!');
+  loadProfile();
+};
+
+// ── CAR ──
+window.openCarModal=function(){openModal('modal-car')};
+window.selectCarOpt2=function(type){
+  document.getElementById('co-model').classList.toggle('selected',type==='model');
+  document.getElementById('co-mpg').classList.toggle('selected',type==='mpg');
+  document.getElementById('car-modal-model').classList.toggle('hidden',type==='mpg');
+  document.getElementById('car-modal-mpg').classList.toggle('hidden',type==='model');
+};
+window.saveCar=async function(){
+  const isModel=!document.getElementById('car-modal-model').classList.contains('hidden');
+  let carData;
+  if(isModel){
+    const year=document.getElementById('cm-year').value;
+    const make=document.getElementById('cm-make').value.trim();
+    const model=document.getElementById('cm-model').value.trim();
+    if(!year||!make||!model){showToast('Please fill in year, make, and model.');return}
+    carData={method:'model',year,make,model,mpg:getMPG(year,make,model)};
+  } else {
+    const mpg=parseFloat(document.getElementById('cm-mpg').value);
+    if(!mpg){showToast('Please enter your MPG.');return}
+    carData={method:'mpg',mpg};
+  }
+  await updateDoc(doc(db,'users',currentUser.uid),{car:carData,hasCar:true});
+  currentUserData=(await getDoc(doc(db,'users',currentUser.uid))).data();
+  closeModal('modal-car');
+  showToast('Car saved! 🚗');
+  loadProfile();
+};
+
+// ── PARENT VIEW ──
+window.generateParentCode=function(){
+  if(!currentUser) return;
+  const link=window.location.origin+'?parent='+btoa(currentUser.uid);
+  document.getElementById('parent-link-display').textContent=link;
+  openModal('modal-parent');
+};
+window.copyParentLink=function(){
+  const text=document.getElementById('parent-link-display').textContent;
+  navigator.clipboard.writeText(text).then(()=>showToast('Link copied! 📋'));
+};
+
+// Check if parent view
+const urlParams=new URLSearchParams(window.location.search);
+const parentCode=urlParams.get('parent');
+if(parentCode){
+  const studentUid=atob(parentCode);
+  showPage('parent');
+  (async()=>{
+    const snap=await getDoc(doc(db,'users',studentUid));
+    if(!snap.exists()){document.querySelector('.parent-wrap').innerHTML='<div class="auth-card" style="margin:2rem auto;text-align:center"><h2>Link not found</h2><p>This parent view link may have expired or be invalid.</p></div>';return}
+    const d=snap.data();
+    document.getElementById('parent-profile').innerHTML=`
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:1rem">
+        <div class="avatar" style="background:var(--green)">${initials(d.firstName,d.lastName)}</div>
+        <div><strong>${d.firstName} ${d.lastName}</strong><div style="font-size:.8rem;color:var(--muted)">${d.grade} · ${SCHOOL}</div></div>
+      </div>
+      <div class="alert alert-success">✓ Verified O'Dowd student</div>`;
+
+    const partners=d.partners||[];
+    if(partners.length){
+      const pRows=await Promise.all(partners.map(async uid=>{
+        const ps=await getDoc(doc(db,'users',uid));
+        if(!ps.exists()) return '';
+        const p=ps.data();
+        return `<div style="display:flex;align-items:center;gap:10px;padding:.6rem 0;border-bottom:1px solid var(--border)">
+          <div class="avatar" style="background:${avatarColor(uid)}">${initials(p.firstName,p.lastName)}</div>
+          <div><strong style="font-size:.875rem">${p.firstName} ${p.lastName}</strong><div style="font-size:.75rem;color:var(--muted)">${p.grade} · ${p.neighborhoodZone||''}</div></div>
+        </div>`;
+      }));
+      document.getElementById('parent-partners').innerHTML=pRows.join('');
+    }
+
+    const rQ=query(collection(db,'rides'),where('userId','==',studentUid),orderBy('createdAt','desc'),limit(5));
+    const rSnap=await getDocs(rQ);
+    if(!rSnap.empty){
+      document.getElementById('parent-rides').innerHTML=rSnap.docs.map(d=>{
+        const r=d.data();
+        return `<div class="ride-item"><div style="font-size:1.2rem">${r.role==='driver'?'🚗':'🎒'}</div><div class="ride-info"><strong>${r.role==='driver'?'Drove':'Rode'} · ${r.miles} miles</strong><span>${fmtDate(r.createdAt)}</span></div><div class="ride-meta"><strong style="color:var(--green)">${r.co2Saved} lbs CO₂</strong>saved</div></div>`;
+      }).join('');
+    }
+  })();
+}
+
+// ── EXPOSE GLOBALS ──
+window.closeModal=closeModal;
+window.openModal=openModal;
+window.openRequestModal=window.openRequestModal;
+</script>
+</body>
+</html>
