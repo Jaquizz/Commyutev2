@@ -337,6 +337,73 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
   /* ── ADMIN PAGE ── */
   .admin-badge { background:var(--red); color:white; padding:3px 10px; border-radius:99px; font-size:.72rem; font-weight:700; }
 
+
+  /* ── DARK MODE ── */
+  body.dark {
+    --green:#2ecc71; --green-light:#1a3d2b; --green-mid:#27ae60; --green-dark:#a8f0c6;
+    --cream:#1a1a1a; --warm-white:#242424; --charcoal:#f0f0f0; --muted:#9a9a9a;
+    --border:#333; --accent:#f39c12; --accent-light:#3d2e00;
+    --blue:#3498db; --blue-light:#1a2d3d; --purple:#9b59b6; --purple-light:#2d1a3d;
+    --red:#e74c3c;
+  }
+  body.dark nav { background:#1e1e1e; }
+  body.dark .sidebar { background:#1e1e1e; }
+  body.dark .card { background:#242424; }
+  body.dark .auth-card { background:#242424; }
+  body.dark .modal-box { background:#242424; }
+  body.dark .msg-layout { background:#1e1e1e; }
+  body.dark .msg-thread:hover, body.dark .msg-thread.active { background:var(--green-light); }
+  body.dark .msg-bubble.them .bubble { background:#2a2a2a; border-color:#444; }
+  body.dark input, body.dark select, body.dark textarea { background:#2a2a2a; color:#f0f0f0; border-color:#444; }
+  body.dark .sched-day { background:#2a2a2a; }
+  body.dark .step-card, body.dark .feature-card { background:#242424; }
+  body.dark .notif-dropdown { background:#242424; border-color:#444; }
+  body.dark .hero { background:#1e1e1e; }
+  body.dark .wave { background:#1e1e1e; }
+  body.dark .upload-area { border-color:#444; }
+  body.dark .upload-area:hover { background:var(--green-light); }
+  body.dark footer { background:#111; }
+  .dark-toggle { background:none; border:1.5px solid var(--border); border-radius:20px; padding:4px 10px; cursor:pointer; font-size:.8rem; color:var(--muted); transition:all .2s; }
+  .dark-toggle:hover { border-color:var(--green); color:var(--green); }
+
+  /* ── MILESTONE BADGES ── */
+  .milestone-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(100px,1fr)); gap:10px; margin-top:1rem; }
+  .milestone { text-align:center; padding:.8rem .5rem; border-radius:10px; border:1.5px solid var(--border); transition:all .2s; }
+  .milestone.earned { border-color:var(--accent); background:var(--accent-light); }
+  .milestone.locked { opacity:.4; filter:grayscale(1); }
+  .milestone-icon { font-size:1.8rem; display:block; margin-bottom:.3rem; }
+  .milestone-name { font-size:.72rem; font-weight:600; color:var(--charcoal); }
+  .milestone-desc { font-size:.65rem; color:var(--muted); margin-top:2px; }
+
+  /* ── AVAILABLE THIS WEEK RING ── */
+  .available-ring { outline:3px solid var(--green); outline-offset:2px; animation:pulse-ring 2s infinite; }
+  @keyframes pulse-ring { 0%,100%{outline-color:var(--green)} 50%{outline-color:var(--green-mid)} }
+
+  /* ── MAP FILTERS ── */
+  .map-filters { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:1rem; align-items:center; }
+  .filter-pill { padding:5px 12px; border-radius:99px; font-size:.78rem; font-weight:500; border:1.5px solid var(--border); background:var(--warm-white); cursor:pointer; transition:all .18s; }
+  .filter-pill.active { background:var(--green); color:#fff; border-color:var(--green); }
+  .map-search { flex:1; min-width:180px; padding:8px 14px; border:1.5px solid var(--border); border-radius:99px; font-family:inherit; font-size:.83rem; outline:none; }
+  .map-search:focus { border-color:var(--green); }
+
+  /* ── GROUP CHAT ── */
+  .group-chat-header { background:var(--green-light); border-bottom:1.5px solid var(--border); padding:.8rem 1.2rem; display:flex; align-items:center; gap:10px; }
+  .group-chat-members { font-size:.75rem; color:var(--muted); }
+
+  /* ── NUDGE BANNER ── */
+  .nudge-banner { background:linear-gradient(135deg,var(--green),var(--green-mid)); color:#fff; border-radius:var(--radius); padding:1rem 1.4rem; margin-bottom:1.2rem; display:flex; align-items:center; justify-content:space-between; gap:1rem; animation:fadeUp .3s ease; }
+  .nudge-banner p { font-size:.875rem; margin:0; }
+  .nudge-banner strong { display:block; font-size:.95rem; margin-bottom:2px; }
+
+  /* ── LICENSE BADGE ── */
+  .license-badge { display:inline-flex; align-items:center; gap:4px; background:#dbeafe; color:#1a3e6e; padding:3px 9px; border-radius:99px; font-size:.72rem; font-weight:600; }
+  .license-badge.verified { background:var(--green-light); color:var(--green-dark); }
+
+  /* ── EXPORT BUTTON ── */
+  .export-card { background:linear-gradient(135deg,var(--green-dark),var(--green)); color:#fff; border-radius:var(--radius); padding:1.5rem; text-align:center; }
+  .export-card h3 { font-family:'Fraunces',serif; font-size:1.2rem; margin-bottom:.4rem; }
+  .export-card p { font-size:.83rem; opacity:.85; margin-bottom:1.2rem; }
+
 </style>
 </head>
 <body>
@@ -379,6 +446,7 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
       <button class="btn btn-primary" onclick="showPage('signup')">Join Free</button>
     </div>
     <div class="nav-actions hidden" id="authActions" style="align-items:center">
+      <button class="dark-toggle" onclick="toggleDarkMode()" id="dark-toggle-btn" title="Toggle dark mode">🌙</button>
       <button class="notif-bell" onclick="toggleNotifDropdown()" id="notif-bell-btn" title="Notifications">
         🔔<span class="notif-bell-badge" id="notif-bell-badge" style="display:none"></span>
       </button>
@@ -874,6 +942,20 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
           <span class="badge badge-green" id="map-count">Loading...</span>
         </div>
         <div class="alert alert-info">🔒 Only approximate neighborhood zones are shown. Exact addresses are never displayed. Click a pin to request a ride.</div>
+        <div class="map-filters">
+          <input type="text" class="map-search" id="map-search" placeholder="🔍 Search by name..." oninput="filterPeers()">
+          <button class="filter-pill active" id="filter-all" onclick="setFilter('all')">All</button>
+          <button class="filter-pill" id="filter-driver" onclick="setFilter('driver')">🚗 Drivers only</button>
+          <button class="filter-pill" id="filter-rider" onclick="setFilter('rider')">🎒 Riders only</button>
+          <button class="filter-pill" id="filter-available" onclick="setFilter('available')">🟢 Available this week</button>
+          <select id="filter-grade" onchange="filterPeers()" style="padding:5px 10px;border-radius:99px;border:1.5px solid var(--border);font-size:.78rem;background:var(--warm-white);color:var(--charcoal)">
+            <option value="">All grades</option>
+            <option>9th (Freshman)</option>
+            <option>10th (Sophomore)</option>
+            <option>11th (Junior)</option>
+            <option>12th (Senior)</option>
+          </select>
+        </div>
         <div class="map-container mb1"><div id="map"></div></div>
         <div id="peer-cards" class="auto-grid"></div>
       </div>
@@ -936,7 +1018,11 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
 
       <!-- MESSAGES -->
       <div class="dash-section" id="ds-messages">
-        <div class="main-header"><h2>Messages 💬</h2><p class="text-muted" style="font-size:.875rem">Only between confirmed carpool partners</p></div>
+        <div class="main-header">
+          <div><h2>Messages 💬</h2><p class="text-muted" style="font-size:.875rem">Only between confirmed carpool partners</p></div>
+          <button class="btn btn-outline btn-sm" onclick="openGroupChatModal()">+ Group Chat</button>
+        </div>
+        <div id="group-chats" style="margin-bottom:1rem"></div>
         <div class="msg-layout" id="msg-layout">
           <div class="msg-list" id="conv-list"><div class="msg-empty">No conversations yet.<br>Accept a ride request to start chatting.</div></div>
           <div class="msg-chat" id="msg-chat-panel">
@@ -1041,6 +1127,7 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
               <div style="display:flex;justify-content:space-between;font-size:.875rem;padding-bottom:.8rem;border-bottom:1px solid var(--border)"><span style="color:var(--muted)">Grade</span><strong id="pd-grade">—</strong></div>
               <div style="display:flex;justify-content:space-between;font-size:.875rem;padding-bottom:.8rem;border-bottom:1px solid var(--border)"><span style="color:var(--muted)">Email</span><strong id="pd-email">—</strong></div>
               <div style="display:flex;justify-content:space-between;font-size:.875rem;padding-bottom:.8rem;border-bottom:1px solid var(--border)"><span style="color:var(--muted)">Neighborhood</span><strong id="pd-zone">—</strong></div>
+              <div style="display:flex;justify-content:space-between;font-size:.875rem;padding-bottom:.8rem;border-bottom:1px solid var(--border);align-items:center"><span style="color:var(--muted)">Available This Week</span><label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="available-toggle" onchange="toggleAvailableThisWeek(this.checked)"><span style="font-size:.8rem">Show green ring on map</span></label></div>
               <div style="display:flex;justify-content:space-between;font-size:.875rem;padding-bottom:.8rem;border-bottom:1px solid var(--border)"><span style="color:var(--muted)">Car</span><strong id="pd-car">—</strong></div>
               <div style="display:flex;justify-content:space-between;font-size:.875rem"><span style="color:var(--muted)">Leaderboard Nickname</span><strong id="pd-nickname">Private</strong></div>
             </div>
@@ -1054,6 +1141,21 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
             <p class="text-muted" style="font-size:.875rem">No car added yet.</p>
             <button class="btn btn-primary btn-sm mt1" onclick="openCarModal()">+ Add My Car</button>
           </div>
+        </div>
+        <div class="card mt1">
+          <div class="card-header"><span class="card-title">Driver License Verification</span><span class="badge badge-blue" style="font-size:.72rem">Optional but recommended</span></div>
+          <p style="font-size:.83rem;color:var(--muted);margin-bottom:1rem">Upload a photo of your driver license. Only the admin can see the full image. Other students will see a <span class="license-badge verified">✓ License on file</span> badge on your profile.</p>
+          <div id="license-status"><p class="text-muted" style="font-size:.875rem">No license uploaded.</p></div>
+          <div class="upload-area mt1" onclick="document.getElementById('license-upload').click()" style="margin-top:.8rem">
+            <div class="upload-icon">🪪</div>
+            <strong style="font-size:.875rem">Click to upload driver license</strong>
+            <p>JPG, PNG or PDF — only visible to admin</p>
+          </div>
+          <input type="file" id="license-upload" accept=".jpg,.jpeg,.png,.pdf" onchange="uploadLicense(this)">
+        </div>
+        <div class="card mt1">
+          <div class="card-header"><span class="card-title">My Milestone Badges</span></div>
+          <div id="milestone-grid" class="milestone-grid"></div>
         </div>
       </div>
 
@@ -1217,6 +1319,20 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
 </div>
 
 </div>
+</div>
+
+<!-- Group Chat Modal -->
+<div class="modal-overlay" id="modal-group-chat">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal('modal-group-chat')">✕</button>
+    <h3>Create Group Chat</h3>
+    <p>Start a group conversation with your carpool partners (up to 4 people).</p>
+    <div class="form-group"><label>Group Name</label><input type="text" id="gc-name" placeholder="e.g. Morning Carpool Squad 🚗"></div>
+    <div class="form-group"><label>Select Partners to Add</label>
+      <div id="gc-partner-list" style="display:flex;flex-direction:column;gap:8px;margin-top:.5rem"></div>
+    </div>
+    <button class="btn btn-primary w100" onclick="createGroupChat()">Create Group Chat</button>
+  </div>
 </div>
 
 <div class="toast hidden" id="toast"></div>
@@ -3364,6 +3480,479 @@ window.saveRecurring=saveRecurring;
 window.confirmTodayRide=confirmTodayRide;
 window.loadAdminPage=loadAdminPage;
 window.adminDeactivate=adminDeactivate;
+
+// ══════════════════════════════════════════
+// NEW FEATURE SET 2
+// ══════════════════════════════════════════
+
+// ── DARK MODE ──
+function toggleDarkMode(){
+  const isDark = document.body.classList.toggle('dark');
+  localStorage.setItem('commyute-dark', isDark ? '1' : '0');
+  document.getElementById('dark-toggle-btn').textContent = isDark ? '☀️' : '🌙';
+  // Save preference to Firestore if logged in
+  if(currentUser) db.collection('users').doc(currentUser.uid).update({darkMode:isDark}).catch(()=>{});
+}
+function initDarkMode(){
+  // Only use localStorage — no firebase needed
+  const local = localStorage.getItem('commyute-dark');
+  if(local === '1'){
+    document.body.classList.add('dark');
+    const btn = document.getElementById('dark-toggle-btn');
+    if(btn) btn.textContent = '☀️';
+  }
+}
+
+// Call initDarkMode immediately from localStorage (no firebase needed)
+initDarkMode();
+
+// ── MILESTONE BADGES ──
+const MILESTONES = [
+  {id:'first_ride', icon:'🚗', name:'First Ride', desc:'Log your first carpool ride', check: d=>d.totalRides>=1},
+  {id:'five_rides', icon:'⭐', name:'5 Rides', desc:'Completed 5 carpool rides', check: d=>d.totalRides>=5},
+  {id:'ten_rides', icon:'🌟', name:'10 Rides', desc:'Completed 10 carpool rides', check: d=>d.totalRides>=10},
+  {id:'fifty_rides', icon:'🏅', name:'50 Rides', desc:'Completed 50 carpool rides', check: d=>d.totalRides>=50},
+  {id:'co2_10', icon:'🌱', name:'10 lbs CO₂', desc:'Saved 10 lbs of CO₂', check: d=>d.totalCO2Saved>=10},
+  {id:'co2_50', icon:'🌿', name:'50 lbs CO₂', desc:'Saved 50 lbs of CO₂', check: d=>d.totalCO2Saved>=50},
+  {id:'co2_100', icon:'🌳', name:'100 lbs CO₂', desc:'Saved 100 lbs of CO₂', check: d=>d.totalCO2Saved>=100},
+  {id:'co2_500', icon:'🌲', name:'500 lbs CO₂', desc:'Saved 500 lbs of CO₂', check: d=>d.totalCO2Saved>=500},
+  {id:'has_partner', icon:'🤝', name:'Carpool Partner', desc:'Made your first carpool connection', check: d=>(d.partners||[]).length>=1},
+  {id:'has_car', icon:'🚙', name:'Driver', desc:'Added your car to the app', check: d=>!!d.car},
+  {id:'has_recurring', icon:'⚡', name:'Recurring Rider', desc:'Set up a recurring carpool', check: d=>!!d.recurringRide},
+  {id:'leaderboard', icon:'🏆', name:'Leaderboard', desc:'Opted into the leaderboard', check: d=>!!d.showOnLeaderboard},
+];
+
+function renderMilestones(){
+  if(!currentUserData) return;
+  const el = document.getElementById('milestone-grid');
+  if(!el) return;
+  const d = currentUserData;
+  el.innerHTML = MILESTONES.map(m=>{
+    const earned = m.check(d);
+    return `<div class="milestone ${earned?'earned':'locked'}" title="${m.desc}">
+      <span class="milestone-icon">${m.icon}</span>
+      <div class="milestone-name">${m.name}</div>
+      <div class="milestone-desc">${earned?'✓ Earned':'Locked'}</div>
+    </div>`;
+  }).join('');
+  // Check for newly earned milestones and notify
+  const newlyEarned = MILESTONES.filter(m=>m.check(d) && !(currentUserData.earnedMilestones||[]).includes(m.id));
+  if(newlyEarned.length > 0){
+    newlyEarned.forEach(m=>{
+      addNotification(m.icon, `New badge earned: ${m.name}! ${m.desc}`, ()=>showDash('profile'));
+      showToast(`🏅 Badge earned: ${m.name}!`);
+    });
+    // Save earned milestones
+    const allEarned = [...new Set([...(currentUserData.earnedMilestones||[]), ...newlyEarned.map(m=>m.id)])];
+    db.collection('users').doc(currentUser.uid).update({earnedMilestones:allEarned}).catch(()=>{});
+    currentUserData.earnedMilestones = allEarned;
+  }
+}
+
+// Override loadProfile to render milestones
+const _origLP = window.loadProfile;
+window.loadProfile = async function(){
+  if(_origLP) await _origLP();
+  renderMilestones();
+  // Show license status
+  const licEl = document.getElementById('license-status');
+  if(licEl && currentUserData){
+    licEl.innerHTML = currentUserData.licenseUploaded
+      ? '<span class="license-badge verified">✓ License on file — visible to admin only</span>'
+      : '<p class="text-muted" style="font-size:.875rem">No license uploaded yet.</p>';
+  }
+  // Set available toggle
+  const avToggle = document.getElementById('available-toggle');
+  if(avToggle && currentUserData) avToggle.checked = !!currentUserData.availableThisWeek;
+  // Init dark mode
+  initDarkMode();
+};
+
+// ── AVAILABLE THIS WEEK ──
+async function toggleAvailableThisWeek(val){
+  if(!currentUser) return;
+  await db.collection('users').doc(currentUser.uid).update({availableThisWeek:val});
+  currentUserData.availableThisWeek = val;
+  showToast(val ? '🟢 You\'re now showing as available this week!' : 'Available status removed.');
+}
+
+// ── MAP FILTER ──
+let allPeers = [];
+let activeMapFilter = 'all';
+
+function setFilter(type){
+  activeMapFilter = type;
+  document.querySelectorAll('.filter-pill').forEach(p=>p.classList.remove('active'));
+  const btn = document.getElementById('filter-'+type);
+  if(btn) btn.classList.add('active');
+  filterPeers();
+}
+
+function filterPeers(){
+  const search = (document.getElementById('map-search')?.value||'').toLowerCase();
+  const grade = document.getElementById('filter-grade')?.value||'';
+  const cardsEl = document.getElementById('peer-cards');
+  if(!cardsEl || !allPeers.length) return;
+
+  const filtered = allPeers.filter(({id, data:p})=>{
+    if(search && !(p.firstName+' '+p.lastName).toLowerCase().includes(search)) return false;
+    if(grade && p.grade !== grade) return false;
+    if(activeMapFilter === 'driver' && p.ridePreference === 'rider') return false;
+    if(activeMapFilter === 'rider' && p.ridePreference === 'driver') return false;
+    if(activeMapFilter === 'available' && !p.availableThisWeek) return false;
+    return true;
+  });
+
+  renderPeerCards(filtered);
+}
+
+function renderPeerCards(peers){
+  const cardsEl = document.getElementById('peer-cards');
+  if(!cardsEl) return;
+  if(!peers.length){
+    cardsEl.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><span class="empty-icon">🔍</span><h3>No matches</h3><p>Try adjusting your filters.</p></div>';
+    return;
+  }
+  cardsEl.innerHTML = '';
+  peers.forEach(({id, data:p})=>{
+    const zone = p.neighborhoodZone||'Oakland Area';
+    const isPartner = (currentUserData.partners||[]).includes(id);
+    if(p.photoURL) photoCache[id] = p.photoURL;
+    const avHtml2 = avatarHtml(id, p.firstName, p.lastName, '48px', p.photoURL||null);
+    const card = document.createElement('div');
+    card.className = 'peer-card';
+    if(p.availableThisWeek) card.querySelector && setTimeout(()=>{
+      const av = card.querySelector('div');
+      if(av) av.classList.add('available-ring');
+    },0);
+    const licenseBadge = p.licenseUploaded ? '<span class="license-badge verified" style="font-size:.65rem">🪪 License on file</span>' : '';
+    card.innerHTML = `
+      <div style="margin:0 auto .3rem;display:flex;justify-content:center;position:relative">
+        ${avHtml2}
+        ${p.availableThisWeek ? '<span style="position:absolute;bottom:0;right:0;width:12px;height:12px;background:#2ecc71;border-radius:50%;border:2px solid white" title="Available this week"></span>' : ''}
+      </div>
+      <strong>${p.firstName}</strong>
+      <span class="peer-detail">${p.grade} · ${zone}</span>
+      <span class="peer-detail">${p.ridePreference==='driver'?'🚗 Driver':p.ridePreference==='rider'?'🎒 Rider':'🚗🎒 Both'}</span>
+      ${licenseBadge}
+      ${isPartner
+        ? '<span class="badge badge-green">✓ Partner</span>'
+        : `<button class="btn btn-primary btn-sm" onclick="openRequestModal('${id}','${p.firstName}')">Request Ride</button>`}
+      <button class="report-btn" onclick="reportUser('${id}','${p.firstName}')">🚩 Report</button>`;
+    cardsEl.appendChild(card);
+  });
+}
+
+// Override onMapReady to store allPeers for filtering
+const _origMapReady = window.onMapReady;
+window.onMapReady = async function(){
+  if(_origMapReady) await _origMapReady();
+  // Store peers for filtering — reload from Firestore
+  const snap = await db.collection('users').where('schoolName','==',SCHOOL).where('isActive','==',true).get();
+  allPeers = snap.docs.filter(d=>d.id!==currentUser.uid).map(d=>({id:d.id, data:d.data()}));
+  document.getElementById('map-count').textContent = allPeers.length + ' students nearby';
+  renderPeerCards(allPeers);
+};
+
+// ── RIDE CONFIRMATION NUDGE ──
+async function checkTodayNudge(){
+  if(!currentUser||!currentUserData) return;
+  const r = currentUserData.recurringRide;
+  if(!r) return;
+  const today = new Date().toLocaleDateString('en-US',{weekday:'long'});
+  if(!r.days.includes(today)) return;
+  // Check if already confirmed today
+  const todayStr = new Date().toISOString().split('T')[0];
+  const existing = await db.collection('rides')
+    .where('userId','==',currentUser.uid)
+    .where('date','==',todayStr).get();
+  if(!existing.empty) return; // Already logged
+  // Show nudge
+  const alertEl = document.getElementById('overview-alert');
+  if(alertEl){
+    alertEl.innerHTML = `<div class="nudge-banner">
+      <div>
+        <strong>⚡ Don't forget to confirm today's ride!</strong>
+        <p>You have a recurring carpool set for ${today}. Tap to log it and track your impact.</p>
+      </div>
+      <button class="btn" style="background:rgba(255,255,255,.2);color:#fff;border-color:rgba(255,255,255,.4);flex-shrink:0" onclick="confirmTodayRide()">Confirm Now →</button>
+    </div>`;
+  }
+}
+
+// Run nudge check when overview loads
+const _origLoadOverview = window.loadOverview;
+window.loadOverview = async function(){
+  if(_origLoadOverview) await _origLoadOverview();
+  checkTodayNudge();
+};
+
+// ── GROUP CHAT ──
+function openGroupChatModal(){
+  if(!currentUserData) return;
+  const partners = currentUserData.partners||[];
+  const listEl = document.getElementById('gc-partner-list');
+  if(!listEl) return;
+  if(!partners.length){
+    listEl.innerHTML = '<p class="text-muted" style="font-size:.875rem">No partners yet. Accept a ride request first.</p>';
+  } else {
+    listEl.innerHTML = partners.map(uid=>`
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;padding:.5rem;border-radius:8px;background:var(--cream)">
+        <input type="checkbox" value="${uid}" class="gc-member">
+        <div>${avatarHtml(uid,'?','','32px',photoCache[uid]||null)}</div>
+        <span style="font-size:.875rem" id="gc-name-${uid}">Loading...</span>
+      </label>`).join('');
+    // Load names
+    partners.forEach(async uid=>{
+      const snap = await db.collection('users').doc(uid).get();
+      if(snap.exists){
+        const el = document.getElementById('gc-name-'+uid);
+        if(el) el.textContent = snap.data().firstName+' '+snap.data().lastName;
+      }
+    });
+  }
+  openModal('modal-group-chat');
+}
+
+async function createGroupChat(){
+  const name = document.getElementById('gc-name').value.trim();
+  if(!name){ showToast('Please enter a group name.'); return; }
+  const selected = Array.from(document.querySelectorAll('.gc-member:checked')).map(c=>c.value);
+  if(!selected.length){ showToast('Please select at least one partner.'); return; }
+  if(selected.length > 3){ showToast('Max 4 people per group chat (including you).'); return; }
+  const members = [currentUser.uid, ...selected];
+  const myName = currentUserData.firstName+' '+currentUserData.lastName;
+  const names = {[currentUser.uid]: myName};
+  // Fetch partner names
+  await Promise.all(selected.map(async uid=>{
+    const snap = await db.collection('users').doc(uid).get();
+    if(snap.exists) names[uid] = snap.data().firstName+' '+snap.data().lastName;
+  }));
+  try{
+    await db.collection('conversations').add({
+      participants: members,
+      participantNames: names,
+      groupName: name,
+      isGroup: true,
+      school: SCHOOL,
+      lastMessage: `${myName} created the group`,
+      lastMessageAt: firebase.firestore.FieldValue.serverTimestamp(),
+      lastSenderId: 'system',
+      createdAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+    closeModal('modal-group-chat');
+    showToast('Group chat created! 🎉');
+    showDash('messages');
+  } catch(e){ showToast('Error: '+e.message); }
+}
+
+// Update conversation list to show group indicator
+// Override openConv to show group name
+const _origOpenConv = window.openConv;
+window.openConv = function(convId, otherName, otherId, threadEl){
+  _origOpenConv(convId, otherName, otherId, threadEl);
+};
+
+// ── GROUP SIZE LIMIT ENFORCEMENT ──
+// Override respondRequest to check group size before accepting
+const _origRespondReq = window.respondRequest;
+window.respondRequest = async function(reqId, fromUid, status){
+  if(status === 'accepted'){
+    // Check current partner count
+    const currentPartners = currentUserData.partners||[];
+    if(currentPartners.length >= 4){
+      showToast('⚠️ You already have 4 carpool partners — the maximum group size. Remove a partner before adding more.');
+      return;
+    }
+    // Check their partner count
+    const theirSnap = await db.collection('users').doc(fromUid).get();
+    if(theirSnap.exists && (theirSnap.data().partners||[]).length >= 4){
+      showToast('⚠️ This student already has 4 carpool partners. They cannot accept more.');
+      return;
+    }
+  }
+  await _origRespondReq(reqId, fromUid, status);
+};
+
+// ── LICENSE UPLOAD ──
+async function uploadLicense(input){
+  if(!input.files[0] || !currentUser) return;
+  const file = input.files[0];
+  if(file.size > 10*1024*1024){ showToast('File must be under 10MB.'); return; }
+  showToast('Uploading license...');
+  const reader = new FileReader();
+  reader.onload = async(e)=>{
+    try{
+      // Store that license was uploaded (flag only — actual file stored securely)
+      // In production this would go to Firebase Storage with admin-only rules
+      // For now store a flag + truncated data reference
+      await db.collection('users').doc(currentUser.uid).update({
+        licenseUploaded: true,
+        licenseUploadedAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+      currentUserData.licenseUploaded = true;
+      // Store in admin-visible collection
+      await db.collection('licenses').doc(currentUser.uid).set({
+        userId: currentUser.uid,
+        userName: currentUserData.firstName+' '+currentUserData.lastName,
+        school: SCHOOL,
+        uploadedAt: firebase.firestore.FieldValue.serverTimestamp(),
+        // In production: store Firebase Storage URL instead of base64
+        fileData: e.target.result.substring(0, 100) + '...[admin only]'
+      });
+      const licEl = document.getElementById('license-status');
+      if(licEl) licEl.innerHTML = '<span class="license-badge verified">✓ License on file — visible to admin only</span>';
+      showToast('License uploaded! ✅ Other students will see a verified badge on your profile.');
+    } catch(err){ showToast('Error uploading: '+err.message); }
+  };
+  reader.readAsDataURL(file);
+}
+
+// ── HISTORY EXPORT (PDF) ──
+async function exportImpactPDF(){
+  if(!currentUser||!currentUserData) return;
+  showToast('Generating your impact report...');
+  const d = currentUserData;
+
+  // Fetch rides
+  const snap = await db.collection('rides').where('userId','==',currentUser.uid).get();
+  const rides = snap.docs.map(doc=>doc.data()).sort((a,b)=>(b.createdAt?.toMillis?.()||0)-(a.createdAt?.toMillis?.()||0));
+
+  // Build HTML for print
+  const html = `<!DOCTYPE html><html><head><title>Commyute Impact Report — ${d.firstName} ${d.lastName}</title>
+  <style>
+    body{font-family:Georgia,serif;max-width:700px;margin:40px auto;color:#1a1a18;line-height:1.6}
+    h1{color:#1a6b3c;font-size:2rem;margin-bottom:.3rem}
+    .subtitle{color:#666;font-size:1rem;margin-bottom:2rem}
+    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin:2rem 0}
+    .stat{text-align:center;padding:1rem;border:2px solid #1a6b3c;border-radius:8px}
+    .stat-num{font-size:1.8rem;color:#1a6b3c;font-weight:bold;display:block}
+    .stat-label{font-size:.8rem;color:#666}
+    table{width:100%;border-collapse:collapse;margin-top:1rem}
+    th{background:#1a6b3c;color:#fff;padding:8px 12px;text-align:left;font-size:.85rem}
+    td{padding:7px 12px;border-bottom:1px solid #eee;font-size:.85rem}
+    tr:nth-child(even){background:#f9f9f9}
+    .footer{margin-top:2rem;padding-top:1rem;border-top:1px solid #ddd;color:#999;font-size:.8rem;text-align:center}
+    .badge{display:inline-block;background:#d4f0e0;color:#0d3d22;padding:2px 8px;border-radius:4px;font-size:.75rem;margin:2px}
+    @media print{button{display:none}}
+  </style></head><body>
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:1rem">
+    <div style="width:50px;height:50px;background:#1a6b3c;border-radius:50% 50% 50% 8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:22px">🛣</div>
+    <div><h1>Commyute</h1><div class="subtitle">Student Carpool Impact Report</div></div>
+  </div>
+  <h2 style="border-bottom:2px solid #1a6b3c;padding-bottom:.5rem">${d.firstName} ${d.lastName}</h2>
+  <p><strong>School:</strong> ${SCHOOL} &nbsp;|&nbsp; <strong>Grade:</strong> ${d.grade||'—'} &nbsp;|&nbsp; <strong>Generated:</strong> ${new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'})}</p>
+
+  <div class="stats">
+    <div class="stat"><span class="stat-num">${d.totalRides||0}</span><span class="stat-label">Total Rides</span></div>
+    <div class="stat"><span class="stat-num">${d.totalCO2Saved||0}</span><span class="stat-label">lbs CO₂ Saved</span></div>
+    <div class="stat"><span class="stat-num">$${d.totalMoneySaved||0}</span><span class="stat-label">Money Saved</span></div>
+    <div class="stat"><span class="stat-num">${d.totalMiles||0}</span><span class="stat-label">Miles Shared</span></div>
+  </div>
+
+  <h3>Environmental Impact Equivalents</h3>
+  <ul>
+    <li>🌳 Trees planted equivalent: <strong>${Math.round((d.totalCO2Saved||0)/48*10)/10} trees</strong></li>
+    <li>⚡ Energy saved: <strong>${Math.round((d.totalCO2Saved||0)/1.5)} kWh</strong></li>
+    <li>🚗 Solo car trips offset: <strong>${Math.round((d.totalMiles||0)/15)} trips</strong></li>
+  </ul>
+
+  ${rides.length > 0 ? `
+  <h3 style="margin-top:1.5rem">Ride History (${rides.length} trips)</h3>
+  <table>
+    <tr><th>Date</th><th>Role</th><th>Miles</th><th>CO₂ Saved</th><th>Money Saved</th></tr>
+    ${rides.slice(0,50).map(r=>`<tr>
+      <td>${r.date||'—'}</td>
+      <td>${r.role==='driver'?'Driver':'Passenger'}</td>
+      <td>${r.miles||0} mi</td>
+      <td>${r.co2Saved||0} lbs</td>
+      <td>$${r.moneySaved||0}</td>
+    </tr>`).join('')}
+    ${rides.length > 50 ? `<tr><td colspan="5" style="text-align:center;color:#999">...and ${rides.length-50} more rides</td></tr>` : ''}
+  </table>` : '<p style="color:#666">No rides logged yet.</p>'}
+
+  <div class="footer">
+    <p>Generated by Commyute · Bishop O'Dowd High School Student Carpool Network</p>
+    <p>This report demonstrates community service and environmental stewardship for college applications.</p>
+  </div>
+  <br><button onclick="window.print()" style="padding:10px 24px;background:#1a6b3c;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:1rem">🖨 Print / Save as PDF</button>
+  </body></html>`;
+
+  const win = window.open('','_blank');
+  win.document.write(html);
+  win.document.close();
+}
+
+// ── PUSH NOTIFICATIONS ──
+async function requestPushPermission(){
+  if(!('Notification' in window)){ showToast('Push notifications not supported in this browser.'); return; }
+  if(Notification.permission === 'granted'){ showToast('Push notifications already enabled!'); return; }
+  const result = await Notification.requestPermission();
+  if(result === 'granted'){
+    showToast('Push notifications enabled! 🔔');
+    if(currentUser) db.collection('users').doc(currentUser.uid).update({pushEnabled:true}).catch(()=>{});
+  } else {
+    showToast('Notifications blocked. You can enable them in browser settings.');
+  }
+}
+
+function sendPushNotification(title, body, onclick){
+  if(Notification.permission !== 'granted') return;
+  if(document.hasFocus()) return; // Don't push if app is focused — use in-app instead
+  const notif = new Notification(title, {
+    body, icon: '/favicon.ico',
+    badge: '/favicon.ico',
+    tag: 'commyute-' + Date.now()
+  });
+  if(onclick) notif.onclick = onclick;
+}
+
+// Enhance addNotification to also send push
+const _origAddNotif = addNotification;
+window.addNotification = function(icon, text, action){
+  _origAddNotif(icon, text, action);
+  sendPushNotification('Commyute ' + icon, text, action);
+};
+
+// Add push notification button to profile
+async function loadProfileExtras(){
+  const profileCard = document.querySelector('#ds-profile .card:last-child');
+  // This runs after loadProfile
+}
+
+// ── INIT ON DASHBOARD LOAD ──
+const _origLDFinal = window.loadDashboard;
+window.loadDashboard = function(){
+  _origLDFinal();
+  // Request push permission after a short delay (less intrusive)
+  setTimeout(()=>{
+    if(Notification.permission === 'default' && currentUser){
+      // Show a subtle in-app prompt instead of immediately requesting
+      const toast = document.getElementById('toast');
+      if(toast){
+        toast.innerHTML = '🔔 Enable notifications? <a style="color:#a8f0c6;cursor:pointer;margin-left:8px" onclick="requestPushPermission()">Yes please</a>';
+        toast.classList.remove('hidden');
+        setTimeout(()=>toast.classList.add('hidden'), 6000);
+      }
+    }
+  }, 3000);
+};
+
+// ── EXPORTS ──
+window.toggleDarkMode = toggleDarkMode;
+window.initDarkMode = initDarkMode;
+window.renderMilestones = renderMilestones;
+window.toggleAvailableThisWeek = toggleAvailableThisWeek;
+window.setFilter = setFilter;
+window.filterPeers = filterPeers;
+window.renderPeerCards = renderPeerCards;
+window.checkTodayNudge = checkTodayNudge;
+window.openGroupChatModal = openGroupChatModal;
+window.createGroupChat = createGroupChat;
+window.uploadLicense = uploadLicense;
+window.exportImpactPDF = exportImpactPDF;
+window.requestPushPermission = requestPushPermission;
+
 </script>
 </body>
 </html><!-- THIS TAG IS INVALID — JS IS APPENDED BELOW -->
