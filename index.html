@@ -760,7 +760,7 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
           <div class="form-group"><label>Grade</label><select id="reg-grade"><option value="">Select grade</option><option>9th (Freshman)</option><option>10th (Sophomore)</option><option>11th (Junior)</option><option>12th (Senior)</option></select></div>
         </div>
         <div class="form-group"><label>School Email (@bishopodowd.org)</label><input type="email" id="reg-email" placeholder="@bishopodowd.org"></div>
-        <div class="form-group"><label>Password (min. 6 characters)</label><input type="password" id="reg-pass" placeholder="Create a strong password"></div>
+        <div class="form-group"><label>Password (min. 6 characters)</label><input type="password" id="reg-pass" placeholder="Create a strong password" onkeydown="if(event.key==='Enter')suStep(2)"></div>
         <button class="btn btn-primary w100" onclick="suStep(2)">Continue →</button>
       </div>
 
@@ -852,8 +852,8 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
       <h2>Welcome back!</h2>
       <p class="subtitle">Log in to your carpool dashboard</p>
       <div id="login-error" class="alert alert-error hidden"></div>
-      <div class="form-group"><label>School Email</label><input type="email" id="login-email" placeholder="@bishopodowd.org"></div>
-      <div class="form-group"><label>Password</label><input type="password" id="login-pass" placeholder="••••••••"></div>
+      <div class="form-group"><label>School Email</label><input type="email" id="login-email" placeholder="@bishopodowd.org" onkeydown="if(event.key==='Enter')document.getElementById('login-pass').focus()"></div>
+      <div class="form-group"><label>Password</label><input type="password" id="login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
       <button class="btn btn-primary w100" onclick="doLogin()" id="login-btn">Log In →</button>
       <div style="text-align:center;margin-top:.8rem"><a style="font-size:.8rem;color:var(--muted);cursor:pointer" onclick="doPasswordReset()">Forgot password?</a></div>
       <div class="auth-switch">New to Commyute? <a onclick="showPage('signup')">Create an account</a></div>
@@ -994,11 +994,7 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
             <div class="card mb1">
               <div class="card-header"><span class="card-title">This Week's Schedule</span><a style="font-size:.8rem;color:var(--green);cursor:pointer" onclick="showDash('schedule')">View all →</a></div>
               <div class="week-grid" id="overview-week">
-                <div class="sched-day"><div class="day-name">Mon</div><div class="driver-name" style="color:var(--muted);font-size:.75rem">No ride</div></div>
-                <div class="sched-day"><div class="day-name">Tue</div><div class="driver-name" style="color:var(--muted);font-size:.75rem">No ride</div></div>
-                <div class="sched-day today"><div class="day-name">Today</div><div class="driver-name" style="color:var(--muted);font-size:.75rem">No ride</div></div>
-                <div class="sched-day"><div class="day-name">Thu</div><div class="driver-name" style="color:var(--muted);font-size:.75rem">No ride</div></div>
-                <div class="sched-day"><div class="day-name">Fri</div><div class="driver-name" style="color:var(--muted);font-size:.75rem">No ride</div></div>
+                <div id="overview-week-inner" style="display:contents"><div class="sched-day"><div class="day-name">Loading...</div></div></div>
               </div>
             </div>
             <div class="card">
@@ -1344,7 +1340,7 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
       <p class="subtitle">View your student's carpool activity</p>
       <div id="par-login-error" class="alert alert-error hidden"></div>
       <div class="form-group"><label>Your Email</label><input type="email" id="par-login-email" placeholder="parent@email.com"></div>
-      <div class="form-group"><label>Password</label><input type="password" id="par-login-pass" placeholder="••••••••"></div>
+      <div class="form-group"><label>Password</label><input type="password" id="par-login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doParentLogin()"></div>
       <button class="btn btn-primary w100" onclick="doParentLogin()">Log In →</button>
       <div class="auth-switch">New parent? <a onclick="showPage('parent-signup')">Create account</a></div>
       <div class="divider"></div>
@@ -2030,6 +2026,9 @@ function showDash(id){
   if(dn) dn.classList.add('active');
   if(id==='map'){ mapInstance=null; initMap(); }
   if(id==='impact') loadImpact();
+  // Close mobile sidebar when navigating
+  closeMobileNav();
+  window.scrollTo({top:0, behavior:'smooth'});
   if(id==='leaderboard') loadLeaderboard();
   if(id==='messages') loadMessages();
   if(id==='friends') loadFriends();
@@ -2274,15 +2273,45 @@ async function loadOverview(){
   const d = currentUserData;
   const hour = new Date().getHours();
   const greet = hour<12 ? 'Good morning' : hour<17 ? 'Good afternoon' : 'Good evening';
-  document.getElementById('greeting').textContent = greet+', '+d.firstName+' 👋';
-  document.getElementById('overview-sub').textContent = 'Welcome to Commyute — '+SCHOOL;
-  document.getElementById('stat-rides').textContent = d.totalRides||0;
-  document.getElementById('stat-co2').textContent = d.totalCO2Saved||0;
+  const greetEl=document.getElementById('greeting');
+  const subEl=document.getElementById('overview-sub');
+  if(greetEl) greetEl.textContent = greet+', '+d.firstName+' 👋';
+  if(subEl) subEl.textContent = 'Welcome to Commyute — '+SCHOOL;
+  const srEl=document.getElementById('stat-rides'); if(srEl) srEl.textContent = d.totalRides||0;
+  const scEl=document.getElementById('stat-co2'); if(scEl) scEl.textContent = d.totalCO2Saved||0;
   document.getElementById('stat-money').textContent = '$'+(d.totalMoneySaved||0);
   document.getElementById('stat-time').textContent = d.totalTimeSaved||0;
   loadRecentRides('recent-rides', 3);
   loadPartners();
   loadPendingOverview();
+  renderOverviewWeek();
+}
+
+async function renderOverviewWeek(){
+  if(!currentUser) return;
+  const days=['Monday','Tuesday','Wednesday','Thursday','Friday'];
+  const today=new Date().toLocaleDateString('en-US',{weekday:'long'});
+  const weekDates=getWeekDates();
+  const weekDateStrings=weekDates.map(d=>d.toISOString().split('T')[0]);
+  const rawSnap=await db.collection('rides').where('userId','==',currentUser.uid).limit(100).get();
+  const ridesByDateStr={};
+  rawSnap.docs.forEach(d=>{
+    const r=d.data();
+    if(r.date && weekDateStrings.includes(r.date) && !ridesByDateStr[r.date]) ridesByDateStr[r.date]=r;
+  });
+  const el=document.getElementById('overview-week-inner')||document.getElementById('overview-week');
+  if(!el) return;
+  el.innerHTML=days.map((day,i)=>{
+    const dateStr=weekDates[i].toISOString().split('T')[0];
+    const isToday=day===today;
+    const r=ridesByDateStr[dateStr];
+    const noSchool=typeof isNoSchoolDay==='function'&&isNoSchoolDay(dateStr);
+    let cls='sched-day'+(r?' mine':'')+(isToday?' today':'')+(noSchool?' no-school-day':'');
+    return `<div class="${cls}">
+      <div class="day-name">${isToday?'Today':day.substring(0,3)}</div>
+      <div class="driver-name" style="font-size:.75rem">${noSchool?'No School':r?r.role==='driver'?'🚗 Drove':'🎒 Rode':'—'}</div>
+    </div>`;
+  }).join('');
 }
 
 async function loadRecentRides(containerId, lim){
@@ -2733,31 +2762,65 @@ async function loadSchedule(){
   if(!currentUser) return;
   const days=['Monday','Tuesday','Wednesday','Thursday','Friday'];
   const today=new Date().toLocaleDateString('en-US',{weekday:'long'});
-  const rawSnap=await db.collection('rides').where('userId','==',currentUser.uid).limit(50).get();
-  const snap={docs:rawSnap.docs.sort((a,b)=>(b.data().createdAt?.toMillis?.()||0)-(a.data().createdAt?.toMillis?.()||0)).slice(0,20)};
-  const ridesByDay={};
-  snap.docs.forEach(d=>{
-    const r=d.data();
-    if(r.date){
-      // Parse date correctly regardless of timezone
-      const parts = r.date.split('-');
-      const rDate = new Date(parseInt(parts[0]), parseInt(parts[1])-1, parseInt(parts[2]));
-      const dayName = rDate.toLocaleDateString('en-US',{weekday:'long'});
-      if(!ridesByDay[dayName]) ridesByDay[dayName]=r;
+
+  // Get THIS week's exact date strings (YYYY-MM-DD)
+  const weekDates = getWeekDates ? getWeekDates() : (()=>{
+    const d=new Date(), dow=d.getDay(), mon=new Date(d);
+    mon.setDate(d.getDate()-(dow===0?6:dow-1));
+    return Array.from({length:5},(_,i)=>{const x=new Date(mon);x.setDate(mon.getDate()+i);return x;});
+  })();
+  const weekDateStrings = weekDates.map(d=>d.toISOString().split('T')[0]);
+
+  // Fetch rides and match ONLY by exact date this week
+  const rawSnap=await db.collection('rides').where('userId','==',currentUser.uid).limit(100).get();
+  const allRides=rawSnap.docs.map(d=>d.data()).sort((a,b)=>(b.createdAt?.toMillis?.()||0)-(a.createdAt?.toMillis?.()||0));
+
+  // Map: 'YYYY-MM-DD' -> ride (only this week's dates)
+  const ridesByDateStr={};
+  allRides.forEach(r=>{
+    if(r.date && weekDateStrings.includes(r.date) && !ridesByDateStr[r.date]){
+      ridesByDateStr[r.date]=r;
     }
   });
+
   const weekEl=document.getElementById('full-week');
-  weekEl.innerHTML=days.map(day=>{
+  if(!weekEl) return;
+
+  weekEl.innerHTML=days.map((day,i)=>{
+    const date=weekDates[i];
+    const dateStr=date.toISOString().split('T')[0];
+    const dayNum=date.getDate();
     const isToday=day===today;
-    const r=ridesByDay[day];
-    return `<div class="sched-day ${r?'mine':''} ${isToday?'today':''}">
+    const r=ridesByDateStr[dateStr]; // EXACT date match only
+    const noSchool=typeof isNoSchoolDay==='function'?isNoSchoolDay(dateStr):false;
+    const noSchoolReason=typeof getNoSchoolReason==='function'?getNoSchoolReason(dateStr):null;
+
+    let cls='sched-day';
+    if(noSchool) cls+=' no-school-day';
+    else if(r) cls+=' mine';
+    else if(isToday) cls+=' today';
+
+    let inner='';
+    if(noSchool){
+      inner=`<div class="driver-name" style="font-size:.72rem">📅 ${noSchoolReason}</div>`;
+    } else if(r){
+      inner=`<div class="driver-name">${r.role==='driver'?'🚗 Drove':'🎒 Rode'}</div>
+        <div style="font-size:.7rem;color:var(--muted)">${r.miles||0} mi · ${r.co2Saved||0} lbs CO₂</div>
+        ${isToday?'<button class="btn btn-outline btn-sm" style="margin-top:5px;font-size:.68rem" onclick="cancelTodaysRide()">Cancel</button>':''}`;
+    } else {
+      inner=`<div class="driver-name" style="color:var(--muted);font-size:.75rem">No ride</div>
+        ${isToday?'<button class="btn btn-primary btn-sm" style="margin-top:5px;font-size:.68rem" onclick="openAddRideModal()">Log it</button>':''}`;
+    }
+
+    return `<div class="${cls}">
       <div class="day-name">${isToday?'Today':day.substring(0,3)}</div>
-      ${r?`<div class="driver-name">${r.role==='driver'?'🚗 Drove':'🎒 Rode'}</div><div style="font-size:.7rem;color:var(--muted)">${r.miles} mi</div>`
-        :`<div class="driver-name" style="color:var(--muted);font-size:.75rem">No ride</div>`}
-      ${isToday&&!r?`<button class="btn btn-primary btn-sm" style="margin-top:5px;font-size:.7rem" onclick="openAddRideModal()">Log it</button>`:''}
+      <div style="font-size:1.1rem;font-weight:700;color:var(--muted);margin:.2rem 0">${dayNum}</div>
+      ${inner}
     </div>`;
   }).join('');
+
   loadRecentRides('ride-history',10);
+  if(typeof renderRecurringSummary==='function') renderRecurringSummary();
 }
 
 // ── MESSAGES ──
@@ -3622,11 +3685,7 @@ async function confirmTodayRide(){
 }
 
 // Load recurring summary when schedule opens
-const _origLoadSchedule = window.loadSchedule;
-window.loadSchedule = async function(){
-  await _origLoadSchedule();
-  renderRecurringSummary();
-};
+// loadSchedule handles renderRecurringSummary directly now
 
 // ── ADMIN PAGE ──
 async function loadAdminPage(){
@@ -4477,86 +4536,7 @@ async function cancelTodaysRide(){
 window.cancelTodaysRide = cancelTodaysRide;
 
 // ── IMPROVED SCHEDULE WITH CALENDAR AWARENESS ──
-const _origLoadSchedule2 = window.loadSchedule;
-window.loadSchedule = async function(){
-  if(!currentUser) return;
-  const days = ['Monday','Tuesday','Wednesday','Thursday','Friday'];
-  const today = new Date().toLocaleDateString('en-US',{weekday:'long'});
-  const weekDates = getWeekDates();
-
-  const rawSnap = await db.collection('rides').where('userId','==',currentUser.uid).limit(50).get();
-  const snap = {docs:rawSnap.docs.sort((a,b)=>(b.data().createdAt?.toMillis?.()||0)-(a.data().createdAt?.toMillis?.()||0)).slice(0,20)};
-
-  // Build a map of THIS WEEK's date strings to ride data
-  // Key = 'YYYY-MM-DD', value = ride — only matches exact dates this week
-  const weekDateStrings = weekDates.map(d=>d.toISOString().split('T')[0]);
-  const ridesByDateStr = {};
-  snap.docs.forEach(d=>{
-    const r=d.data();
-    if(r.date && weekDateStrings.includes(r.date)){
-      ridesByDateStr[r.date] = r;
-    }
-  });
-
-  const weekEl = document.getElementById('full-week');
-  if(!weekEl) return;
-  weekEl.innerHTML = '';
-
-  // Build improved week cards
-  const weekCardsHtml = days.map((day,i)=>{
-    const date = weekDates[i];
-    const dateStr = date.toISOString().split('T')[0];
-    const dayNum = date.getDate();
-    const isToday = day===today;
-    const r = ridesByDateStr[dateStr]; // Only matches rides from THIS exact week
-    const noSchool = isNoSchoolDay(dateStr);
-    const noSchoolReason = getNoSchoolReason(dateStr);
-
-    let cls = 'sched-day';
-    if(noSchool) cls += ' no-school-day';
-    else if(r) cls += ' mine';
-    else if(isToday) cls += ' today';
-
-    let content = '';
-    if(noSchool){
-      content = `<div class="driver-name" style="font-size:.75rem">📅 ${noSchoolReason}</div>`;
-    } else if(r){
-      content = `<div class="driver-name">${r.role==='driver'?'🚗 Drove':'🎒 Rode'}</div>
-        <div style="font-size:.7rem;color:var(--muted)">${r.miles} mi · ${r.co2Saved} lbs CO₂</div>
-        ${isToday?`<button class="btn btn-outline btn-sm" style="margin-top:5px;font-size:.68rem" onclick="cancelTodaysRide()">Cancel</button>`:''}`;
-    } else {
-      content = `<div class="driver-name" style="color:var(--muted);font-size:.75rem">No ride</div>
-        ${isToday?`<button class="btn btn-primary btn-sm" style="margin-top:5px;font-size:.68rem" onclick="openAddRideModal()">Log it</button>`:''}`;
-    }
-
-    return `<div class="${cls}">
-      <div class="day-name">${isToday?'Today':day.substring(0,3)}</div>
-      <div style="font-size:1.1rem;font-weight:700;color:var(--muted);margin:.2rem 0">${dayNum}</div>
-      ${content}
-    </div>`;
-  }).join('');
-
-  weekEl.innerHTML = weekCardsHtml;
-
-  // Load history
-  const histEl = document.getElementById('ride-history');
-  if(histEl){
-    if(snap.docs.length===0){
-      histEl.innerHTML='<div class="empty-state"><span class="empty-icon">🗓</span><h3>No rides logged yet</h3><p>Log your first carpool ride to start tracking your environmental impact.</p><button class="btn btn-primary" onclick="openAddRideModal()">+ Log a Ride</button></div>';
-    } else {
-      histEl.innerHTML = snap.docs.map(d=>{
-        const r=d.data();
-        return `<div class="ride-item">
-          <div style="font-size:1.3rem">${r.role==='driver'?'🚗':'🎒'}</div>
-          <div class="ride-info"><strong>${r.role==='driver'?'You drove':'You rode'} · ${r.miles||0} mi</strong><span>${r.date||fmtDate(r.createdAt)}</span></div>
-          <div class="ride-meta"><strong style="color:var(--green)">${r.co2Saved||0} lbs CO₂</strong>$${r.moneySaved||0} saved</div>
-        </div>`;
-      }).join('');
-    }
-  }
-
-  renderRecurringSummary();
-};
+// Schedule handled by original loadSchedule function
 
 // ── ROUTE VISUALIZER ──
 async function showRouteForPartner(uid){
