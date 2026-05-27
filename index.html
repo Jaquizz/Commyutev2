@@ -4486,14 +4486,15 @@ window.loadSchedule = async function(){
 
   const rawSnap = await db.collection('rides').where('userId','==',currentUser.uid).limit(50).get();
   const snap = {docs:rawSnap.docs.sort((a,b)=>(b.data().createdAt?.toMillis?.()||0)-(a.data().createdAt?.toMillis?.()||0)).slice(0,20)};
-  const ridesByDay = {};
+
+  // Build a map of THIS WEEK's date strings to ride data
+  // Key = 'YYYY-MM-DD', value = ride — only matches exact dates this week
+  const weekDateStrings = weekDates.map(d=>d.toISOString().split('T')[0]);
+  const ridesByDateStr = {};
   snap.docs.forEach(d=>{
     const r=d.data();
-    if(r.date){
-      const parts=r.date.split('-');
-      const rDate=new Date(parseInt(parts[0]),parseInt(parts[1])-1,parseInt(parts[2]));
-      const dayName=rDate.toLocaleDateString('en-US',{weekday:'long'});
-      if(!ridesByDay[dayName]) ridesByDay[dayName]=r;
+    if(r.date && weekDateStrings.includes(r.date)){
+      ridesByDateStr[r.date] = r;
     }
   });
 
@@ -4507,7 +4508,7 @@ window.loadSchedule = async function(){
     const dateStr = date.toISOString().split('T')[0];
     const dayNum = date.getDate();
     const isToday = day===today;
-    const r = ridesByDay[day];
+    const r = ridesByDateStr[dateStr]; // Only matches rides from THIS exact week
     const noSchool = isNoSchoolDay(dateStr);
     const noSchoolReason = getNoSchoolReason(dateStr);
 
