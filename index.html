@@ -404,6 +404,79 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
   .export-card h3 { font-family:'Fraunces',serif; font-size:1.2rem; margin-bottom:.4rem; }
   .export-card p { font-size:.83rem; opacity:.85; margin-bottom:1.2rem; }
 
+
+  /* ── PARENT ACCOUNT ── */
+  .parent-dashboard { background:var(--warm-white); min-height:calc(100vh - 64px); }
+  .parent-header-bar { background:var(--green-dark); color:#fff; padding:1.2rem 2rem; display:flex; align-items:center; justify-content:space-between; }
+  .parent-header-bar h2 { font-family:'Fraunces',serif; font-size:1.4rem; }
+  .parent-content { max-width:1000px; margin:0 auto; padding:2rem; }
+  .parent-badge { background:rgba(255,255,255,.15); color:#fff; padding:4px 12px; border-radius:99px; font-size:.75rem; font-weight:600; }
+
+  /* ── RIDE CHECK-IN ── */
+  .checkin-bar { background:linear-gradient(135deg,#2d9b5f,#1a6b3c); color:#fff; border-radius:var(--radius); padding:1rem 1.4rem; margin-bottom:1.2rem; display:flex; align-items:center; justify-content:space-between; gap:1rem; }
+  .checkin-bar p { font-size:.875rem; margin:0; }
+  .checkin-bar strong { display:block; font-size:.95rem; margin-bottom:2px; }
+  .checkin-btn { background:rgba(255,255,255,.2); color:#fff; border:1.5px solid rgba(255,255,255,.4); border-radius:10px; padding:8px 16px; font-size:.83rem; font-weight:600; cursor:pointer; transition:all .18s; }
+  .checkin-btn:hover { background:rgba(255,255,255,.35); }
+  .checkin-btn.arrived { background:#fff; color:var(--green-dark); }
+
+  /* ── NO SCHOOL BADGE ── */
+  .no-school-day { border-color:var(--accent) !important; background:var(--accent-light) !important; }
+  .no-school-day .driver-name { color:var(--accent) !important; }
+
+  /* ── ROUTE VISUALIZER ── */
+  .route-map { height:280px; border-radius:var(--radius); overflow:hidden; border:1.5px solid var(--border); }
+
+  /* ── BETTER EMAIL VERIFY SCREEN ── */
+  .verify-screen { text-align:center; padding:3rem 1.5rem; }
+  .verify-screen .verify-icon { font-size:4rem; margin-bottom:1rem; display:block; animation:bounce 2s infinite; }
+  @keyframes bounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+  .verify-steps { text-align:left; background:var(--green-light); border-radius:10px; padding:1rem 1.2rem; margin:1.2rem 0; }
+  .verify-steps li { font-size:.875rem; color:var(--green-dark); margin-bottom:.4rem; }
+
+  /* ── TRUSTED CONTACT ── */
+  .trusted-contact-card { background:var(--blue-light); border:1px solid #bfdbfe; border-radius:10px; padding:.9rem 1rem; font-size:.83rem; }
+  .trusted-contact-card strong { display:block; color:#1a3e6e; margin-bottom:.2rem; }
+
+  /* ── PWA / INSTALL BANNER ── */
+  .install-banner { background:var(--green-dark); color:#fff; padding:.8rem 1.2rem; display:flex; align-items:center; justify-content:space-between; gap:1rem; font-size:.83rem; }
+  .install-banner button { background:rgba(255,255,255,.2); color:#fff; border:1px solid rgba(255,255,255,.3); border-radius:8px; padding:5px 14px; cursor:pointer; font-size:.8rem; }
+
+  /* ── ANIMATED COUNTERS ── */
+  .counter-animating { animation:countUp .6s ease; }
+  @keyframes countUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
+
+  /* ── MOBILE BOTTOM TAB BAR ── */
+  .mobile-tab-bar { display:none; position:fixed; bottom:0; left:0; right:0; background:var(--warm-white); border-top:1.5px solid var(--border); z-index:90; padding:6px 0 env(safe-area-inset-bottom,6px); }
+  .mobile-tab-bar nav { display:flex; justify-content:space-around; }
+  .mobile-tab-btn { display:flex; flex-direction:column; align-items:center; gap:2px; padding:6px 12px; color:var(--muted); font-size:.65rem; font-weight:500; cursor:pointer; border:none; background:none; transition:color .15s; min-width:48px; }
+  .mobile-tab-btn .tab-icon { font-size:1.3rem; }
+  .mobile-tab-btn.active { color:var(--green); }
+  @media(max-width:768px){ .mobile-tab-bar{display:block} body{padding-bottom:70px} .hamburger{display:none!important} }
+
+  /* ── IMPROVED HERO ── */
+  .hero-illustration { margin:2.5rem auto 0; max-width:480px; height:180px; position:relative; }
+  .hero-car { position:absolute; bottom:0; left:50%; transform:translateX(-50%); width:260px; }
+
+  /* ── PROGRESS PROFILE ── */
+  .profile-progress { background:var(--green-light); border-radius:var(--radius); padding:1rem 1.4rem; margin-bottom:1.5rem; }
+  .profile-progress-bar { height:8px; background:var(--border); border-radius:4px; overflow:hidden; margin-top:.6rem; }
+  .profile-progress-fill { height:100%; background:var(--green); border-radius:4px; transition:width .6s ease; }
+
+  /* ── REFERRAL ── */
+  .referral-card { background:linear-gradient(135deg,var(--purple-light),var(--blue-light)); border:1.5px solid var(--purple); border-radius:var(--radius); padding:1.5rem; }
+  .referral-link-box { background:#fff; border-radius:8px; padding:.7rem 1rem; font-size:.8rem; word-break:break-all; border:1.5px solid var(--border); margin:.8rem 0; }
+
+  /* ── IMPROVED SCHEDULE CARDS ── */
+  .sched-card-full { background:var(--warm-white); border:1.5px solid var(--border); border-radius:var(--radius); padding:1.2rem; display:flex; align-items:center; gap:1rem; margin-bottom:.8rem; transition:all .18s; }
+  .sched-card-full:hover { border-color:var(--green); box-shadow:var(--shadow); }
+  .sched-card-full.mine { border-color:var(--green); background:var(--green-light); }
+  .sched-card-full.today-card { border-color:var(--blue); background:var(--blue-light); }
+  .sched-card-full.no-school { border-color:var(--accent); background:var(--accent-light); }
+  .sched-day-label { width:64px; text-align:center; flex-shrink:0; }
+  .sched-day-label .day-abbr { font-size:.7rem; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }
+  .sched-day-label .day-num { font-family:'Fraunces',serif; font-size:1.5rem; color:var(--charcoal); line-height:1; }
+
 </style>
 </head>
 <body>
@@ -442,6 +515,7 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
       <a onclick="showDash('impact')">My Impact</a>
     </div>
     <div class="nav-actions" id="guestActions">
+      <button class="btn btn-outline" onclick="showPage('parent-login')" style="font-size:.78rem">👨‍👩‍👧 Parent</button>
       <button class="btn btn-outline" onclick="showPage('login')">Log In</button>
       <button class="btn btn-primary" onclick="showPage('signup')">Join Free</button>
     </div>
@@ -790,13 +864,22 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
 <!-- ══════ PAGE: PENDING ══════ -->
 <div class="page" id="page-pending">
   <div class="auth-wrap">
-    <div class="auth-card" style="text-align:center">
-      <div style="font-size:3rem;margin-bottom:1rem">⏳</div>
-      <h2>You're in!</h2>
-      <p class="subtitle">Your account has been created</p>
-      <div class="alert alert-success">✅ Account created successfully<br>✅ School email verified<br>⏳ Administrator verification coming soon</div>
-      <p style="font-size:.875rem;color:var(--muted);margin:1rem 0">You can start using Commyute right now. Administrator verification will be added as an extra layer of safety soon.</p>
-      <button class="btn btn-primary w100" onclick="loadDashboard()">Go to Dashboard →</button>
+    <div class="auth-card">
+      <div class="verify-screen">
+        <span class="verify-icon">📬</span>
+        <h2 style="font-family:'Fraunces',serif;color:var(--green-dark);margin-bottom:.4rem">Check Your Email</h2>
+        <p style="color:var(--muted);font-size:.9rem;margin-bottom:1.2rem">We sent a verification link to your <strong>@bishopodowd.org</strong> email address.</p>
+        <ol class="verify-steps">
+          <li>Open your Bishop O'Dowd email (mail.google.com or the Gmail app)</li>
+          <li>Look for an email from <strong>Commyute</strong> or <strong>noreply@commyute-13e3e.firebaseapp.com</strong></li>
+          <li>Click the <strong>"Verify Email"</strong> link in the email</li>
+          <li>Come back here and click the button below</li>
+        </ol>
+        <div class="alert alert-warning">⏱ Check your spam/junk folder if you don't see it within 2 minutes.</div>
+        <button class="btn btn-primary w100" onclick="checkVerificationAndLogin()" id="verify-check-btn">I Verified My Email →</button>
+        <button class="btn btn-outline w100" style="margin-top:.6rem" onclick="resendVerifyEmail()">Resend Verification Email</button>
+        <div style="margin-top:1rem;font-size:.78rem;color:var(--muted)">Wrong email? <a style="color:var(--green);cursor:pointer" onclick="doLogout();showPage('signup')">Start over</a></div>
+      </div>
     </div>
   </div>
 </div>
@@ -899,6 +982,7 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
           </div>
         </div>
         <div id="overview-alert"></div>
+        <div id="checkin-bar-container"></div>
         <div class="stats-row" id="overview-stats">
           <div class="stat-card"><div class="stat-label">Rides This Month</div><div class="stat-num" id="stat-rides">0</div></div>
           <div class="stat-card"><div class="stat-label">CO₂ Saved</div><div class="stat-num" id="stat-co2">0</div><div class="stat-unit">lbs</div></div>
@@ -1136,11 +1220,33 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
           </div>
         </div>
         <div class="card mt1">
+          <div class="card-header"><span class="card-title">Link Parent Account</span></div>
+          <p style="font-size:.83rem;color:var(--muted);margin-bottom:1rem">Generate a 6-digit code for your parent or guardian to create a linked parent account. The code expires after 24 hours.</p>
+          <div id="pairing-code-display" style="display:none;background:var(--green-light);border-radius:10px;padding:1rem;text-align:center;margin-bottom:.8rem">
+            <div style="font-family:'Fraunces',serif;font-size:2rem;letter-spacing:.3em;color:var(--green-dark)" id="pairing-code-val">——</div>
+            <div style="font-size:.75rem;color:var(--muted);margin-top:.3rem">Share this with your parent · Expires in <span id="pairing-countdown">24:00:00</span></div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="generatePairingCode()">Generate Pairing Code</button>
+        </div>
+        <div class="card mt1">
+          <div class="card-title" style="margin-bottom:1rem">Trusted Contact (Optional)</div>
+          <p style="font-size:.83rem;color:var(--muted);margin-bottom:1rem">This contact is shared only with your confirmed carpool partners — not publicly visible.</p>
+          <div class="form-row">
+            <div class="form-group"><label>Guardian Name</label><input type="text" id="tc-name" placeholder="Mom, Dad, Guardian name"></div>
+            <div class="form-group"><label>Phone Number</label><input type="tel" id="tc-phone" placeholder="(510) 555-0000"></div>
+          </div>
+          <button class="btn btn-primary btn-sm" onclick="saveTrustedContact()">Save Contact</button>
+        </div>
+        <div class="card mt1">
           <div class="card-title" style="margin-bottom:1rem">My Car Details</div>
           <div id="car-details-display">
             <p class="text-muted" style="font-size:.875rem">No car added yet.</p>
             <button class="btn btn-primary btn-sm mt1" onclick="openCarModal()">+ Add My Car</button>
           </div>
+        </div>
+        <div class="card mt1">
+          <div class="card-header"><span class="card-title">Blocked Users</span></div>
+          <div id="blocked-users-list"><p class="text-muted" style="font-size:.875rem">No blocked users.</p></div>
         </div>
         <div class="card mt1">
           <div class="card-header"><span class="card-title">Driver License Verification</span><span class="badge badge-blue" style="font-size:.72rem">Optional but recommended</span></div>
@@ -1156,6 +1262,16 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
         <div class="card mt1">
           <div class="card-header"><span class="card-title">My Milestone Badges</span></div>
           <div id="milestone-grid" class="milestone-grid"></div>
+        </div>
+        <div class="referral-card mt1">
+          <div class="card-title" style="margin-bottom:.5rem;color:var(--purple)">🔗 Invite a Classmate</div>
+          <p style="font-size:.83rem;color:var(--muted);margin-bottom:.8rem">Share your link — when a classmate signs up through it, you both earn the "Connector" badge.</p>
+          <div class="referral-link-box" id="referral-link">Generating your link...</div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-primary btn-sm" style="flex:1;justify-content:center" onclick="copyReferralLink()">Copy Link 📋</button>
+            <button class="btn btn-outline btn-sm" style="flex:1;justify-content:center" onclick="shareReferralLink()">Share 📤</button>
+          </div>
+          <div style="font-size:.75rem;color:var(--muted);margin-top:.5rem">Your referrals: <strong id="referral-count">0</strong></div>
         </div>
       </div>
 
@@ -1184,6 +1300,110 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
       <div class="card">
         <div class="card-header"><span class="card-title">Reports</span></div>
         <div id="admin-reports-list"><p class="text-muted" style="font-size:.875rem">No reports yet.</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ PAGE: PARENT SIGNUP ══════ -->
+<div class="page" id="page-parent-signup">
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <div style="text-align:center;margin-bottom:1.5rem">
+        <div class="logo" style="justify-content:center;font-family:'Fraunces',serif;font-size:1.3rem;display:flex;align-items:center;gap:10px;color:var(--green-dark)"><div class="logo-mark">🛣</div>Commyute</div>
+      </div>
+      <h2>Parent Account</h2>
+      <p class="subtitle">Create an account to monitor your student's carpool activity</p>
+      <div class="alert alert-info">👨‍👩‍👧 Parent accounts are view-only. You can see your student's schedule, partners, and ride history — but cannot interact with other students.</div>
+      <div class="form-row">
+        <div class="form-group"><label>Your First Name</label><input type="text" id="par-first" placeholder="First name"></div>
+        <div class="form-group"><label>Your Last Name</label><input type="text" id="par-last" placeholder="Last name"></div>
+      </div>
+      <div class="form-group"><label>Your Email</label><input type="email" id="par-email" placeholder="parent@email.com"></div>
+      <div class="form-group"><label>Password</label><input type="password" id="par-pass" placeholder="Create a password"></div>
+      <div class="form-group"><label>Student's 6-Digit Pairing Code</label>
+        <input type="text" id="par-code" placeholder="Ask your student to generate this from their profile" maxlength="6" style="letter-spacing:.2em;font-size:1.1rem;text-align:center">
+        <p style="font-size:.75rem;color:var(--muted);margin-top:.3rem">Your student generates this code from their Profile page under "Link Parent Account"</p>
+      </div>
+      <button class="btn btn-primary w100" onclick="doParentSignup()">Create Parent Account</button>
+      <div class="auth-switch">Already have a parent account? <a onclick="showPage('parent-login')">Log In</a></div>
+      <div class="divider"></div>
+      <div class="auth-switch" style="font-size:.78rem">Are you a student? <a onclick="showPage('signup')">Sign up here</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ PAGE: PARENT LOGIN ══════ -->
+<div class="page" id="page-parent-login">
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <div style="text-align:center;margin-bottom:1.5rem">
+        <div class="logo" style="justify-content:center;font-family:'Fraunces',serif;font-size:1.3rem;display:flex;align-items:center;gap:10px;color:var(--green-dark)"><div class="logo-mark">🛣</div>Commyute</div>
+      </div>
+      <h2>Parent Login</h2>
+      <p class="subtitle">View your student's carpool activity</p>
+      <div id="par-login-error" class="alert alert-error hidden"></div>
+      <div class="form-group"><label>Your Email</label><input type="email" id="par-login-email" placeholder="parent@email.com"></div>
+      <div class="form-group"><label>Password</label><input type="password" id="par-login-pass" placeholder="••••••••"></div>
+      <button class="btn btn-primary w100" onclick="doParentLogin()">Log In →</button>
+      <div class="auth-switch">New parent? <a onclick="showPage('parent-signup')">Create account</a></div>
+      <div class="divider"></div>
+      <div class="auth-switch" style="font-size:.78rem">Are you a student? <a onclick="showPage('login')">Student login</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ PAGE: PARENT DASHBOARD ══════ -->
+<div class="page" id="page-parent-dashboard">
+  <div class="parent-dashboard">
+    <div class="parent-header-bar">
+      <div>
+        <h2>Parent Dashboard</h2>
+        <p style="font-size:.8rem;opacity:.75;margin-top:2px">Viewing: <strong id="par-student-name">Loading...</strong> · Bishop O'Dowd</p>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <span class="parent-badge">👁 View Only</span>
+        <button class="btn btn-outline btn-sm" style="color:#fff;border-color:rgba(255,255,255,.4)" onclick="doParentLogout()">Log Out</button>
+      </div>
+    </div>
+    <div class="parent-content">
+      <!-- Stats -->
+      <div class="stats-row" id="par-stats">
+        <div class="stat-card"><div class="stat-label">Total Rides</div><div class="stat-num" id="par-stat-rides">—</div></div>
+        <div class="stat-card"><div class="stat-label">CO₂ Saved</div><div class="stat-num" id="par-stat-co2">—</div><div class="stat-unit">lbs</div></div>
+        <div class="stat-card"><div class="stat-label">Carpool Partners</div><div class="stat-num" id="par-stat-partners">—</div></div>
+        <div class="stat-card"><div class="stat-label">Last Ride</div><div class="stat-num" id="par-stat-lastride" style="font-size:1rem">—</div></div>
+      </div>
+      <!-- Check-in status -->
+      <div id="par-checkin-status" class="card mb1" style="display:none">
+        <div class="card-title" style="margin-bottom:.8rem">Today's Ride Status 🚗</div>
+        <div id="par-checkin-detail"></div>
+      </div>
+      <div class="grid-2">
+        <!-- Partners -->
+        <div class="card">
+          <div class="card-title" style="margin-bottom:1rem">Carpool Partners</div>
+          <div id="par-partners-list"><p class="text-muted" style="font-size:.875rem">Loading...</p></div>
+        </div>
+        <!-- This week schedule -->
+        <div class="card">
+          <div class="card-title" style="margin-bottom:1rem">This Week's Schedule</div>
+          <div id="par-schedule"><p class="text-muted" style="font-size:.875rem">Loading...</p></div>
+        </div>
+      </div>
+      <!-- Recent rides -->
+      <div class="card mt1">
+        <div class="card-title" style="margin-bottom:1rem">Recent Rides</div>
+        <div id="par-rides"><p class="text-muted" style="font-size:.875rem">Loading...</p></div>
+      </div>
+      <!-- Notifications settings -->
+      <div class="card mt1">
+        <div class="card-title" style="margin-bottom:1rem">Notification Preferences</div>
+        <div style="display:flex;flex-direction:column;gap:.8rem">
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer"><input type="checkbox" id="par-notif-partner" onchange="saveParentPrefs()"><div><strong style="font-size:.875rem">New carpool partner</strong><div style="font-size:.75rem;color:var(--muted)">Notify me when my student accepts a new carpool partner</div></div></label>
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer"><input type="checkbox" id="par-notif-checkin" onchange="saveParentPrefs()"><div><strong style="font-size:.875rem">Ride check-in alerts</strong><div style="font-size:.75rem;color:var(--muted)">Alert me if my student doesn't check in within 45 min of scheduled pickup</div></div></label>
+          <label style="display:flex;align-items:center;gap:10px;cursor:pointer"><input type="checkbox" id="par-notif-weekly" onchange="saveParentPrefs()"><div><strong style="font-size:.875rem">Weekly summary</strong><div style="font-size:.75rem;color:var(--muted)">Monday morning summary of last week's carpool activity</div></div></label>
+        </div>
       </div>
     </div>
   </div>
@@ -1415,6 +1635,84 @@ const db = firebase.firestore();
 // ── CONSTANTS ──
 const SCHOOL = "Bishop O'Dowd High School";
 const SCHOOL_DOMAIN = "bishopodowd.org";
+
+// ── BISHOP O'DOWD HIGH SCHOOL 2025-2026 CALENDAR ──
+// Source: bishopodowd.org/calendar — verify at start of each semester
+// Format: 'YYYY-MM-DD': 'Description'
+const ODOWD_NO_SCHOOL = {
+  // Summer / Year Start
+  '2025-08-14': 'Faculty Orientation',
+  '2025-08-15': 'Feast of the Assumption - No School',
+
+  // September
+  '2025-09-01': 'Labor Day',
+
+  // October
+  '2025-10-13': 'Indigenous Peoples Day / Faculty PD',
+
+  // November
+  '2025-11-03': 'All Souls Day - No School',
+  '2025-11-11': 'Veterans Day',
+  '2025-11-26': 'Thanksgiving Break',
+  '2025-11-27': 'Thanksgiving',
+  '2025-11-28': 'Thanksgiving Break',
+
+  // December — Winter Break
+  '2025-12-08': 'Feast of Immaculate Conception - No School',
+  '2025-12-19': 'Winter Break Begins',
+  '2025-12-22': 'Winter Break',
+  '2025-12-23': 'Winter Break',
+  '2025-12-24': 'Winter Break',
+  '2025-12-25': 'Christmas',
+  '2025-12-26': 'Winter Break',
+  '2025-12-29': 'Winter Break',
+  '2025-12-30': 'Winter Break',
+  '2025-12-31': 'Winter Break',
+
+  // January 2026
+  '2026-01-01': "New Year's Day",
+  '2026-01-02': 'Winter Break',
+  '2026-01-05': 'Faculty PD — No School',
+  '2026-01-19': "Martin Luther King Jr. Day",
+
+  // February
+  '2026-02-16': "Presidents Day",
+
+  // March — Spring Break (Holy Week)
+  '2026-03-30': 'Spring Break',
+  '2026-03-31': 'Spring Break',
+
+  // April
+  '2026-04-01': 'Spring Break',
+  '2026-04-02': 'Spring Break',
+  '2026-04-03': 'Good Friday - No School',
+  '2026-04-06': 'Easter Monday - No School',
+
+  // May
+  '2026-05-25': 'Memorial Day',
+
+  // June — Last Days
+  '2026-06-05': 'Last Day of School',
+};
+
+// Check if a given date string (YYYY-MM-DD) is a no-school day
+function isNoSchoolDay(dateStr) {
+  return !!ODOWD_NO_SCHOOL[dateStr];
+}
+
+function getNoSchoolReason(dateStr) {
+  return ODOWD_NO_SCHOOL[dateStr] || null;
+}
+
+// Check if today is a school day
+function isSchoolDay(date) {
+  const d = date || new Date();
+  const day = d.getDay(); // 0=Sun, 6=Sat
+  if(day === 0 || day === 6) return false;
+  const dateStr = d.toISOString().split('T')[0];
+  return !isNoSchoolDay(dateStr);
+}
+
 const MAPS_KEY = "AIzaSyAMCCzRmBSMOlgtbFX3-f3cDQ8s_1KTFWU";
 
 let currentUser = null;
@@ -3952,6 +4250,734 @@ window.createGroupChat = createGroupChat;
 window.uploadLicense = uploadLicense;
 window.exportImpactPDF = exportImpactPDF;
 window.requestPushPermission = requestPushPermission;
+
+
+// ══════════════════════════════════════════
+// MEGA FEATURE SET — SAFETY, PARENT, CALENDAR, VISUAL
+// ══════════════════════════════════════════
+
+// ── MOBILE TAB BAR ──
+function setMobileTab(el){
+  document.querySelectorAll('.mobile-tab-btn').forEach(b=>b.classList.remove('active'));
+  if(el) el.classList.add('active');
+}
+window.setMobileTab = setMobileTab;
+
+// ── O'DOWD CALENDAR INTEGRATION ──
+// Update schedule rendering to show no-school days
+function getWeekDates(){
+  const today = new Date();
+  const dayOfWeek = today.getDay();
+  const monday = new Date(today);
+  monday.setDate(today.getDate() - (dayOfWeek===0 ? 6 : dayOfWeek-1));
+  const days = [];
+  for(let i=0;i<5;i++){
+    const d = new Date(monday);
+    d.setDate(monday.getDate()+i);
+    days.push(d);
+  }
+  return days;
+}
+
+// ── RIDE CHECK-IN SYSTEM ──
+async function renderCheckInBar(){
+  if(!currentUser||!currentUserData) return;
+  const container = document.getElementById('checkin-bar-container');
+  if(!container) return;
+  const r = currentUserData.recurringRide;
+  if(!r) return;
+  const today = new Date().toLocaleDateString('en-US',{weekday:'long'});
+  const todayStr = new Date().toISOString().split('T')[0];
+  if(!r.days.includes(today)) return;
+  // Check if no school today
+  if(isNoSchoolDay(todayStr)){
+    container.innerHTML = `<div class="checkin-bar" style="background:linear-gradient(135deg,#e6a020,#c8891a)">
+      <div><strong>🎉 No School Today!</strong><p>${getNoSchoolReason(todayStr)} — No ride needed today.</p></div>
+    </div>`;
+    return;
+  }
+  // Check existing check-in status
+  const checkInSnap = await db.collection('rideCheckins').doc(currentUser.uid+'_'+todayStr).get();
+  const checkIn = checkInSnap.exists ? checkInSnap.data() : null;
+  if(checkIn?.arrived){
+    container.innerHTML = `<div class="checkin-bar">
+      <div><strong>✅ Arrived Safely!</strong><p>You checked in at ${checkIn.arrivedAt?.toDate?.().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})||'school'}. Great ride!</p></div>
+    </div>`;
+  } else if(checkIn?.started){
+    container.innerHTML = `<div class="checkin-bar">
+      <div><strong>🚗 Ride in Progress</strong><p>Started at ${checkIn.startedAt?.toDate?.().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})||'—'}. Tap when you arrive!</p></div>
+      <button class="checkin-btn arrived" onclick="checkInArrived('${todayStr}')">I Arrived Safely ✓</button>
+    </div>`;
+  } else {
+    container.innerHTML = `<div class="checkin-bar">
+      <div><strong>🚗 Carpool Day!</strong><p>You have a ${r.role==='driver'?'driving':'passenger'} ride today. Tap when you get in the car.</p></div>
+      <button class="checkin-btn" onclick="checkInStart('${todayStr}')">Start Ride 🚗</button>
+    </div>`;
+  }
+}
+
+async function checkInStart(dateStr){
+  if(!currentUser) return;
+  await db.collection('rideCheckins').doc(currentUser.uid+'_'+dateStr).set({
+    userId:currentUser.uid, school:SCHOOL, date:dateStr,
+    started:true, startedAt:firebase.firestore.FieldValue.serverTimestamp(),
+    arrived:false
+  });
+  addNotification('🚗','Ride started! Tap "I Arrived" when you get to school.',()=>{});
+  renderCheckInBar();
+}
+
+async function checkInArrived(dateStr){
+  if(!currentUser) return;
+  await db.collection('rideCheckins').doc(currentUser.uid+'_'+dateStr).update({
+    arrived:true, arrivedAt:firebase.firestore.FieldValue.serverTimestamp()
+  });
+  addNotification('✅','You arrived safely at Bishop O\'Dowd! Have a great day.',()=>{});
+  showToast('Arrival confirmed! ✅ Stay safe, Dragon!');
+  renderCheckInBar();
+}
+
+window.checkInStart = checkInStart;
+window.checkInArrived = checkInArrived;
+
+// Hook check-in bar into loadOverview
+const _origLO = window.loadOverview;
+window.loadOverview = async function(){
+  if(_origLO) await _origLO();
+  renderCheckInBar();
+};
+
+// ── BLOCKED USERS ──
+async function blockUser(uid, name){
+  if(!currentUser||!confirm(`Block ${name}? They won't be able to message you or see your profile.`)) return;
+  await db.collection('users').doc(currentUser.uid).update({
+    blockedUsers: firebase.firestore.FieldValue.arrayUnion(uid)
+  });
+  currentUserData.blockedUsers = [...(currentUserData.blockedUsers||[]), uid];
+  showToast(`${name} has been blocked.`);
+  addNotification('🚫',`You blocked ${name}. They can no longer contact you.`,()=>{});
+  loadProfile();
+}
+
+async function unblockUser(uid, name){
+  if(!currentUser) return;
+  await db.collection('users').doc(currentUser.uid).update({
+    blockedUsers: firebase.firestore.FieldValue.arrayRemove(uid)
+  });
+  currentUserData.blockedUsers = (currentUserData.blockedUsers||[]).filter(b=>b!==uid);
+  showToast(`${name} has been unblocked.`);
+  loadProfile();
+}
+
+async function loadBlockedUsers(){
+  const el = document.getElementById('blocked-users-list');
+  if(!el||!currentUserData) return;
+  const blocked = currentUserData.blockedUsers||[];
+  if(!blocked.length){ el.innerHTML='<p class="text-muted" style="font-size:.875rem">No blocked users.</p>'; return; }
+  const rows = await Promise.all(blocked.map(async uid=>{
+    const s = await db.collection('users').doc(uid).get();
+    if(!s.exists) return '';
+    const p = s.data();
+    return `<div style="display:flex;align-items:center;gap:10px;padding:.6rem 0;border-bottom:1px solid var(--border)">
+      ${avatarHtml(uid,p.firstName,p.lastName,'36px',p.photoURL||null)}
+      <div style="flex:1"><strong style="font-size:.875rem">${p.firstName} ${p.lastName}</strong></div>
+      <button class="btn btn-outline btn-sm" onclick="unblockUser('${uid}','${p.firstName}')">Unblock</button>
+    </div>`;
+  }));
+  el.innerHTML = rows.join('') || '<p class="text-muted" style="font-size:.875rem">No blocked users.</p>';
+}
+
+window.blockUser = blockUser;
+window.unblockUser = unblockUser;
+
+// Add block to report modal (after report)
+const _origReport = window.reportUser;
+window.reportUser = function(uid, name){
+  _origReport(uid, name);
+  // Also offer block option
+  const modal = document.getElementById('modal-report');
+  if(modal){
+    const existing = modal.querySelector('.block-also');
+    if(!existing){
+      const blockDiv = document.createElement('div');
+      blockDiv.className = 'block-also';
+      blockDiv.style = 'margin-top:.8rem';
+      blockDiv.innerHTML = `<label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:.83rem"><input type="checkbox" id="also-block"> Also block this user so they can't contact me</label>`;
+      modal.querySelector('.btn-red').before(blockDiv);
+    }
+  }
+};
+
+const _origSubmitReport = window.submitReport;
+window.submitReport = async function(){
+  const alsoBlock = document.getElementById('also-block')?.checked;
+  const reportedUid = document.getElementById('report-uid').value;
+  const reportedName = document.getElementById('report-name-val').value;
+  await _origSubmitReport();
+  if(alsoBlock && reportedUid) await blockUser(reportedUid, reportedName);
+};
+
+// ── TRUSTED CONTACT ──
+async function saveTrustedContact(){
+  if(!currentUser) return;
+  const name = document.getElementById('tc-name').value.trim();
+  const phone = document.getElementById('tc-phone').value.trim();
+  if(!name&&!phone){ showToast('Please enter a name or phone number.'); return; }
+  await db.collection('users').doc(currentUser.uid).update({trustedContact:{name,phone}});
+  currentUserData.trustedContact = {name,phone};
+  showToast('Trusted contact saved! ✅');
+}
+
+async function loadTrustedContact(){
+  if(!currentUserData) return;
+  const tc = currentUserData.trustedContact;
+  const nameEl = document.getElementById('tc-name');
+  const phoneEl = document.getElementById('tc-phone');
+  if(nameEl && tc?.name) nameEl.value = tc.name;
+  if(phoneEl && tc?.phone) phoneEl.value = tc.phone;
+}
+
+window.saveTrustedContact = saveTrustedContact;
+
+// Show trusted contact for partners
+async function getTrustedContactHTML(uid){
+  const snap = await db.collection('users').doc(uid).get();
+  if(!snap.exists) return '';
+  const tc = snap.data().trustedContact;
+  if(!tc?.name&&!tc?.phone) return '';
+  return `<div class="trusted-contact-card mt1">
+    <strong>👨‍👩‍👧 Trusted Contact: ${tc.name||'—'}</strong>
+    <span>${tc.phone||'No phone provided'}</span>
+  </div>`;
+}
+
+// ── RIDE CANCELLATION ──
+async function cancelTodaysRide(){
+  if(!currentUser||!currentUserData) return;
+  const r = currentUserData.recurringRide;
+  if(!r){ showToast('No recurring ride to cancel.'); return; }
+  if(!confirm('Cancel today\'s ride? Your carpool partners will be notified.')) return;
+  const partners = currentUserData.partners||[];
+  // Notify all partners
+  const myName = currentUserData.firstName+' '+currentUserData.lastName;
+  await Promise.all(partners.map(async uid=>{
+    await db.collection('notifications_queue').add({
+      toUid:uid, fromName:myName, type:'ride_cancelled',
+      message:`${myName} cancelled today's ride. You may need to find another way to school.`,
+      school:SCHOOL, createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+  }));
+  addNotification('❌','Today\'s ride cancelled. Your partners have been notified.',()=>{});
+  showToast('Ride cancelled. Partners notified. 📱');
+  // Remove checkin for today
+  const todayStr = new Date().toISOString().split('T')[0];
+  await db.collection('rideCheckins').doc(currentUser.uid+'_'+todayStr).delete().catch(()=>{});
+  renderCheckInBar();
+}
+window.cancelTodaysRide = cancelTodaysRide;
+
+// ── IMPROVED SCHEDULE WITH CALENDAR AWARENESS ──
+const _origLoadSchedule2 = window.loadSchedule;
+window.loadSchedule = async function(){
+  if(!currentUser) return;
+  const days = ['Monday','Tuesday','Wednesday','Thursday','Friday'];
+  const today = new Date().toLocaleDateString('en-US',{weekday:'long'});
+  const weekDates = getWeekDates();
+
+  const rawSnap = await db.collection('rides').where('userId','==',currentUser.uid).limit(50).get();
+  const snap = {docs:rawSnap.docs.sort((a,b)=>(b.data().createdAt?.toMillis?.()||0)-(a.data().createdAt?.toMillis?.()||0)).slice(0,20)};
+  const ridesByDay = {};
+  snap.docs.forEach(d=>{
+    const r=d.data();
+    if(r.date){
+      const parts=r.date.split('-');
+      const rDate=new Date(parseInt(parts[0]),parseInt(parts[1])-1,parseInt(parts[2]));
+      const dayName=rDate.toLocaleDateString('en-US',{weekday:'long'});
+      if(!ridesByDay[dayName]) ridesByDay[dayName]=r;
+    }
+  });
+
+  const weekEl = document.getElementById('full-week');
+  if(!weekEl) return;
+  weekEl.innerHTML = '';
+
+  // Build improved week cards
+  const weekCardsHtml = days.map((day,i)=>{
+    const date = weekDates[i];
+    const dateStr = date.toISOString().split('T')[0];
+    const dayNum = date.getDate();
+    const isToday = day===today;
+    const r = ridesByDay[day];
+    const noSchool = isNoSchoolDay(dateStr);
+    const noSchoolReason = getNoSchoolReason(dateStr);
+
+    let cls = 'sched-day';
+    if(noSchool) cls += ' no-school-day';
+    else if(r) cls += ' mine';
+    else if(isToday) cls += ' today';
+
+    let content = '';
+    if(noSchool){
+      content = `<div class="driver-name" style="font-size:.75rem">📅 ${noSchoolReason}</div>`;
+    } else if(r){
+      content = `<div class="driver-name">${r.role==='driver'?'🚗 Drove':'🎒 Rode'}</div>
+        <div style="font-size:.7rem;color:var(--muted)">${r.miles} mi · ${r.co2Saved} lbs CO₂</div>
+        ${isToday?`<button class="btn btn-outline btn-sm" style="margin-top:5px;font-size:.68rem" onclick="cancelTodaysRide()">Cancel</button>`:''}`;
+    } else {
+      content = `<div class="driver-name" style="color:var(--muted);font-size:.75rem">No ride</div>
+        ${isToday?`<button class="btn btn-primary btn-sm" style="margin-top:5px;font-size:.68rem" onclick="openAddRideModal()">Log it</button>`:''}`;
+    }
+
+    return `<div class="${cls}">
+      <div class="day-name">${isToday?'Today':day.substring(0,3)}</div>
+      <div style="font-size:1.1rem;font-weight:700;color:var(--muted);margin:.2rem 0">${dayNum}</div>
+      ${content}
+    </div>`;
+  }).join('');
+
+  weekEl.innerHTML = weekCardsHtml;
+
+  // Load history
+  const histEl = document.getElementById('ride-history');
+  if(histEl){
+    if(snap.docs.length===0){
+      histEl.innerHTML='<div class="empty-state"><span class="empty-icon">🗓</span><h3>No rides logged yet</h3><p>Log your first carpool ride to start tracking your environmental impact.</p><button class="btn btn-primary" onclick="openAddRideModal()">+ Log a Ride</button></div>';
+    } else {
+      histEl.innerHTML = snap.docs.map(d=>{
+        const r=d.data();
+        return `<div class="ride-item">
+          <div style="font-size:1.3rem">${r.role==='driver'?'🚗':'🎒'}</div>
+          <div class="ride-info"><strong>${r.role==='driver'?'You drove':'You rode'} · ${r.miles||0} mi</strong><span>${r.date||fmtDate(r.createdAt)}</span></div>
+          <div class="ride-meta"><strong style="color:var(--green)">${r.co2Saved||0} lbs CO₂</strong>$${r.moneySaved||0} saved</div>
+        </div>`;
+      }).join('');
+    }
+  }
+
+  renderRecurringSummary();
+};
+
+// ── ROUTE VISUALIZER ──
+async function showRouteForPartner(uid){
+  if(!currentUser||!currentUserData) return;
+  // Only show after they're confirmed partners
+  const isPartner = (currentUserData.partners||[]).includes(uid);
+  if(!isPartner){ showToast('Route only visible between confirmed carpool partners.'); return; }
+  const snap = await db.collection('users').doc(uid).get();
+  if(!snap.exists) return;
+  const p = snap.data();
+  const myZone = currentUserData.neighborhoodZone||'Oakland';
+  const theirZone = p.neighborhoodZone||'Oakland';
+  const school = 'Bishop O\'Dowd High School, 9500 Stearns Ave, Oakland, CA 94605';
+
+  // Open Google Maps directions in new tab (privacy-safe — uses zones not exact addresses)
+  const url = `https://www.google.com/maps/dir/${encodeURIComponent(myZone+', Oakland, CA')}/${encodeURIComponent(theirZone+', Oakland, CA')}/${encodeURIComponent(school)}`;
+  window.open(url,'_blank');
+}
+window.showRouteForPartner = showRouteForPartner;
+
+// ── PARENT ACCOUNT SYSTEM ──
+let parentUser = null;
+let parentData = null;
+let linkedStudentData = null;
+
+async function doParentSignup(){
+  const first = document.getElementById('par-first').value.trim();
+  const last = document.getElementById('par-last').value.trim();
+  const email = document.getElementById('par-email').value.trim();
+  const pass = document.getElementById('par-pass').value;
+  const code = document.getElementById('par-code').value.trim().toUpperCase();
+
+  if(!first||!last||!email||!pass||!code){ showToast('Please fill in all fields.'); return; }
+  if(pass.length<6){ showToast('Password must be at least 6 characters.'); return; }
+
+  // Verify pairing code
+  const codeSnap = await db.collection('pairingCodes').where('code','==',code).where('used','==',false).get();
+  if(codeSnap.empty){ showToast('Invalid or expired pairing code. Ask your student to generate a new one.'); return; }
+
+  const codeDoc = codeSnap.docs[0];
+  const studentUid = codeDoc.data().studentUid;
+
+  // Check if code is expired (24 hours)
+  const createdAt = codeDoc.data().createdAt?.toMillis?.() || 0;
+  if(Date.now() - createdAt > 24*60*60*1000){ showToast('This code has expired. Ask your student to generate a new one.'); return; }
+
+  try{
+    const cred = await auth.createUserWithEmailAndPassword(email, pass);
+    const uid = cred.user.uid;
+    await db.collection('parents').doc(uid).set({
+      firstName:first, lastName:last, email,
+      linkedStudentUid:studentUid, isParent:true,
+      notifPartner:true, notifCheckin:true, notifWeekly:false,
+      createdAt:firebase.firestore.FieldValue.serverTimestamp()
+    });
+    // Mark code as used
+    await db.collection('pairingCodes').doc(codeDoc.id).update({used:true, usedBy:uid});
+    // Link parent to student
+    await db.collection('users').doc(studentUid).update({
+      linkedParentUid:uid, linkedParentEmail:email
+    });
+    parentUser = cred.user;
+    parentData = {firstName:first,lastName:last,email,linkedStudentUid:studentUid};
+    await loadParentDashboard();
+  } catch(e){
+    if(e.code==='auth/email-already-in-use') showToast('An account with this email already exists.');
+    else showToast('Error: '+e.message);
+  }
+}
+
+async function doParentLogin(){
+  const email = document.getElementById('par-login-email').value.trim();
+  const pass = document.getElementById('par-login-pass').value;
+  const errEl = document.getElementById('par-login-error');
+  errEl.classList.add('hidden');
+  if(!email||!pass){ showToast('Please fill in all fields.'); return; }
+  try{
+    const cred = await auth.signInWithEmailAndPassword(email, pass);
+    const snap = await db.collection('parents').doc(cred.user.uid).get();
+    if(!snap.exists){ showToast('No parent account found. Please sign up.'); await auth.signOut(); return; }
+    parentUser = cred.user;
+    parentData = snap.data();
+    await loadParentDashboard();
+  } catch(e){
+    errEl.textContent = '❌ Incorrect email or password.';
+    errEl.classList.remove('hidden');
+  }
+}
+
+async function doParentLogout(){
+  await auth.signOut();
+  parentUser=null; parentData=null; linkedStudentData=null;
+  showPage('home');
+}
+
+async function loadParentDashboard(){
+  if(!parentData) return;
+  showPage('parent-dashboard');
+  const studentUid = parentData.linkedStudentUid;
+  const snap = await db.collection('users').doc(studentUid).get();
+  if(!snap.exists){ showToast('Could not load student data.'); return; }
+  linkedStudentData = snap.data();
+  const d = linkedStudentData;
+
+  document.getElementById('par-student-name').textContent = d.firstName+' '+d.lastName+' ('+d.grade+')';
+  document.getElementById('par-stat-rides').textContent = d.totalRides||0;
+  document.getElementById('par-stat-co2').textContent = d.totalCO2Saved||0;
+  document.getElementById('par-stat-partners').textContent = (d.partners||[]).length;
+
+  // Load recent rides for last date
+  const ridesSnap = await db.collection('rides').where('userId','==',studentUid).get();
+  const rides = ridesSnap.docs.map(r=>r.data()).sort((a,b)=>(b.createdAt?.toMillis?.()||0)-(a.createdAt?.toMillis?.()||0));
+  document.getElementById('par-stat-lastride').textContent = rides[0]?.date||'—';
+
+  // Partners
+  const partners = d.partners||[];
+  const partEl = document.getElementById('par-partners-list');
+  if(!partners.length){ partEl.innerHTML='<p class="text-muted" style="font-size:.875rem">No partners yet.</p>'; }
+  else{
+    const rows = await Promise.all(partners.map(async uid=>{
+      const ps = await db.collection('users').doc(uid).get();
+      if(!ps.exists) return '';
+      const p = ps.data();
+      return `<div style="display:flex;align-items:center;gap:10px;padding:.6rem 0;border-bottom:1px solid var(--border)">
+        ${avatarHtml(uid,p.firstName,p.lastName,'36px',p.photoURL||null)}
+        <div style="flex:1"><strong style="font-size:.875rem">${p.firstName} ${p.lastName}</strong>
+        <div style="font-size:.75rem;color:var(--muted)">${p.grade} · ${p.neighborhoodZone||''} · ${p.email}</div>
+        ${p.trustedContact?.name?`<div style="font-size:.73rem;color:var(--green-dark)">Contact: ${p.trustedContact.name} ${p.trustedContact.phone||''}</div>`:''}
+        </div>
+      </div>`;
+    }));
+    partEl.innerHTML = rows.join('');
+  }
+
+  // Schedule
+  const schEl = document.getElementById('par-schedule');
+  const days = ['Mon','Tue','Wed','Thu','Fri'];
+  const weekDates = getWeekDates();
+  schEl.innerHTML = `<div class="week-grid">${days.map((day,i)=>{
+    const dateStr = weekDates[i].toISOString().split('T')[0];
+    const noSchool = isNoSchoolDay(dateStr);
+    return `<div class="sched-day ${noSchool?'no-school-day':''}">
+      <div class="day-name">${day}</div>
+      <div class="driver-name" style="font-size:.72rem">${noSchool?'No School':'—'}</div>
+    </div>`;
+  }).join('')}</div>`;
+
+  // Recent rides
+  const ridesEl = document.getElementById('par-rides');
+  if(rides.length===0){ ridesEl.innerHTML='<p class="text-muted" style="font-size:.875rem">No rides logged yet.</p>'; }
+  else{
+    ridesEl.innerHTML = rides.slice(0,10).map(r=>`
+      <div class="ride-item">
+        <div style="font-size:1.2rem">${r.role==='driver'?'🚗':'🎒'}</div>
+        <div class="ride-info"><strong>${r.role==='driver'?'Drove':'Rode'} · ${r.miles||0} miles</strong><span>${r.date||'—'}</span></div>
+        <div class="ride-meta"><strong style="color:var(--green)">${r.co2Saved||0} lbs CO₂</strong>$${r.moneySaved||0} saved</div>
+      </div>`).join('');
+  }
+
+  // Today's check-in status
+  const todayStr = new Date().toISOString().split('T')[0];
+  const ciSnap = await db.collection('rideCheckins').doc(studentUid+'_'+todayStr).get();
+  const parCheckinEl = document.getElementById('par-checkin-status');
+  if(ciSnap.exists){
+    parCheckinEl.style.display='block';
+    const ci = ciSnap.data();
+    document.getElementById('par-checkin-detail').innerHTML = ci.arrived
+      ? `<div class="alert alert-success">✅ ${d.firstName} arrived safely at school today at ${ci.arrivedAt?.toDate?.().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})||'school'}.</div>`
+      : ci.started
+      ? `<div class="alert alert-warning">🚗 ${d.firstName} started their ride at ${ci.startedAt?.toDate?.().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})||'—'}. Waiting for arrival check-in.</div>`
+      : '';
+  }
+
+  // Notification prefs
+  document.getElementById('par-notif-partner').checked = parentData.notifPartner!==false;
+  document.getElementById('par-notif-checkin').checked = parentData.notifCheckin!==false;
+  document.getElementById('par-notif-weekly').checked = !!parentData.notifWeekly;
+}
+
+async function saveParentPrefs(){
+  if(!parentUser) return;
+  const prefs = {
+    notifPartner: document.getElementById('par-notif-partner').checked,
+    notifCheckin: document.getElementById('par-notif-checkin').checked,
+    notifWeekly: document.getElementById('par-notif-weekly').checked,
+  };
+  await db.collection('parents').doc(parentUser.uid).update(prefs);
+  Object.assign(parentData, prefs);
+}
+
+window.doParentSignup = doParentSignup;
+window.doParentLogin = doParentLogin;
+window.doParentLogout = doParentLogout;
+window.saveParentPrefs = saveParentPrefs;
+
+// ── PAIRING CODE GENERATOR ──
+function generatePairingCode(){
+  if(!currentUser) return;
+  const code = Math.random().toString(36).substr(2,6).toUpperCase();
+  db.collection('pairingCodes').add({
+    code, studentUid:currentUser.uid, used:false,
+    createdAt:firebase.firestore.FieldValue.serverTimestamp()
+  }).then(()=>{
+    document.getElementById('pairing-code-display').style.display='block';
+    document.getElementById('pairing-code-val').textContent=code;
+    showToast('Pairing code generated! Share it with your parent. Expires in 24 hours.');
+  }).catch(e=>showToast('Error: '+e.message));
+}
+window.generatePairingCode = generatePairingCode;
+
+// ── IMPROVED EMAIL VERIFICATION ──
+async function checkVerificationAndLogin(){
+  const btn = document.getElementById('verify-check-btn');
+  if(!auth.currentUser){ showToast('Please log in first.'); showPage('login'); return; }
+  btn.textContent = 'Checking...'; btn.disabled=true;
+  await auth.currentUser.reload();
+  if(auth.currentUser.emailVerified){
+    const snap = await db.collection('users').doc(auth.currentUser.uid).get();
+    if(snap.exists){
+      currentUser=auth.currentUser; currentUserData=snap.data();
+      loadDashboard();
+    }
+  } else {
+    showToast('Email not verified yet. Check your inbox and click the link.');
+    btn.textContent='I Verified My Email →'; btn.disabled=false;
+  }
+}
+
+async function resendVerifyEmail(){
+  if(!auth.currentUser){ showToast('Please log in first.'); return; }
+  try{
+    await auth.currentUser.sendEmailVerification();
+    showToast('Verification email resent! Check your @bishopodowd.org inbox.');
+  } catch(e){ showToast('Error: '+e.message); }
+}
+
+window.checkVerificationAndLogin = checkVerificationAndLogin;
+window.resendVerifyEmail = resendVerifyEmail;
+
+// ── ANIMATED IMPACT COUNTERS ──
+function animateCounter(el, target, suffix=''){
+  if(!el) return;
+  const start = 0;
+  const duration = 800;
+  const startTime = performance.now();
+  function update(now){
+    const elapsed = now-startTime;
+    const progress = Math.min(elapsed/duration, 1);
+    const eased = 1-Math.pow(1-progress,3);
+    const current = Math.round(eased*target*10)/10;
+    el.textContent = current + suffix;
+    if(progress<1) requestAnimationFrame(update);
+  }
+  requestAnimationFrame(update);
+}
+
+const _origLoadImpact2 = window.loadImpact;
+window.loadImpact = async function(){
+  if(_origLoadImpact2) await _origLoadImpact2();
+  if(!currentUserData) return;
+  const d = currentUserData;
+  setTimeout(()=>{
+    animateCounter(document.getElementById('imp-co2'), d.totalCO2Saved||0);
+    animateCounter(document.getElementById('imp-miles'), d.totalMiles||0);
+    animateCounter(document.getElementById('imp-rides'), d.totalRides||0);
+    animateCounter(document.getElementById('imp-time'), d.totalTimeSaved||0);
+  }, 100);
+};
+
+// ── REFERRAL SYSTEM ──
+function generateReferralLink(){
+  if(!currentUser) return;
+  const link = window.location.origin+window.location.pathname+'?ref='+currentUser.uid;
+  const el = document.getElementById('referral-link');
+  if(el) el.textContent=link;
+}
+
+function copyReferralLink(){
+  const link = document.getElementById('referral-link')?.textContent;
+  if(!link) return;
+  navigator.clipboard.writeText(link).then(()=>showToast('Referral link copied! 📋'));
+}
+
+function shareReferralLink(){
+  const link = document.getElementById('referral-link')?.textContent;
+  if(!link) return;
+  if(navigator.share){
+    navigator.share({title:'Join me on Commyute!',text:'I\'m carpooling with my O\'Dowd classmates using Commyute. Join me!',url:link});
+  } else {
+    copyReferralLink();
+  }
+}
+
+async function loadReferralCount(){
+  if(!currentUser) return;
+  const snap = await db.collection('referrals').where('referrerId','==',currentUser.uid).get();
+  const el = document.getElementById('referral-count');
+  if(el) el.textContent = snap.size;
+  generateReferralLink();
+}
+
+// Check for referral on signup
+const refParam = new URLSearchParams(window.location.search).get('ref');
+
+window.copyReferralLink = copyReferralLink;
+window.shareReferralLink = shareReferralLink;
+
+// Hook referral count into profile load
+const _origLP2 = window.loadProfile;
+window.loadProfile = async function(){
+  if(_origLP2) await _origLP2();
+  loadBlockedUsers();
+  loadTrustedContact();
+  loadReferralCount();
+};
+
+// ── PWA MANIFEST ──
+function injectPWAManifest(){
+  const manifest = {
+    name:'Commyute',
+    short_name:'Commyute',
+    description:'Student carpool network for Bishop O\'Dowd High School',
+    start_url:'/',
+    display:'standalone',
+    background_color:'#f8f5ef',
+    theme_color:'#1a6b3c',
+    icons:[
+      {src:'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="20" fill="%231a6b3c"/><text y=".9em" font-size="80" x="10">🛣</text></svg>',sizes:'192x192',type:'image/svg+xml'},
+      {src:'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" rx="20" fill="%231a6b3c"/><text y=".9em" font-size="80" x="10">🛣</text></svg>',sizes:'512x512',type:'image/svg+xml'}
+    ]
+  };
+  const blob = new Blob([JSON.stringify(manifest)],{type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('link');
+  link.rel='manifest'; link.href=url;
+  document.head.appendChild(link);
+
+  // Add meta tags
+  const meta1 = document.createElement('meta');
+  meta1.name='apple-mobile-web-app-capable'; meta1.content='yes';
+  document.head.appendChild(meta1);
+  const meta2 = document.createElement('meta');
+  meta2.name='apple-mobile-web-app-status-bar-style'; meta2.content='default';
+  document.head.appendChild(meta2);
+  const meta3 = document.createElement('meta');
+  meta3.name='apple-mobile-web-app-title'; meta3.content='Commyute';
+  document.head.appendChild(meta3);
+  const meta4 = document.createElement('meta');
+  meta4.name='theme-color'; meta4.content='#1a6b3c';
+  document.head.appendChild(meta4);
+
+  // PWA install prompt
+  window.addEventListener('beforeinstallprompt', e=>{
+    e.preventDefault();
+    window._pwaPrompt = e;
+    // Show install banner
+    const banner = document.createElement('div');
+    banner.className = 'install-banner';
+    banner.id = 'install-banner';
+    banner.innerHTML = `<span>📱 Add Commyute to your home screen for quick access!</span><button onclick="installPWA()">Install</button><button onclick="document.getElementById('install-banner').remove()" style="background:none;border:none;color:rgba(255,255,255,.6);cursor:pointer;font-size:1rem;padding:0 8px">✕</button>`;
+    document.body.insertBefore(banner, document.body.firstChild);
+  });
+}
+
+async function installPWA(){
+  if(window._pwaPrompt){
+    window._pwaPrompt.prompt();
+    const result = await window._pwaPrompt.userChoice;
+    if(result.outcome==='accepted') showToast('Commyute installed! 🎉 Find it on your home screen.');
+    document.getElementById('install-banner')?.remove();
+  }
+}
+
+window.installPWA = installPWA;
+
+// Init PWA on load
+injectPWAManifest();
+
+// ── PROFILE COMPLETION PROGRESS ──
+function getProfileCompletion(d){
+  const checks = [
+    {label:'Added your car',done:!!d.car},
+    {label:'Set your ZIP code',done:!!d.zip},
+    {label:'Made a carpool partner',done:(d.partners||[]).length>0},
+    {label:'Logged your first ride',done:(d.totalRides||0)>0},
+    {label:'Set leaderboard nickname',done:!!d.nickname},
+    {label:'Uploaded student ID',done:!!d.isVerified},
+  ];
+  const done = checks.filter(c=>c.done).length;
+  return {percent:Math.round(done/checks.length*100), checks};
+}
+
+function renderProfileProgress(){
+  if(!currentUserData) return;
+  const {percent, checks} = getProfileCompletion(currentUserData);
+  if(percent>=100) return; // Hide when complete
+  // Inject progress bar at top of dashboard
+  const existing = document.getElementById('profile-progress-bar');
+  if(!existing){
+    const bar = document.createElement('div');
+    bar.id='profile-progress-bar';
+    bar.className='profile-progress';
+    bar.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center">
+      <strong style="font-size:.875rem">Complete your profile</strong>
+      <span style="font-size:.8rem;color:var(--green)">${percent}%</span>
+    </div>
+    <div class="profile-progress-bar"><div class="profile-progress-fill" style="width:${percent}%"></div></div>
+    <div style="font-size:.75rem;color:var(--muted);margin-top:.4rem">${checks.filter(c=>!c.done).map(c=>`• ${c.label}`).slice(0,2).join('  ')}</div>`;
+    const overview = document.getElementById('ds-overview');
+    if(overview) overview.insertBefore(bar, overview.firstChild);
+  } else {
+    existing.querySelector('.profile-progress-fill').style.width=percent+'%';
+  }
+}
+
+// Hook profile progress into dashboard
+const _origLoadDashFinal = window.loadDashboard;
+window.loadDashboard = function(){
+  _origLoadDashFinal();
+  setTimeout(renderProfileProgress, 800);
+};
+
 
 </script>
 </body>
