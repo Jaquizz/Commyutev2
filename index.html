@@ -1426,7 +1426,10 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
   <div class="modal-box" style="text-align:center">
     <div style="font-size:3rem;margin-bottom:1rem">🎉</div>
     <h3>Welcome to Commyute!</h3>
-    <p>Your account has been created! <strong>Check your @bishopodowd.org email</strong> and click the verification link to activate your account. Then come back and log in.</p>
+    <p>Account created! We sent a verification link to your <strong>@bishopodowd.org email</strong>. Click it to activate your account, then come back and log in.</p>
+    <div style="background:var(--green-light);border-radius:10px;padding:.8rem 1rem;margin:.8rem 0;font-size:.83rem;color:var(--green-dark)">
+      📬 Check your Bishop O'Dowd email inbox — it may take up to 2 minutes to arrive. Check spam if you don't see it.
+    </div>
     <button class="btn btn-primary w100" onclick="closeModal('modal-success');showPage('login')">Got it — Go to Login →</button>
   </div>
 </div>
@@ -2044,32 +2047,47 @@ auth.onAuthStateChanged(async function(user){
   const loadingScreen = document.getElementById('auth-loading');
   if(user){
     try{
+      // ── VERIFICATION GATE 1: Block unverified users on every page load ──
+      if(!user.emailVerified){
+        if(loadingScreen) loadingScreen.style.display='none';
+        const activePage = document.querySelector('.page.active');
+        const safePages = ['page-pending','page-login','page-signup','page-home','page-why','page-how','page-safety','page-parent-login','page-parent-signup'];
+        if(activePage && !safePages.includes(activePage.id)){
+          showPage('pending');
+        }
+        return;
+      }
       const snap = await db.collection('users').doc(user.uid).get();
-      if(snap.exists){
-        currentUser = user;
-        currentUserData = snap.data();
-        // Always load dashboard if logged in — regardless of current page
-        loadDashboard();
-      } else {
-        // User exists in auth but not in Firestore — sign them out
+      if(!snap.exists){
+        // Check if parent account
+        try{
+          const parentSnap = await db.collection('parents').doc(user.uid).get();
+          if(parentSnap.exists){
+            parentUser = user;
+            parentData = parentSnap.data();
+            if(loadingScreen) loadingScreen.style.display='none';
+            if(typeof loadParentDashboard==='function') loadParentDashboard();
+            return;
+          }
+        }catch(pe){}
         await auth.signOut();
         if(loadingScreen) loadingScreen.style.display='none';
+        return;
       }
+      currentUser = user;
+      currentUserData = snap.data();
+      loadDashboard();
     } catch(e){
       console.error('Auth state error:', e);
       if(loadingScreen) loadingScreen.style.display='none';
     }
   } else {
-    // Not logged in — show home page
     currentUser = null;
     currentUserData = null;
     if(loadingScreen) loadingScreen.style.display='none';
-    // Only redirect to home if on a protected page
     const activePage = document.querySelector('.page.active');
     if(activePage && activePage.id === 'page-dashboard'){
       showPage('home');
-  const ls2 = document.getElementById('auth-loading');
-  if(ls2) ls2.style.display='none';
     }
   }
 });
@@ -2156,10 +2174,22 @@ async function doSignup(){
       totalCO2Saved:0, totalRides:0, totalMiles:0, totalMoneySaved:0, totalTimeSaved:0,
       partners:[], createdAt:firebase.firestore.FieldValue.serverTimestamp()
     });
-    // Send verification email
-    await cred.user.sendEmailVerification();
-    currentUser = cred.user;
-    currentUserData = (await db.collection('users').doc(uid).get()).data();
+    // ── VERIFICATION GATE 3: Send verification email, block access until verified ──
+    try{
+      await cred.user.sendEmailVerification({
+        url: window.location.origin + window.location.pathname + '?verified=true',
+        handleCodeInApp: false
+      });
+    } catch(verifyErr){
+      console.warn('Could not send verification email:', verifyErr.message);
+      // Still continue — user can request resend from pending screen
+    }
+    // Sign out immediately — user must verify email first
+    await auth.signOut();
+    currentUser = null;
+    currentUserData = null;
+    await auth.signOut();
+    currentUser = null;
     openModal('modal-success');
   } catch(e){
     if(e.code==='auth/email-already-in-use') showToast('An account with this email already exists.');
@@ -2186,14 +2216,14 @@ async function doLogin(){
     const snap = await db.collection('users').doc(cred.user.uid).get();
     if(!snap.exists){ showToast('Account not found. Please sign up.'); return; }
     // Check email verification
+    // ── VERIFICATION GATE 2: Block unverified users on login ──
     if(!cred.user.emailVerified){
-      errEl.innerHTML = '❌ Please verify your @bishopodowd.org email first.<br><a style="color:var(--green);cursor:pointer" onclick="resendVerification()">Resend verification email</a>';
+      errEl.innerHTML = '❌ Please verify your <strong>@bishopodowd.org</strong> email before logging in.<br><br><button class="btn btn-outline btn-sm" style="margin-top:.5rem" onclick="resendVerifyEmail()">📧 Resend verification email</button>';
       errEl.classList.remove('hidden');
       await auth.signOut();
+      btn.textContent='Log In →'; btn.disabled=false;
       return;
     }
-    currentUser = cred.user;
-    currentUserData = snap.data();
     loadDashboard();
   } catch(e){
     errEl.textContent = (e.code==='auth/invalid-credential'||e.code==='auth/wrong-password')
@@ -3325,6 +3355,16 @@ function copyParentLink(){}
 // ── CHECK FOR PARENT VIEW ──
 const urlParams=new URLSearchParams(window.location.search);
 const parentCode=urlParams.get('parent');
+
+// If returning from email verification link, prompt them to log in
+if(urlParams.get('verified')==='true'){
+  // Clean URL
+  window.history.replaceState({}, document.title, window.location.pathname);
+  setTimeout(()=>{
+    showPage('login');
+    showToast('Email verified! ✅ You can now log in with your @bishopodowd.org account.');
+  }, 500);
+}
 if(parentCode){
   try{
     const studentUid=atob(parentCode);
