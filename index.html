@@ -28,7 +28,7 @@ nav{background:var(--warm-white);border-bottom:1.5px solid var(--border);positio
 .nav-links a{color:var(--muted);text-decoration:none;font-size:.875rem;font-weight:500;padding:6px 13px;border-radius:8px;transition:all .18s;white-space:nowrap;cursor:pointer}
 .nav-links a:hover,.nav-links a.active{color:var(--green-dark);background:var(--green-light)}
 .nav-actions{display:flex;gap:8px;margin-left:auto}
-.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 20px;border-radius:10px;font-size:.875rem;font-weight:500;font-family:inherit;cursor:pointer;border:1.5px solid transparent;transition:all .18s;text-decoration:none}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 20px;border-radius:10px;font-size:.875rem;font-weight:500;font-family:inherit;cursor:pointer;border:1.5px solid transparent;transition:all .18s;text-decoration:none;min-height:44px;-webkit-tap-highlight-color:transparent}
 .btn-outline{border-color:var(--border);color:var(--charcoal);background:transparent}
 .btn-outline:hover{border-color:var(--green);color:var(--green)}
 .btn-primary{background:var(--green);color:#fff;border-color:var(--green)}
@@ -92,7 +92,7 @@ nav{background:var(--warm-white);border-bottom:1.5px solid var(--border);positio
 /* FORMS */
 .form-group{margin-bottom:1.1rem}
 .form-group label{display:block;font-size:.83rem;font-weight:500;margin-bottom:5px;color:var(--charcoal)}
-.form-group input,.form-group select,.form-group textarea{width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:10px;font-family:inherit;font-size:.875rem;background:#fff;color:var(--charcoal);transition:border-color .18s;outline:none}
+.form-group input,.form-group select,.form-group textarea{width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:10px;font-family:inherit;font-size:16px;background:#fff;color:var(--charcoal);transition:border-color .18s;outline:none}
 .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--green)}
 .form-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
 .upload-area{border:2px dashed var(--border);border-radius:10px;padding:1.4rem;text-align:center;cursor:pointer;transition:all .18s}
@@ -199,7 +199,7 @@ input[type=file]{display:none}
 .progress-bar{height:100%;background:var(--green);border-radius:3px;transition:width .6s ease}
 
 /* MODAL */
-.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center;padding:1rem}
+.modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:200;align-items:center;justify-content:center;padding:1rem;-webkit-overflow-scrolling:touch}
 .modal-overlay.open{display:flex}
 .modal-box{background:#fff;border-radius:20px;padding:2rem;max-width:480px;width:100%;box-shadow:var(--shadow-lg);animation:fadeUp .25s ease;max-height:90vh;overflow-y:auto}
 .modal-box h3{font-family:'Fraunces',serif;font-size:1.4rem;color:var(--green-dark);margin-bottom:.4rem}
@@ -265,13 +265,72 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
 .footer-bottom{padding-top:1.3rem;display:flex;justify-content:space-between;align-items:center;font-size:.78rem;flex-wrap:wrap;gap:.8rem}
 
 /* RESPONSIVE */
-@media(max-width:768px){
-  .dash-layout{grid-template-columns:1fr}
-  .sidebar{display:none}
-  .grid-2,.grid-3,.grid-4,.form-row{grid-template-columns:1fr}
-  .footer-top{grid-template-columns:1fr 1fr}
-  .msg-layout{grid-template-columns:1fr}
-  .week-grid{grid-template-columns:repeat(3,1fr)}
+@media (max-width: 768px) {
+  body { font-size: 15px; padding-bottom: 72px; }
+  nav { padding: 0 1rem; }
+  .nav-inner { height: 56px; gap: .8rem; }
+  .logo { font-size: 1.2rem; }
+  .logo-mark { width: 30px; height: 30px; font-size: 14px; }
+  #guestNav, #authNav { display: none !important; }
+  .dark-toggle { display: none; }
+  .hero { padding: 2.5rem 1.2rem 2rem; }
+  .hero h1 { font-size: 2.2rem; }
+  .hero p { font-size: .95rem; }
+  .hero-cta { flex-direction: column; align-items: stretch; gap: 10px; }
+  .hero-cta .btn { justify-content: center; padding: 13px; }
+  .impact-band { gap: 1.2rem; margin-top: 2rem; }
+  .impact-stat-num { font-size: 1.6rem; }
+  .section { padding: 2.5rem 1.2rem; }
+  .section-title { font-size: 1.6rem; }
+  .auto-grid { grid-template-columns: 1fr; gap: 1rem; }
+  .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; gap: 1rem; }
+  .form-row { grid-template-columns: 1fr; gap: .8rem; }
+  .footer-top { grid-template-columns: 1fr; gap: 1.5rem; }
+  footer { padding: 2rem 1.2rem 1.5rem; }
+  .dash-layout { grid-template-columns: 1fr; }
+  .sidebar { display: none; }
+  .main-content { padding: 1.2rem; }
+  .main-header { flex-direction: column; align-items: flex-start; gap: .6rem; margin-bottom: 1.2rem; }
+  .main-header h2 { font-size: 1.4rem; }
+  .stats-row { grid-template-columns: 1fr 1fr; gap: .8rem; }
+  .stat-card { padding: 1rem; }
+  .stat-card .stat-num { font-size: 1.5rem; }
+  .card { padding: 1.1rem; }
+  .week-grid { grid-template-columns: repeat(5, 1fr); gap: 5px; }
+  .sched-day { padding: .6rem .3rem; }
+  .sched-day .day-name { font-size: .6rem; }
+  .sched-day .driver-name { font-size: .68rem; }
+  .map-container { height: 240px; }
+  .map-filters { flex-wrap: wrap; gap: 5px; }
+  .map-search { width: 100%; }
+  #peer-cards { grid-template-columns: 1fr 1fr; gap: .8rem; }
+  .peer-card { padding: .9rem .7rem; }
+  .msg-layout { grid-template-columns: 1fr; height: auto; border: none; border-radius: 0; }
+  .msg-list { border-right: none; border-bottom: 1.5px solid var(--border); max-height: 180px; }
+  .msg-chat { min-height: 320px; border: 1.5px solid var(--border); border-radius: var(--radius); margin-top: .8rem; overflow: hidden; }
+  .auth-wrap { padding: 1.5rem .8rem; align-items: flex-start; padding-top: 2rem; }
+  .auth-card { padding: 1.8rem 1.4rem; border-radius: 16px; }
+  .auth-card h2 { font-size: 1.4rem; }
+  .modal-overlay { padding: 0; align-items: flex-end; }
+  .modal-box { border-radius: 20px 20px 0 0; max-height: 90vh; padding: 1.8rem 1.4rem; }
+  .notif-dropdown { right: .5rem; width: calc(100vw - 1rem); top: 56px; }
+  .nudge-banner, .checkin-bar { flex-direction: column; gap: .7rem; text-align: center; }
+  .nudge-banner button, .checkin-btn { width: 100%; }
+  .milestone-grid { grid-template-columns: repeat(3, 1fr); }
+  .avatar-lg { width: 60px; height: 60px; font-size: 1.2rem; }
+  .mobile-tab-bar { display: block; }
+  .hamburger { display: none !important; }
+  .parent-content { padding: 1rem; }
+  .parent-header-bar { padding: 1rem; flex-direction: column; gap: .5rem; }
+}
+@media (max-width: 390px) {
+  .hero h1 { font-size: 1.9rem; }
+  .stats-row { grid-template-columns: 1fr; }
+  #peer-cards { grid-template-columns: 1fr; }
+  .milestone-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  .mobile-tab-bar { padding-bottom: env(safe-area-inset-bottom); }
 }
 
 /* UTILS */
@@ -291,7 +350,7 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
   .mobile-nav-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,.5); z-index:90; }
   .mobile-nav-overlay.open { display:block; }
   .sidebar.mobile-open { display:block !important; position:fixed; left:0; top:64px; bottom:0; z-index:95; width:var(--sidebar); overflow-y:auto; box-shadow:var(--shadow-lg); }
-  @media(max-width:768px){ .hamburger{display:flex} }
+  
 
   /* ── NOTIFICATION BELL ── */
   .notif-bell { position:relative; cursor:pointer; background:none; border:none; font-size:1.2rem; padding:6px; }
@@ -449,10 +508,12 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
   /* ── MOBILE BOTTOM TAB BAR ── */
   .mobile-tab-bar { display:none; position:fixed; bottom:0; left:0; right:0; background:var(--warm-white); border-top:1.5px solid var(--border); z-index:90; padding:6px 0 env(safe-area-inset-bottom,6px); }
   .mobile-tab-bar nav { display:flex; justify-content:space-around; }
-  .mobile-tab-btn { display:flex; flex-direction:column; align-items:center; gap:2px; padding:6px 12px; color:var(--muted); font-size:.65rem; font-weight:500; cursor:pointer; border:none; background:none; transition:color .15s; min-width:48px; }
-  .mobile-tab-btn .tab-icon { font-size:1.3rem; }
+  .mobile-tab-btn { display:flex; flex-direction:column; align-items:center; gap:2px; padding:8px 10px; color:var(--muted); font-size:.62rem; font-weight:500; cursor:pointer; border:none; background:none; transition:all .15s; min-width:52px; flex:1; -webkit-tap-highlight-color:transparent; }
+  .mobile-tab-btn .tab-icon { font-size:1.4rem; line-height:1; }
+  .mobile-tab-btn span:last-child { line-height:1; margin-top:1px; }
   .mobile-tab-btn.active { color:var(--green); }
-  @media(max-width:768px){ .mobile-tab-bar{display:block} body{padding-bottom:70px} .hamburger{display:none!important} }
+  .mobile-tab-btn.active .tab-icon { transform:scale(1.1); }
+  
 
   /* ── IMPROVED HERO ── */
   .hero-illustration { margin:2.5rem auto 0; max-width:480px; height:180px; position:relative; }
@@ -525,8 +586,10 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
         🔔<span class="notif-bell-badge" id="notif-bell-badge" style="display:none"></span>
       </button>
       <button class="btn btn-primary btn-sm" onclick="doLogout()">Log Out</button>
-      <button class="hamburger" onclick="toggleMobileNav()" id="hamburger-btn" aria-label="Menu">
-        <span></span><span></span><span></span>
+      <button class="hamburger" onclick="toggleMobileDrawer()" id="hamburger-btn" aria-label="Menu" style="display:flex;flex-direction:column;gap:5px;padding:8px;border:none;background:none;cursor:pointer">
+        <span style="width:22px;height:2px;background:var(--charcoal);border-radius:2px;display:block;transition:all .2s"></span>
+        <span style="width:22px;height:2px;background:var(--charcoal);border-radius:2px;display:block;transition:all .2s"></span>
+        <span style="width:22px;height:2px;background:var(--charcoal);border-radius:2px;display:block;transition:all .2s"></span>
       </button>
     </div>
 
@@ -540,7 +603,27 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
     </div>
 
     <!-- Mobile Nav Overlay -->
-    <div class="mobile-nav-overlay" id="mobile-overlay" onclick="closeMobileNav()"></div>
+    <div class="mobile-nav-overlay" id="mobile-overlay" onclick="closeMobileNav();closeMobileDrawer()"></div>
+
+    <!-- Mobile Drawer Menu -->
+    <div id="mobile-drawer" style="display:none;position:fixed;top:56px;right:0;bottom:0;width:260px;background:var(--warm-white);border-left:1.5px solid var(--border);z-index:95;padding:1.2rem;box-shadow:-4px 0 20px rgba(0,0,0,.15);overflow-y:auto">
+      <div id="drawer-user" style="display:flex;align-items:center;gap:10px;padding-bottom:1rem;border-bottom:1px solid var(--border);margin-bottom:1rem">
+        <div class="avatar" id="drawer-avatar">?</div>
+        <div><div style="font-weight:600;font-size:.875rem" id="drawer-name">Loading...</div><div style="font-size:.75rem;color:var(--muted)">Bishop O'Dowd ✓</div></div>
+      </div>
+      <nav style="display:flex;flex-direction:column;gap:2px">
+        <a class="sidebar-nav" style="display:flex;align-items:center;gap:10px;padding:.8rem 1rem;border-radius:10px;cursor:pointer;text-decoration:none;color:var(--charcoal)" onclick="showDash('schedule');closeMobileDrawer()">🗓 Schedule</a>
+        <a class="sidebar-nav" style="display:flex;align-items:center;gap:10px;padding:.8rem 1rem;border-radius:10px;cursor:pointer;text-decoration:none;color:var(--charcoal)" onclick="showDash('friends');closeMobileDrawer()">👥 Friends</a>
+        <a class="sidebar-nav" style="display:flex;align-items:center;gap:10px;padding:.8rem 1rem;border-radius:10px;cursor:pointer;text-decoration:none;color:var(--charcoal)" onclick="showDash('available');closeMobileDrawer()">🪑 Available Rides</a>
+        <a class="sidebar-nav" style="display:flex;align-items:center;gap:10px;padding:.8rem 1rem;border-radius:10px;cursor:pointer;text-decoration:none;color:var(--charcoal)" onclick="showDash('leaderboard');closeMobileDrawer()">🏆 Leaderboard</a>
+        <a class="sidebar-nav" style="display:flex;align-items:center;gap:10px;padding:.8rem 1rem;border-radius:10px;cursor:pointer;text-decoration:none;color:var(--charcoal)" onclick="showDash('requests');closeMobileDrawer()">🚗 Ride Requests</a>
+      </nav>
+      <div style="border-top:1px solid var(--border);margin-top:1rem;padding-top:1rem;display:flex;flex-direction:column;gap:.5rem">
+        <button class="btn btn-outline w100" onclick="toggleDarkMode()">🌙 Toggle Dark Mode</button>
+        <button class="btn btn-outline w100" onclick="requestPushPermission()">🔔 Enable Notifications</button>
+        <button class="btn btn-outline w100" style="color:var(--red);border-color:var(--red)" onclick="doLogout()">Log Out</button>
+      </div>
+    </div>
   </div>
 </nav>
 
@@ -885,6 +968,27 @@ footer{background:var(--charcoal);color:rgba(255,255,255,.65);padding:3rem 2rem 
 </div>
 
 <!-- ══════ PAGE: DASHBOARD ══════ -->
+<!-- Mobile Bottom Tab Bar -->
+<div class="mobile-tab-bar" id="mobile-tab-bar" style="display:none">
+  <nav style="display:flex;justify-content:space-around;align-items:center">
+    <button class="mobile-tab-btn active" onclick="showDash('overview');setMobileTab(this)" id="mtab-overview">
+      <span class="tab-icon">🏠</span><span>Home</span>
+    </button>
+    <button class="mobile-tab-btn" onclick="showDash('map');setMobileTab(this)" id="mtab-map">
+      <span class="tab-icon">📍</span><span>Map</span>
+    </button>
+    <button class="mobile-tab-btn" onclick="showDash('requests');setMobileTab(this)" id="mtab-requests" style="position:relative">
+      <span class="tab-icon">🚗</span><span>Rides</span>
+    </button>
+    <button class="mobile-tab-btn" onclick="showDash('messages');setMobileTab(this)" id="mtab-messages" style="position:relative">
+      <span class="tab-icon">💬</span><span>Chat</span>
+    </button>
+    <button class="mobile-tab-btn" onclick="showDash('profile');setMobileTab(this)" id="mtab-profile">
+      <span class="tab-icon">👤</span><span>Profile</span>
+    </button>
+  </nav>
+</div>
+
 <!-- ══════ WELCOME OVERLAY ══════ -->
 <div id="welcome-overlay" class="welcome-overlay" style="display:none">
   <div class="welcome-box">
@@ -2070,6 +2174,12 @@ auth.onAuthStateChanged(async function(user){
             return;
           }
         }catch(pe){}
+        // Email verified but no Firestore doc — they need to complete verification flow
+        if(user.emailVerified){
+          if(loadingScreen) loadingScreen.style.display='none';
+          showPage('pending');
+          return;
+        }
         await auth.signOut();
         if(loadingScreen) loadingScreen.style.display='none';
         return;
@@ -2164,17 +2274,19 @@ async function doSignup(){
     const cred = await auth.createUserWithEmailAndPassword(email, pass);
     const uid = cred.user.uid;
     const zone = getNeighborhood(zip);
-    await db.collection('users').doc(uid).set({
-      firstName:first, lastName:last, email, age:parseInt(age)||17, grade,
+
+    // ── VERIFICATION GATE 3: Store data in sessionStorage, write to Firestore ONLY after email verified ──
+    // This prevents any unverified account from appearing in the database
+    const pendingData = {
+      uid, firstName:first, lastName:last, email, age:parseInt(age)||17, grade,
       schoolName:SCHOOL, zip, neighborhoodZone:zone,
       ridePreference:pref, compensation:comp,
       nickname:nickname||null, showOnLeaderboard:!!nickname,
-      hasCar, car:carData,
-      isActive:true, isVerified:true,
-      totalCO2Saved:0, totalRides:0, totalMiles:0, totalMoneySaved:0, totalTimeSaved:0,
-      partners:[], createdAt:firebase.firestore.FieldValue.serverTimestamp()
-    });
-    // ── VERIFICATION GATE 3: Send verification email, block access until verified ──
+      hasCar, car:carData
+    };
+    sessionStorage.setItem('commyute_pending_signup', JSON.stringify(pendingData));
+
+    // Send verification email
     try{
       await cred.user.sendEmailVerification({
         url: window.location.origin + window.location.pathname + '?verified=true',
@@ -2182,14 +2294,12 @@ async function doSignup(){
       });
     } catch(verifyErr){
       console.warn('Could not send verification email:', verifyErr.message);
-      // Still continue — user can request resend from pending screen
     }
-    // Sign out immediately — user must verify email first
+
+    // Sign out immediately — no Firestore doc yet = no dashboard access possible
     await auth.signOut();
     currentUser = null;
     currentUserData = null;
-    await auth.signOut();
-    currentUser = null;
     openModal('modal-success');
   } catch(e){
     if(e.code==='auth/email-already-in-use') showToast('An account with this email already exists.');
@@ -2257,6 +2367,9 @@ async function doLogout(){
   currentUser=null; currentUserData=null; activeConvId=null;
   const panel = document.getElementById('msg-chat-panel');
   if(panel) panel.innerHTML='<div class="msg-empty">Select a conversation to start messaging.</div>';
+  const tabBar2 = document.getElementById('mobile-tab-bar');
+  if(tabBar2) tabBar2.style.display='none';
+  closeMobileDrawer();
   if(convUnsub) convUnsub();
   if(msgUnsub) msgUnsub();
   document.getElementById('guestNav').classList.remove('hidden');
@@ -2292,6 +2405,11 @@ function loadDashboard(){
   // Hide loading screen
   const ls = document.getElementById('auth-loading');
   if(ls) ls.style.display='none';
+  // Show mobile UI elements
+  const tabBar = document.getElementById('mobile-tab-bar');
+  if(tabBar) tabBar.style.display='block';
+  const hbg = document.getElementById('hamburger-btn');
+  if(hbg) hbg.style.display='';
   // Run post-login checks
   setTimeout(checkWelcome, 500);
   setTimeout(checkIfAdmin, 600);
@@ -4337,6 +4455,42 @@ window.loadDashboard = function(){
 
 // ── EXPORTS ──
 window.toggleDarkMode = toggleDarkMode;
+
+// ── MOBILE DRAWER ──
+function toggleMobileDrawer(){
+  const drawer = document.getElementById('mobile-drawer');
+  const overlay = document.getElementById('mobile-overlay');
+  if(!drawer) return;
+  const isOpen = drawer.style.display !== 'none';
+  drawer.style.display = isOpen ? 'none' : 'block';
+  if(overlay) overlay.classList.toggle('open', !isOpen);
+  // Sync user info
+  if(!isOpen && currentUserData){
+    const da = document.getElementById('drawer-avatar');
+    const dn = document.getElementById('drawer-name');
+    if(da){
+      if(currentUserData.photoURL) da.innerHTML=`<img src="${currentUserData.photoURL}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+      else da.textContent=initials(currentUserData.firstName,currentUserData.lastName);
+    }
+    if(dn) dn.textContent=currentUserData.firstName+' '+currentUserData.lastName;
+  }
+}
+function closeMobileDrawer(){
+  const drawer = document.getElementById('mobile-drawer');
+  const overlay = document.getElementById('mobile-overlay');
+  if(drawer) drawer.style.display='none';
+  if(overlay) overlay.classList.remove('open');
+}
+window.toggleMobileDrawer = toggleMobileDrawer;
+window.closeMobileDrawer = closeMobileDrawer;
+
+// Show hamburger only when logged in on mobile
+function updateMobileNav(){
+  const hbg = document.getElementById('hamburger-btn');
+  if(hbg) hbg.style.display = currentUser ? '' : 'none';
+  const tabBar = document.getElementById('mobile-tab-bar');
+  if(tabBar) tabBar.style.display = currentUser ? 'block' : 'none';
+}
 window.initDarkMode = initDarkMode;
 window.renderMilestones = renderMilestones;
 window.toggleAvailableThisWeek = toggleAvailableThisWeek;
@@ -4790,17 +4944,48 @@ window.generatePairingCode = generatePairingCode;
 // ── IMPROVED EMAIL VERIFICATION ──
 async function checkVerificationAndLogin(){
   const btn = document.getElementById('verify-check-btn');
-  if(!auth.currentUser){ showToast('Please log in first.'); showPage('login'); return; }
+  if(!auth.currentUser){ showToast('Please log in first — use the login page.'); showPage('login'); return; }
   btn.textContent = 'Checking...'; btn.disabled=true;
-  await auth.currentUser.reload();
-  if(auth.currentUser.emailVerified){
-    const snap = await db.collection('users').doc(auth.currentUser.uid).get();
-    if(snap.exists){
-      currentUser=auth.currentUser; currentUserData=snap.data();
+  try{
+    await auth.currentUser.reload();
+    if(auth.currentUser.emailVerified){
+      // Email verified — now write Firestore doc if it doesn't exist yet
+      const uid = auth.currentUser.uid;
+      const snap = await db.collection('users').doc(uid).get();
+      if(!snap.exists){
+        // Retrieve pending signup data from sessionStorage
+        const pendingRaw = sessionStorage.getItem('commyute_pending_signup');
+        if(pendingRaw){
+          const p = JSON.parse(pendingRaw);
+          await db.collection('users').doc(uid).set({
+            firstName:p.firstName, lastName:p.lastName, email:p.email,
+            age:p.age, grade:p.grade, schoolName:p.schoolName,
+            zip:p.zip, neighborhoodZone:p.neighborhoodZone,
+            ridePreference:p.ridePreference, compensation:p.compensation,
+            nickname:p.nickname||null, showOnLeaderboard:!!p.nickname,
+            hasCar:p.hasCar, car:p.car||null,
+            isActive:true, isVerified:true,
+            totalCO2Saved:0, totalRides:0, totalMiles:0, totalMoneySaved:0, totalTimeSaved:0,
+            partners:[], createdAt:firebase.firestore.FieldValue.serverTimestamp()
+          });
+          sessionStorage.removeItem('commyute_pending_signup');
+        } else {
+          // pendingData lost (e.g. different device) — ask them to contact admin
+          showToast('Verification confirmed but signup data was lost. Please sign up again.');
+          await auth.signOut();
+          showPage('signup');
+          return;
+        }
+      }
+      currentUser = auth.currentUser;
+      currentUserData = (await db.collection('users').doc(uid).get()).data();
       loadDashboard();
+    } else {
+      showToast('Email not verified yet. Check your @bishopodowd.org inbox and click the link.');
+      btn.textContent='I Verified My Email →'; btn.disabled=false;
     }
-  } else {
-    showToast('Email not verified yet. Check your inbox and click the link.');
+  } catch(e){
+    showToast('Error: '+e.message);
     btn.textContent='I Verified My Email →'; btn.disabled=false;
   }
 }
