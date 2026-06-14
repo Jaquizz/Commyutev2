@@ -730,6 +730,34 @@ d{color:var(--muted)}
   .sched-day-label .day-abbr { font-size:.7rem; font-weight:600; text-transform:uppercase; letter-spacing:.05em; color:var(--muted); }
   .sched-day-label .day-num { font-family:'Fraunces',serif; font-size:1.5rem; color:var(--charcoal); line-height:1; }
 
+
+  /* ── LOADING STATES ── */
+  .loading-spinner { display:inline-block; width:20px; height:20px; border:2px solid var(--border); border-top-color:var(--green); border-radius:50%; animation:spin .7s linear infinite; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  .section-loading { display:flex; align-items:center; justify-content:center; padding:3rem; gap:10px; color:var(--muted); font-size:.875rem; }
+  .skeleton { background:linear-gradient(90deg,var(--border) 25%,var(--cream) 50%,var(--border) 75%); background-size:200% 100%; animation:shimmer 1.4s infinite; border-radius:6px; }
+  @keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+  .skeleton-line { height:14px; margin-bottom:8px; border-radius:4px; }
+  .skeleton-line.wide { width:80%; }
+  .skeleton-line.medium { width:55%; }
+  .skeleton-line.narrow { width:35%; }
+  .skeleton-card { padding:1.2rem; border:1.5px solid var(--border); border-radius:var(--radius); margin-bottom:.8rem; }
+
+  /* ── SECTION TRANSITIONS ── */
+  .dash-section { animation:fadeSection .25s ease; }
+  @keyframes fadeSection { from{opacity:0;transform:translateY(6px)} to{opacity:1;transform:translateY(0)} }
+
+  /* ── TOAST IMPROVEMENTS ── */
+  .toast { position:fixed; bottom:calc(80px + env(safe-area-inset-bottom,0px)); left:50%; transform:translateX(-50%) translateY(20px); background:#1a1a18; color:#fff; padding:11px 20px; border-radius:99px; font-size:.83rem; font-weight:500; white-space:nowrap; z-index:999; opacity:0; transition:all .25s ease; pointer-events:none; max-width:90vw; text-align:center; }
+  .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+  @media(max-width:480px){ .toast { bottom:calc(76px + env(safe-area-inset-bottom,0px)); font-size:.78rem; } }
+
+  /* ── IMPROVED MODAL TRANSITIONS ── */
+  .modal-overlay { transition:opacity .2s; }
+  .modal-overlay.open { opacity:1; }
+  .modal-box { transition:transform .25s cubic-bezier(.34,1.56,.64,1); }
+  @media(max-width:480px){ .modal-box { transform:translateY(30px); } .modal-overlay.open .modal-box { transform:translateY(0); } }
+
 </style>
 </head>
 <body>
@@ -1642,6 +1670,7 @@ d{color:var(--muted)}
       </div>
       <div style="display:flex;gap:10px;align-items:center">
         <span id="admin-online-count" style="background:rgba(255,255,255,.1);padding:4px 12px;border-radius:99px;font-size:.78rem">Loading...</span>
+        <button class="btn btn-sm" style="background:rgba(255,255,255,.1);color:#fff;border-color:rgba(255,255,255,.2)" onclick="switchToStudentLogin()">Switch to Student</button>
         <button class="btn btn-sm" style="background:rgba(255,255,255,.1);color:#fff;border-color:rgba(255,255,255,.2)" onclick="doAdminLogout()">Log Out</button>
       </div>
     </div>
@@ -3666,6 +3695,7 @@ function startMessageNotifications(){
 
 async function loadLeaderboard(){
   // Fetch all school users, filter client-side to avoid Firestore composite index requirement
+  try{
   const snap=await db.collection('users')
     .where('schoolName','==',SCHOOL)
     .get();
@@ -3691,7 +3721,15 @@ async function loadLeaderboard(){
       </div>`;
     }).join('');
   }
-  if(currentUserData) document.getElementById('lb-nickname-input').value=currentUserData.nickname||'';
+  } catch(e){
+    const el=document.getElementById('leaderboard-list');
+    if(el) el.innerHTML='<p class="text-muted" style="font-size:.875rem;text-align:center;padding:1rem">Could not load leaderboard.</p>';
+    console.error('Leaderboard error:',e);
+  }
+  if(currentUserData) {
+    const ni = document.getElementById('lb-nickname-input');
+    if(ni) ni.value=currentUserData.nickname||'';
+  }
 }
 
 async function saveNickname(){
@@ -5551,12 +5589,14 @@ function initPlacesAutocomplete() {
   // Signup form
   const signupInput = document.getElementById('reg-address-input');
   if (signupInput && !signupAutocomplete) {
-    signupAutocomplete = new google.maps.places.Autocomplete(signupInput, opts);
-    signupAutocomplete.addListener('place_changed', () => {
-      const place = signupAutocomplete.getPlace();
-      if (!place.geometry) return;
-      applyPrivacyOffset(place, 'reg-lat', 'reg-lng', 'reg-zip', 'reg-zone');
-    });
+    try{
+      signupAutocomplete = new google.maps.places.Autocomplete(signupInput, opts);
+      signupAutocomplete.addListener('place_changed', () => {
+        const place = signupAutocomplete.getPlace();
+        if (!place.geometry){ showToast('Please select an address from the dropdown.'); return; }
+        applyPrivacyOffset(place, 'reg-lat', 'reg-lng', 'reg-zip', 'reg-zone');
+      });
+    } catch(e){ console.warn('Places autocomplete init failed:', e); }
   }
 
   // Edit profile form
@@ -5791,10 +5831,21 @@ async function doAdminLogin() {
 }
 
 async function doAdminLogout() {
+  if(adminUsersUnsub) adminUsersUnsub();
   adminAuthenticated = false;
   currentUser = null;
+  currentUserData = null;
+  document.body.classList.remove('is-logged-in');
   await auth.signOut();
   showPage('home');
+}
+
+function switchToStudentLogin() {
+  if(adminUsersUnsub) adminUsersUnsub();
+  adminAuthenticated = false;
+  currentUser = null;
+  currentUserData = null;
+  auth.signOut().then(() => showPage('login'));
 }
 
 function switchAdminTab(tab) {
@@ -5819,27 +5870,41 @@ function switchAdminTab(tab) {
   if (tab === 'flagged') loadAdminFlagged();
 }
 
+let adminUsersUnsub = null;
+
 async function loadAdminDashboard() {
   if (!adminAuthenticated) return;
 
-  // Load stats
-  const [usersSnap, ridesSnap, reportsSnap] = await Promise.all([
-    db.collection('users').where('schoolName','==',SCHOOL).get(),
+  // ── REAL-TIME listener for users ──
+  if (adminUsersUnsub) adminUsersUnsub();
+  adminUsersUnsub = db.collection('users').where('schoolName','==',SCHOOL)
+    .onSnapshot(snap => {
+      allStudentsCache = snap.docs.map(d => ({id:d.id,...d.data()}));
+      const total = allStudentsCache.length;
+      const active = allStudentsCache.filter(u => (u.totalRides||0) > 0).length;
+      const el = document.getElementById('as-total');
+      const el2 = document.getElementById('as-active');
+      const el3 = document.getElementById('admin-online-count');
+      if(el) el.textContent = total;
+      if(el2) el2.textContent = active;
+      if(el3) el3.textContent = `${total} students`;
+      // Refresh current tab
+      const activeTab = document.querySelector('.admin-tab.active');
+      if(activeTab && activeTab.id === 'atab-students') filterAdminStudents();
+    });
+
+  // Static stats (rides + reports)
+  const [ridesSnap, reportsSnap] = await Promise.all([
     db.collection('rides').where('school','==',SCHOOL).get(),
     db.collection('reports').where('school','==',SCHOOL).where('status','==','pending').get()
   ]);
+  const el4 = document.getElementById('as-rides');
+  const el5 = document.getElementById('as-co2');
+  const el6 = document.getElementById('as-reports');
+  if(el4) el4.textContent = ridesSnap.size;
+  if(el5) el5.textContent = Math.round(ridesSnap.docs.reduce((s,d) => s+(d.data().co2Saved||0), 0)*10)/10;
+  if(el6) el6.textContent = reportsSnap.size;
 
-  const users = usersSnap.docs.map(d => ({id:d.id,...d.data()}));
-  allStudentsCache = users;
-
-  document.getElementById('as-total').textContent = users.length;
-  document.getElementById('as-active').textContent = users.filter(u => (u.totalRides||0) > 0).length;
-  document.getElementById('as-rides').textContent = ridesSnap.size;
-  document.getElementById('as-co2').textContent = Math.round(ridesSnap.docs.reduce((s,d) => s+(d.data().co2Saved||0), 0)*10)/10;
-  document.getElementById('as-reports').textContent = reportsSnap.size;
-  document.getElementById('admin-online-count').textContent = `${users.length} students`;
-
-  // Load students tab by default
   loadAdminStudents();
 }
 
@@ -5966,24 +6031,18 @@ async function adminDeactivateUser(uid, name) {
     deactivatedAt: firebase.firestore.FieldValue.serverTimestamp(),
     deactivatedBy: currentUser.uid
   });
-
-  // Update local cache
-  const idx = allStudentsCache.findIndex(u => u.id === uid);
-  if (idx >= 0) allStudentsCache[idx].isActive = false;
-
-  showToast(`${name} has been removed from Commyute.`);
-  filterAdminStudents();
-  loadAdminDashboard();
+  // Close detail view if open
+  document.getElementById('admin-student-detail')?.remove();
+  showToast(`${name} has been removed from Commyute. ✓`);
+  // onSnapshot listener will auto-refresh the list
 }
 
 async function adminReactivate(uid, name) {
   if (!adminAuthenticated) return;
   if (!confirm(`Reactivate ${name}'s account?`)) return;
   await db.collection('users').doc(uid).update({ isActive: true, deactivatedAt: null });
-  const idx = allStudentsCache.findIndex(u => u.id === uid);
-  if (idx >= 0) allStudentsCache[idx].isActive = true;
-  showToast(`${name} has been reactivated.`);
-  filterAdminStudents();
+  showToast(`${name} has been reactivated. ✓`);
+  // onSnapshot will auto-refresh
 }
 
 async function adminResetPassword(email) {
@@ -6143,6 +6202,117 @@ window.adminRemoveParent = adminRemoveParent;
 window.loadAdminFlagged = loadAdminFlagged;
 window.adminClearFlag = adminClearFlag;
 window.initPlacesAutocomplete = initPlacesAutocomplete;
+
+
+// ── LOADING HELPERS ──
+function showSectionLoading(elId, msg='Loading...'){
+  const el = document.getElementById(elId);
+  if(!el) return;
+  el.innerHTML = `<div class="section-loading"><div class="loading-spinner"></div><span>${msg}</span></div>`;
+}
+
+function skeletonCards(n=3){
+  return Array.from({length:n},()=>`<div class="skeleton-card">
+    <div class="skeleton skeleton-line wide"></div>
+    <div class="skeleton skeleton-line medium"></div>
+    <div class="skeleton skeleton-line narrow"></div>
+  </div>`).join('');
+}
+
+// ── WRAP loadLeaderboard with loading state + error handling ──
+const _origLoadLB = window.loadLeaderboard;
+window.loadLeaderboard = async function(){
+  const el = document.getElementById('leaderboard-list');
+  if(el) el.innerHTML = '<div class="section-loading"><div class="loading-spinner"></div><span>Loading leaderboard...</span></div>';
+  try{
+    await _origLoadLB();
+  } catch(e){
+    if(el) el.innerHTML = `<div class="empty-state"><span class="empty-icon">⚠️</span><h3>Couldn't load leaderboard</h3><p>Check your connection and try again.</p><button class="btn btn-outline btn-sm" onclick="loadLeaderboard()">Retry</button></div>`;
+    console.error('Leaderboard error:', e);
+  }
+};
+
+// ── WRAP loadFriends with loading state ──
+const _origLF = window.loadFriends;
+window.loadFriends = async function(){
+  const el = document.getElementById('friends-list');
+  if(el) el.innerHTML = skeletonCards(3);
+  try{
+    await _origLF();
+  } catch(e){
+    if(el) el.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><span class="empty-icon">⚠️</span><h3>Couldn't load friends</h3><button class="btn btn-outline btn-sm" onclick="loadFriends()">Retry</button></div>`;
+    console.error('Friends error:', e);
+  }
+};
+
+// ── WRAP loadRequests with loading state ──
+const _origLoadReq = window.loadRequests;
+window.loadRequests = async function(){
+  const inc = document.getElementById('incoming-requests');
+  const out = document.getElementById('outgoing-requests');
+  if(inc) inc.innerHTML = skeletonCards(2);
+  if(out) out.innerHTML = skeletonCards(2);
+  try{
+    await _origLoadReq();
+  } catch(e){
+    if(inc) inc.innerHTML = '<p class="text-muted" style="font-size:.875rem">Could not load requests.</p>';
+    console.error('Requests error:', e);
+  }
+};
+
+// ── WRAP loadAvailableRides ──
+const _origLoadAvail = window.loadAvailableRides;
+window.loadAvailableRides = async function(){
+  const el = document.getElementById('available-rides-list');
+  if(el) el.innerHTML = '<div class="section-loading" style="grid-column:1/-1"><div class="loading-spinner"></div><span>Finding rides...</span></div>';
+  try{
+    await _origLoadAvail();
+  } catch(e){
+    if(el) el.innerHTML = `<div class="empty-state" style="grid-column:1/-1"><span class="empty-icon">⚠️</span><h3>Couldn't load rides</h3><button class="btn btn-outline btn-sm" onclick="loadAvailableRides()">Retry</button></div>`;
+  }
+};
+
+// ── WRAP loadMessages ──
+const _origLoadMsgs = window.loadMessages;
+window.loadMessages = async function(){
+  const el = document.getElementById('conv-list');
+  if(el) el.innerHTML = '<div class="section-loading"><div class="loading-spinner"></div><span>Loading messages...</span></div>';
+  try{
+    await _origLoadMsgs();
+  } catch(e){
+    if(el) el.innerHTML = '<p class="text-muted" style="font-size:.875rem;text-align:center;padding:1rem">Could not load messages.</p>';
+  }
+};
+
+// ── SMOOTH SECTION SWITCH ──
+const _origShowDash = window.showDash;
+window.showDash = function(id){
+  const sections = document.querySelectorAll('.dash-section');
+  sections.forEach(s => {
+    if(s.id === 'ds-'+id){
+      s.style.animation = 'none';
+      s.offsetHeight; // reflow
+      s.style.animation = '';
+    }
+  });
+  if(_origShowDash) _origShowDash(id);
+};
+
+// ── EMPTY STATES for requests and leaderboard ──
+function emptyRequests(incoming, outgoing){
+  if(incoming){
+    const el = document.getElementById('incoming-requests');
+    if(el) el.innerHTML = '<div class="empty-state"><span class="empty-icon">📬</span><h3>No incoming requests</h3><p>When classmates send you ride requests, they will appear here.</p></div>';
+  }
+  if(outgoing){
+    const el = document.getElementById('outgoing-requests');
+    if(el) el.innerHTML = '<div class="empty-state"><span class="empty-icon">🚗</span><h3>No outgoing requests</h3><p>Find classmates on the map and send a ride request to get started.</p></div>';
+  }
+}
+
+window.showSectionLoading = showSectionLoading;
+window.skeletonCards = skeletonCards;
+window.switchToStudentLogin = switchToStudentLogin;
 
 </script>
 </body>
