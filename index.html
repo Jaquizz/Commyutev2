@@ -1670,8 +1670,8 @@ d{color:var(--muted)}
       </div>
       <div style="display:flex;gap:10px;align-items:center">
         <span id="admin-online-count" style="background:rgba(255,255,255,.1);padding:4px 12px;border-radius:99px;font-size:.78rem">Loading...</span>
-        <button class="btn btn-sm" style="background:rgba(255,255,255,.1);color:#fff;border-color:rgba(255,255,255,.2)" onclick="switchToStudentLogin()">Switch to Student</button>
-        <button class="btn btn-sm" style="background:rgba(255,255,255,.1);color:#fff;border-color:rgba(255,255,255,.2)" onclick="doAdminLogout()">Log Out</button>
+        <button class="btn btn-sm" style="background:rgba(255,255,255,.1);color:#fff;border-color:rgba(255,255,255,.2)" onclick="switchToStudentLogin()" title="Log in as a student">👤 Student Login</button>
+        <button class="btn btn-sm" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.3)" onclick="doAdminLogout()" title="Return to home page">← Home</button>
       </div>
     </div>
 
@@ -2459,7 +2459,28 @@ function showPage(id){
   document.querySelectorAll('.nav-links a').forEach(a=>a.classList.remove('active'));
   const nl = document.getElementById('nav-'+id);
   if(nl) nl.classList.add('active');
-  window.scrollTo(0,0);
+  window.scrollTo({top:0, behavior:'instant'});
+
+  // Show/hide nav actions based on page context
+  const guestPages = ['home','why','how','safety','login','signup','pending','parent-login','parent-signup','admin-login'];
+  const authPages = ['dashboard'];
+  const adminPages = ['admin-dashboard'];
+  const parentPages = ['parent-dashboard'];
+
+  const guestNav = document.getElementById('guestActions');
+  const authNav = document.getElementById('authActions');
+
+  if(guestPages.includes(id)){
+    if(guestNav) guestNav.classList.remove('hidden');
+    if(authNav) authNav.classList.add('hidden');
+  } else if(authPages.includes(id)){
+    if(guestNav) guestNav.classList.add('hidden');
+    if(authNav) authNav.classList.remove('hidden');
+  } else {
+    // admin/parent pages — hide both nav action sets
+    if(guestNav) guestNav.classList.add('hidden');
+    if(authNav) authNav.classList.add('hidden');
+  }
 }
 
 function showDash(id){
@@ -2469,6 +2490,11 @@ function showDash(id){
   document.querySelectorAll('.sidebar-nav a').forEach(a=>a.classList.remove('active'));
   const dn = document.getElementById('dnav-'+id);
   if(dn) dn.classList.add('active');
+  // Sync mobile bottom tab bar
+  document.querySelectorAll('.mobile-tab-btn').forEach(b=>b.classList.remove('active'));
+  const tabMap={overview:'mtab-overview',map:'mtab-map',requests:'mtab-requests',messages:'mtab-messages',profile:'mtab-profile'};
+  const tabId = tabMap[id];
+  if(tabId){ const tb=document.getElementById(tabId); if(tb) tb.classList.add('active'); }
   if(id==='map'){ mapInstance=null; initMap(); }
   if(id==='impact') loadImpact();
   // Close mobile sidebar when navigating
@@ -2489,6 +2515,11 @@ auth.onAuthStateChanged(async function(user){
   const loadingScreen = document.getElementById('auth-loading');
   if(user){
     try{
+      // Skip if admin session is active
+      if(adminAuthenticated){
+        if(loadingScreen) loadingScreen.style.display='none';
+        return;
+      }
       // ── VERIFICATION GATE 1: Block unverified users on every page load ──
       if(!user.emailVerified){
         if(loadingScreen) loadingScreen.style.display='none';
@@ -2716,12 +2747,18 @@ async function doPasswordReset(){
 }
 
 async function doLogout(){
-  await auth.signOut();
+  // Clean up listeners
+  if(typeof msgNotifUnsub==='function') msgNotifUnsub();
+  if(typeof convUnsub==='function') convUnsub();
+  if(typeof msgUnsub==='function') msgUnsub();
+  // Reset state
   currentUser=null; currentUserData=null; activeConvId=null;
+  document.body.classList.remove('is-logged-in');
+  // Reset UI
   const panel = document.getElementById('msg-chat-panel');
   if(panel) panel.innerHTML='<div class="msg-empty">Select a conversation to start messaging.</div>';
-  document.body.classList.remove('is-logged-in');
   closeMobileDrawer();
+  await auth.signOut();
   if(convUnsub) convUnsub();
   if(msgUnsub) msgUnsub();
   document.getElementById('guestNav').classList.remove('hidden');
@@ -2734,8 +2771,10 @@ async function doLogout(){
 // ── LOAD DASHBOARD ──
 function loadDashboard(){
   if(!currentUser||!currentUserData) return;
-  document.getElementById('guestNav').classList.add('hidden');
-  document.getElementById('authNav').classList.remove('hidden');
+  const gn = document.getElementById('guestActions');
+  const an = document.getElementById('authActions');
+  if(gn) gn.classList.add('hidden');
+  if(an) an.classList.remove('hidden');
   document.getElementById('guestActions').classList.add('hidden');
   document.getElementById('authActions').classList.remove('hidden');
   const d = currentUserData;
@@ -5815,9 +5854,12 @@ async function doAdminLogin() {
 
     adminAuthenticated = true;
     currentUser = cred.user;
+    // Clear any student session state
+    currentUserData = null;
+    document.body.classList.remove('is-logged-in');
+    btn.textContent = 'Access Admin Portal →'; btn.disabled = false;
     showPage('admin-dashboard');
     loadAdminDashboard();
-    btn.textContent = 'Access Admin Portal →'; btn.disabled = false;
 
   } catch(e) {
     if (e.code === 'auth/wrong-password' || e.code === 'auth/user-not-found') {
