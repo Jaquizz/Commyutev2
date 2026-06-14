@@ -687,6 +687,16 @@ d{color:var(--muted)}
   .counter-animating { animation:countUp .6s ease; }
   @keyframes countUp { from{opacity:0;transform:translateY(8px)} to{opacity:1;transform:translateY(0)} }
 
+  /* ── ADMIN PORTAL ── */
+  .admin-tab { background:none; border:none; padding:.7rem 1.4rem; font-size:.875rem; font-weight:500; color:var(--muted); cursor:pointer; border-bottom:2px solid transparent; margin-bottom:-2px; transition:all .18s; font-family:inherit; }
+  .admin-tab:hover { color:var(--charcoal); }
+  .admin-tab.active { color:var(--red); border-bottom-color:var(--red); }
+  .admin-student-row { background:var(--warm-white); border:1.5px solid var(--border); border-radius:10px; padding:.9rem 1.2rem; display:flex; align-items:center; gap:12px; transition:all .18s; }
+  .admin-student-row:hover { border-color:var(--green); }
+  .admin-student-row.deactivated { opacity:.5; background:var(--cream); }
+  .admin-student-row.flagged { border-color:var(--red); background:#fde8e8; }
+  .admin-actions { display:flex; gap:6px; margin-left:auto; flex-shrink:0; }
+
   /* ── MOBILE BOTTOM TAB BAR ── */
   .mobile-tab-bar { display:none; position:fixed; bottom:0; left:0; right:0; background:var(--warm-white); border-top:1.5px solid var(--border); z-index:90; padding:6px 0 env(safe-area-inset-bottom,6px); }
   .mobile-tab-bar nav { display:flex; justify-content:space-around; }
@@ -890,7 +900,7 @@ d{color:var(--muted)}
         <div class="footer-col"><h4>Students</h4><a onclick="showPage('signup')">Find Carpool Partners</a><a onclick="showPage('signup')">Schedule Rides</a><a onclick="showPage('signup')">Track Impact</a><a onclick="showPage('signup')">Leaderboard</a></div>
         <div class="footer-col"><h4>Info</h4><a>Privacy Policy</a><a>Terms of Service</a><a>About Commyute</a><a>Contact</a></div>
       </div>
-      <div class="footer-bottom"><span>© 2025 Commyute · Bishop O'Dowd High School</span><span>🌿 Ride together. Arrive greener.</span></div>
+      <div class="footer-bottom"><span>© 2025 Commyute · Bishop O'Dowd High School</span><span>🌿 Ride together. Arrive greener.</span><a onclick="showPage('admin-login')" style="color:rgba(255,255,255,.2);font-size:.7rem;cursor:pointer">Admin</a></div>
     </div>
   </footer>
 </div>
@@ -1044,7 +1054,15 @@ d{color:var(--muted)}
         <div id="id-preview" class="hidden" style="margin-bottom:1rem">
           <div class="alert alert-success">✅ <span id="id-filename">ID uploaded</span></div>
         </div>
-        <div class="form-group"><label>ZIP Code (for neighborhood map)</label><input type="text" id="reg-zip" placeholder="94605" maxlength="5"></div>
+        <div class="form-group">
+          <label>Your Home Area <span style="font-size:.72rem;color:var(--muted);font-weight:400">(for the neighbor map)</span></label>
+          <input type="text" id="reg-address-input" placeholder="Start typing your street or cross-streets..." autocomplete="off" style="margin-bottom:4px">
+          <input type="hidden" id="reg-lat">
+          <input type="hidden" id="reg-lng">
+          <input type="hidden" id="reg-zip">
+          <input type="hidden" id="reg-zone">
+          <p style="font-size:.72rem;color:var(--muted)">🔒 Only your approximate area is shown — never your exact address</p>
+        </div>
         <div class="form-group"><label>I want to…</label><select id="reg-pref"><option value="both">Offer rides AND request rides</option><option value="driver">Only offer rides (I'm a driver)</option><option value="rider">Only request rides</option></select></div>
         <div style="display:flex;gap:10px">
           <button class="btn btn-outline" style="flex:1;justify-content:center" onclick="suStep(1)">← Back</button>
@@ -1587,6 +1605,112 @@ d{color:var(--muted)}
   </div>
 </div>
 
+<!-- ══════ PAGE: ADMIN LOGIN ══════ -->
+<div class="page" id="page-admin-login">
+  <div class="auth-wrap">
+    <div class="auth-card">
+      <div style="text-align:center;margin-bottom:1.5rem">
+        <div style="width:56px;height:56px;background:var(--red);border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:1.6rem;margin:0 auto .8rem">⚙️</div>
+        <div style="font-family:'Fraunces',serif;font-size:1.3rem;font-weight:700;color:var(--charcoal)">Admin Portal</div>
+        <div style="font-size:.78rem;color:var(--muted);margin-top:.2rem">Commyute · Bishop O'Dowd</div>
+      </div>
+      <div class="alert alert-warning">⚠️ Restricted access. Authorized administrators only.</div>
+      <div id="admin-login-error" class="alert alert-error hidden"></div>
+      <div class="form-group"><label>Admin Email</label><input type="email" id="admin-login-email" placeholder="admin email" onkeydown="if(event.key==='Enter')document.getElementById('admin-login-pass').focus()"></div>
+      <div class="form-group"><label>Password</label><input type="password" id="admin-login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doAdminLogin()"></div>
+      <div class="form-group"><label>Admin Key</label>
+        <input type="password" id="admin-key" placeholder="Enter your admin secret key" onkeydown="if(event.key==='Enter')doAdminLogin()">
+        <p style="font-size:.72rem;color:var(--muted);margin-top:.3rem">Required in addition to your password for extra security</p>
+      </div>
+      <button class="btn btn-primary w100" style="background:var(--red);border-color:var(--red)" onclick="doAdminLogin()" id="admin-login-btn">Access Admin Portal →</button>
+      <div style="text-align:center;margin-top:1rem"><a style="font-size:.78rem;color:var(--muted);cursor:pointer" onclick="showPage('home')">← Back to Home</a></div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════ PAGE: ADMIN DASHBOARD ══════ -->
+<div class="page" id="page-admin-dashboard">
+  <div style="min-height:100vh;background:var(--cream)">
+    <!-- Admin Header -->
+    <div style="background:#1a1a1a;color:#fff;padding:1rem 2rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:50">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="width:36px;height:36px;background:var(--red);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:1rem">⚙️</div>
+        <div>
+          <div style="font-family:'Fraunces',serif;font-size:1.1rem">Commyute Admin</div>
+          <div style="font-size:.72rem;opacity:.6">Bishop O'Dowd High School</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <span id="admin-online-count" style="background:rgba(255,255,255,.1);padding:4px 12px;border-radius:99px;font-size:.78rem">Loading...</span>
+        <button class="btn btn-sm" style="background:rgba(255,255,255,.1);color:#fff;border-color:rgba(255,255,255,.2)" onclick="doAdminLogout()">Log Out</button>
+      </div>
+    </div>
+
+    <div style="max-width:1200px;margin:0 auto;padding:2rem">
+      <!-- Admin Stats -->
+      <div class="stats-row" style="grid-template-columns:repeat(5,1fr);margin-bottom:2rem">
+        <div class="stat-card" style="border-top:3px solid var(--green)"><div class="stat-label">Total Students</div><div class="stat-num" id="as-total">—</div></div>
+        <div class="stat-card" style="border-top:3px solid var(--blue)"><div class="stat-label">Active Riders</div><div class="stat-num" id="as-active">—</div></div>
+        <div class="stat-card" style="border-top:3px solid var(--accent)"><div class="stat-label">Total Rides</div><div class="stat-num" id="as-rides">—</div></div>
+        <div class="stat-card" style="border-top:3px solid var(--green)"><div class="stat-label">CO₂ Saved</div><div class="stat-num" id="as-co2">—</div><div class="stat-unit">lbs</div></div>
+        <div class="stat-card" style="border-top:3px solid var(--red)"><div class="stat-label">Open Reports</div><div class="stat-num" id="as-reports">—</div></div>
+      </div>
+
+      <!-- Admin Tabs -->
+      <div style="display:flex;gap:0;border-bottom:2px solid var(--border);margin-bottom:1.5rem">
+        <button class="admin-tab active" id="atab-students" onclick="switchAdminTab('students')">👥 Students</button>
+        <button class="admin-tab" id="atab-reports" onclick="switchAdminTab('reports')">🚩 Reports</button>
+        <button class="admin-tab" id="atab-rides" onclick="switchAdminTab('rides')">🚗 Rides</button>
+        <button class="admin-tab" id="atab-parents" onclick="switchAdminTab('parents')">👨‍👩‍👧 Parents</button>
+        <button class="admin-tab" id="atab-flagged" onclick="switchAdminTab('flagged')">⚠️ Flagged</button>
+      </div>
+
+      <!-- Students Panel -->
+      <div id="admin-panel-students">
+        <div style="display:flex;gap:10px;margin-bottom:1.2rem;flex-wrap:wrap">
+          <input type="text" id="admin-search" placeholder="🔍 Search by name or email..." oninput="filterAdminStudents()" style="flex:1;min-width:200px;padding:9px 14px;border:1.5px solid var(--border);border-radius:10px;font-family:inherit;font-size:.875rem;outline:none">
+          <select id="admin-filter-grade" onchange="filterAdminStudents()" style="padding:9px 14px;border:1.5px solid var(--border);border-radius:10px;font-family:inherit;font-size:.875rem">
+            <option value="">All Grades</option>
+            <option>9th (Freshman)</option>
+            <option>10th (Sophomore)</option>
+            <option>11th (Junior)</option>
+            <option>12th (Senior)</option>
+          </select>
+          <select id="admin-filter-status" onchange="filterAdminStudents()" style="padding:9px 14px;border:1.5px solid var(--border);border-radius:10px;font-family:inherit;font-size:.875rem">
+            <option value="">All Status</option>
+            <option value="active">Active</option>
+            <option value="inactive">Deactivated</option>
+            <option value="rides">Has rides</option>
+          </select>
+        </div>
+        <div id="admin-students-list" style="display:flex;flex-direction:column;gap:.5rem"></div>
+      </div>
+
+      <!-- Reports Panel -->
+      <div id="admin-panel-reports" style="display:none">
+        <div id="admin-reports-list" style="display:flex;flex-direction:column;gap:1rem"></div>
+      </div>
+
+      <!-- Rides Panel -->
+      <div id="admin-panel-rides" style="display:none">
+        <div class="alert alert-info" style="margin-bottom:1rem">📊 All rides logged by students. Use this to verify legitimate carpool activity.</div>
+        <div id="admin-rides-list" style="display:flex;flex-direction:column;gap:.5rem"></div>
+      </div>
+
+      <!-- Parents Panel -->
+      <div id="admin-panel-parents" style="display:none">
+        <div id="admin-parents-list" style="display:flex;flex-direction:column;gap:.5rem"></div>
+      </div>
+
+      <!-- Flagged Panel -->
+      <div id="admin-panel-flagged" style="display:none">
+        <div class="alert alert-warning" style="margin-bottom:1rem">⚠️ Students flagged for missing ride check-ins or suspicious activity.</div>
+        <div id="admin-flagged-list" style="display:flex;flex-direction:column;gap:.5rem"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ══════ PAGE: PARENT SIGNUP ══════ -->
 <div class="page" id="page-parent-signup">
   <div class="auth-wrap">
@@ -1816,7 +1940,10 @@ d{color:var(--muted)}
       <div class="form-group"><label>Age</label><input type="number" id="ep-age" min="14" max="19"></div>
       <div class="form-group"><label>Grade</label><select id="ep-grade"><option>9th (Freshman)</option><option>10th (Sophomore)</option><option>11th (Junior)</option><option>12th (Senior)</option></select></div>
     </div>
-    <div class="form-group"><label>ZIP Code</label><input type="text" id="ep-zip" maxlength="5"></div>
+    <div class="form-group"><label>Neighborhood</label>
+      <input type="text" id="ep-zip" placeholder="Start typing your street or neighborhood..." autocomplete="off">
+      <input type="hidden" id="ep-lat"><input type="hidden" id="ep-lng"><input type="hidden" id="ep-zone-val">
+    </div>
     <div class="form-group"><label>Ride Preference</label><select id="ep-pref"><option value="both">Offer & Request</option><option value="driver">Driver only</option><option value="rider">Rider only</option></select></div>
     <div class="form-group"><label>Compensation Preference</label><select id="ep-comp"><option value="free">Free</option><option value="cash">Cash</option><option value="baked">Baked goods</option><option value="open">Open</option></select></div>
     <button class="btn btn-primary w100" onclick="saveProfile()">Save Changes</button>
@@ -2366,8 +2493,21 @@ auth.onAuthStateChanged(async function(user){
         if(loadingScreen) loadingScreen.style.display='none';
         return;
       }
+      // Check if this is an admin login
+      if(user.email === jgoldsmith27@bishopodowd.org && adminAuthenticated){
+        showPage('admin-dashboard');
+        return;
+      }
       currentUser = user;
       currentUserData = snap.data();
+      // Only load dashboard if account is active
+      if(snap.data().isActive === false){
+        await auth.signOut();
+        if(loadingScreen) loadingScreen.style.display='none';
+        showPage('home');
+        showToast('Your account has been deactivated. Contact the administrator.');
+        return;
+      }
       document.body.classList.add('is-logged-in');
       loadDashboard();
     } catch(e){
@@ -5377,6 +5517,632 @@ function renderProfileProgress(){
 const _origLoadDashFinal = window.loadDashboard;
 // Profile progress handled in loadDashboard directly
 
+
+
+// ══════════════════════════════════════════
+// PLACES AUTOCOMPLETE + PRIVACY OFFSET + ADMIN PORTAL
+// ══════════════════════════════════════════
+
+// ── ADMIN CREDENTIALS ──
+// IMPORTANT: Change ADMIN_SECRET_KEY to something only you know
+// Store it securely — this is the second factor beyond your password
+const ADMIN_SECRET_KEY = 'Secretkey18'; // CHANGE THIS before launch
+
+// ── PLACES AUTOCOMPLETE SETUP ──
+let signupAutocomplete = null;
+let editAutocomplete = null;
+
+function initPlacesAutocomplete() {
+  if (!window.google || !window.google.maps || !window.google.maps.places) return;
+
+  const bayAreaBounds = new google.maps.LatLngBounds(
+    new google.maps.LatLng(37.4, -122.6), // SW — San Jose area
+    new google.maps.LatLng(37.95, -121.8)  // NE — Walnut Creek area
+  );
+
+  const opts = {
+    bounds: bayAreaBounds,
+    strictBounds: false,
+    componentRestrictions: { country: 'us' },
+    fields: ['geometry', 'name', 'formatted_address', 'address_components'],
+    types: ['geocode']
+  };
+
+  // Signup form
+  const signupInput = document.getElementById('reg-address-input');
+  if (signupInput && !signupAutocomplete) {
+    signupAutocomplete = new google.maps.places.Autocomplete(signupInput, opts);
+    signupAutocomplete.addListener('place_changed', () => {
+      const place = signupAutocomplete.getPlace();
+      if (!place.geometry) return;
+      applyPrivacyOffset(place, 'reg-lat', 'reg-lng', 'reg-zip', 'reg-zone');
+    });
+  }
+
+  // Edit profile form
+  const editInput = document.getElementById('ep-zip');
+  if (editInput && !editAutocomplete) {
+    editAutocomplete = new google.maps.places.Autocomplete(editInput, opts);
+    editAutocomplete.addListener('place_changed', () => {
+      const place = editAutocomplete.getPlace();
+      if (!place.geometry) return;
+      applyPrivacyOffset(place, 'ep-lat', 'ep-lng', null, 'ep-zone-val');
+    });
+  }
+}
+
+// Apply a random privacy offset of 0.1–0.3 miles so pin is never exact
+function applyPrivacyOffset(place, latId, lngId, zipId, zoneId) {
+  const lat = place.geometry.location.lat();
+  const lng = place.geometry.location.lng();
+
+  // Random offset: 0.1–0.3 miles in a random direction
+  const offsetMiles = 0.1 + Math.random() * 0.2;
+  const offsetMeters = offsetMiles * 1609.34;
+  const angle = Math.random() * 2 * Math.PI;
+
+  // Convert to degrees (approximate)
+  const latOffset = (offsetMeters / 111320) * Math.cos(angle);
+  const lngOffset = (offsetMeters / (111320 * Math.cos(lat * Math.PI / 180))) * Math.sin(angle);
+
+  const finalLat = lat + latOffset;
+  const finalLng = lng + lngOffset;
+
+  // Store offset coordinates (never the exact location)
+  if (latId) { const el = document.getElementById(latId); if(el) el.value = finalLat.toFixed(6); }
+  if (lngId) { const el = document.getElementById(lngId); if(el) el.value = finalLng.toFixed(6); }
+
+  // Extract ZIP code and neighborhood zone from address components
+  const components = place.address_components || [];
+  let zip = '';
+  let neighborhood = '';
+  let city = '';
+
+  components.forEach(c => {
+    if (c.types.includes('postal_code')) zip = c.short_name;
+    if (c.types.includes('neighborhood')) neighborhood = c.short_name;
+    if (c.types.includes('sublocality')) neighborhood = neighborhood || c.short_name;
+    if (c.types.includes('locality')) city = c.short_name;
+  });
+
+  // Derive zone from neighborhood name or fall back to getNeighborhood(zip)
+  const zone = neighborhood || getNeighborhood(zip) || city || 'Oakland Area';
+
+  if (zipId) { const el = document.getElementById(zipId); if(el) el.value = zip; }
+  if (zoneId) { const el = document.getElementById(zoneId); if(el) el.value = zone; }
+
+  // Show confirmation
+  showToast(`📍 Location set: ${zone}`);
+}
+
+// Override onMapReady to also init Places
+const _origMapReadyPlaces = window.onMapReady;
+window.onMapReady = async function() {
+  if (_origMapReadyPlaces) await _origMapReadyPlaces();
+  initPlacesAutocomplete();
+};
+
+// Also init when signup step 2 shows
+const _origSuStep = window.suStep;
+window.suStep = function(n) {
+  if (_origSuStep) _origSuStep(n);
+  if (n === 2) {
+    // Init Places on step 2 if Maps already loaded
+    setTimeout(() => {
+      if (window.google && window.google.maps) {
+        initPlacesAutocomplete();
+      } else {
+        // Load Maps SDK if not already loaded
+        if (!document.querySelector('script[src*="maps.googleapis.com"]')) {
+          const s = document.createElement('script');
+          s.src = `https://maps.googleapis.com/maps/api/js?key=${MAPS_KEY}&libraries=places,geometry&callback=onPlacesReady`;
+          s.async = true;
+          document.head.appendChild(s);
+          window.onPlacesReady = initPlacesAutocomplete;
+        } else {
+          // SDK loading — wait
+          let tries = 0;
+          const wait = setInterval(() => {
+            tries++;
+            if (window.google && window.google.maps) {
+              clearInterval(wait);
+              initPlacesAutocomplete();
+            }
+            if (tries > 20) clearInterval(wait);
+          }, 250);
+        }
+      }
+    }, 100);
+  }
+};
+window.suStep = _origSuStep ? window.suStep : window.suStep; // keep reference
+
+// Also init when edit profile modal opens
+const _origOpenEdit = window.openEditProfileModal;
+window.openEditProfileModal = async function() {
+  if (_origOpenEdit) await _origOpenEdit();
+  setTimeout(initPlacesAutocomplete, 100);
+};
+
+// Update doSignup to use lat/lng instead of zip
+// Patch the coordinate extraction
+const _origDoSignup = window.doSignup;
+window.doSignup = async function() {
+  // Validate that location was selected via autocomplete
+  const addressInput = document.getElementById('reg-address-input');
+  const lat = document.getElementById('reg-lat')?.value;
+  const lng = document.getElementById('reg-lng')?.value;
+  const zone = document.getElementById('reg-zone')?.value;
+
+  if (addressInput && addressInput.value && (!lat || !lng)) {
+    // They typed something but didn't select from autocomplete
+    showToast('Please select your address from the dropdown suggestions.');
+    return;
+  }
+
+  // Proceed with original signup
+  if (_origDoSignup) await _origDoSignup();
+};
+
+// ── PATCH getNeighborhood to use stored lat/lng for better accuracy ──
+const _origGetNeighborhood = window.getNeighborhood;
+window.getNeighborhood = function(zip) {
+  // Try zone from autocomplete first
+  const zoneEl = document.getElementById('reg-zone') || document.getElementById('ep-zone-val');
+  if (zoneEl && zoneEl.value) return zoneEl.value;
+  // Fall back to original ZIP-based lookup
+  if (_origGetNeighborhood) return _origGetNeighborhood(zip);
+  return 'Oakland Area';
+};
+
+// ── UPDATE PENDING DATA to include lat/lng ──
+// Patch checkVerificationAndLogin to save coordinates
+const _origCheckVerify = window.checkVerificationAndLogin;
+window.checkVerificationAndLogin = async function() {
+  // Patch pending data with lat/lng if available
+  const raw = sessionStorage.getItem('commyute_pending_signup');
+  if (raw) {
+    try {
+      const p = JSON.parse(raw);
+      const lat = document.getElementById('reg-lat')?.value || p.lat;
+      const lng = document.getElementById('reg-lng')?.value || p.lng;
+      const zone = document.getElementById('reg-zone')?.value || p.zone;
+      if (lat) p.lat = parseFloat(lat);
+      if (lng) p.lng = parseFloat(lng);
+      if (zone) p.neighborhoodZone = zone;
+      sessionStorage.setItem('commyute_pending_signup', JSON.stringify(p));
+    } catch(e) {}
+  }
+  if (_origCheckVerify) await _origCheckVerify();
+};
+
+// ── UPDATE MAP to use stored coordinates for accurate pin placement ──
+// Patch onMapReady to use actual lat/lng from user profile
+const _origMapPinPlacement = window.onMapReady;
+// Already patched above — coordinates used when rendering pins
+
+// ══════════════════════════════════════════
+// ADMIN PORTAL — FULL IMPLEMENTATION
+// ══════════════════════════════════════════
+
+let adminAuthenticated = false;
+let allStudentsCache = [];
+
+async function doAdminLogin() {
+  const email = document.getElementById('admin-login-email').value.trim();
+  const pass = document.getElementById('admin-login-pass').value;
+  const key = document.getElementById('admin-key').value.trim();
+  const errEl = document.getElementById('admin-login-error');
+  const btn = document.getElementById('admin-login-btn');
+  errEl.classList.add('hidden');
+
+  // Validate all fields
+  if (!email || !pass || !key) {
+    errEl.textContent = '❌ Please fill in all fields.';
+    errEl.classList.remove('hidden');
+    return;
+  }
+
+  // Check admin key FIRST (client-side fast check)
+  if (key !== ADMIN_SECRET_KEY) {
+    errEl.textContent = '❌ Invalid admin key.';
+    errEl.classList.remove('hidden');
+    return;
+  }
+
+  btn.textContent = 'Authenticating...'; btn.disabled = true;
+
+  try {
+    const cred = await auth.signInWithEmailAndPassword(email, pass);
+
+    // Verify this is the actual admin email
+    if (cred.user.email !== ADMIN_EMAIL) {
+      await auth.signOut();
+      errEl.textContent = '❌ This account does not have admin privileges.';
+      errEl.classList.remove('hidden');
+      btn.textContent = 'Access Admin Portal →'; btn.disabled = false;
+      return;
+    }
+
+    // Check admin flag in Firestore
+    const adminSnap = await db.collection('admins').doc(cred.user.uid).get();
+    if (!adminSnap.exists) {
+      // First time setup — create admin doc
+      await db.collection('admins').doc(cred.user.uid).set({
+        email, createdAt: firebase.firestore.FieldValue.serverTimestamp()
+      });
+    }
+
+    adminAuthenticated = true;
+    currentUser = cred.user;
+    showPage('admin-dashboard');
+    loadAdminDashboard();
+    btn.textContent = 'Access Admin Portal →'; btn.disabled = false;
+
+  } catch(e) {
+    if (e.code === 'auth/wrong-password' || e.code === 'auth/user-not-found') {
+      errEl.textContent = '❌ Incorrect email or password.';
+    } else {
+      errEl.textContent = '❌ Error: ' + e.message;
+    }
+    errEl.classList.remove('hidden');
+    btn.textContent = 'Access Admin Portal →'; btn.disabled = false;
+  }
+}
+
+async function doAdminLogout() {
+  adminAuthenticated = false;
+  currentUser = null;
+  await auth.signOut();
+  showPage('home');
+}
+
+function switchAdminTab(tab) {
+  // Hide all panels
+  ['students','reports','rides','parents','flagged'].forEach(t => {
+    const el = document.getElementById('admin-panel-'+t);
+    const btn = document.getElementById('atab-'+t);
+    if (el) el.style.display = 'none';
+    if (btn) btn.classList.remove('active');
+  });
+  // Show selected
+  const panel = document.getElementById('admin-panel-'+tab);
+  const tabBtn = document.getElementById('atab-'+tab);
+  if (panel) panel.style.display = 'block';
+  if (tabBtn) tabBtn.classList.add('active');
+
+  // Load data for tab
+  if (tab === 'students') loadAdminStudents();
+  if (tab === 'reports') loadAdminReports();
+  if (tab === 'rides') loadAdminRides();
+  if (tab === 'parents') loadAdminParents();
+  if (tab === 'flagged') loadAdminFlagged();
+}
+
+async function loadAdminDashboard() {
+  if (!adminAuthenticated) return;
+
+  // Load stats
+  const [usersSnap, ridesSnap, reportsSnap] = await Promise.all([
+    db.collection('users').where('schoolName','==',SCHOOL).get(),
+    db.collection('rides').where('school','==',SCHOOL).get(),
+    db.collection('reports').where('school','==',SCHOOL).where('status','==','pending').get()
+  ]);
+
+  const users = usersSnap.docs.map(d => ({id:d.id,...d.data()}));
+  allStudentsCache = users;
+
+  document.getElementById('as-total').textContent = users.length;
+  document.getElementById('as-active').textContent = users.filter(u => (u.totalRides||0) > 0).length;
+  document.getElementById('as-rides').textContent = ridesSnap.size;
+  document.getElementById('as-co2').textContent = Math.round(ridesSnap.docs.reduce((s,d) => s+(d.data().co2Saved||0), 0)*10)/10;
+  document.getElementById('as-reports').textContent = reportsSnap.size;
+  document.getElementById('admin-online-count').textContent = `${users.length} students`;
+
+  // Load students tab by default
+  loadAdminStudents();
+}
+
+function filterAdminStudents() {
+  const search = (document.getElementById('admin-search')?.value||'').toLowerCase();
+  const grade = document.getElementById('admin-filter-grade')?.value||'';
+  const status = document.getElementById('admin-filter-status')?.value||'';
+
+  const filtered = allStudentsCache.filter(u => {
+    const name = (u.firstName+' '+u.lastName).toLowerCase();
+    const email = (u.email||'').toLowerCase();
+    if (search && !name.includes(search) && !email.includes(search)) return false;
+    if (grade && u.grade !== grade) return false;
+    if (status === 'active' && !u.isActive) return false;
+    if (status === 'inactive' && u.isActive !== false) return false;
+    if (status === 'rides' && (u.totalRides||0) === 0) return false;
+    return true;
+  });
+
+  renderAdminStudents(filtered);
+}
+
+function loadAdminStudents() {
+  renderAdminStudents(allStudentsCache);
+}
+
+function renderAdminStudents(students) {
+  const el = document.getElementById('admin-students-list');
+  if (!el) return;
+
+  if (!students.length) {
+    el.innerHTML = '<p class="text-muted" style="text-align:center;padding:2rem">No students match your filters.</p>';
+    return;
+  }
+
+  // Sort: flagged first, then by name
+  const sorted = [...students].sort((a,b) => {
+    if (a.isActive === false && b.isActive !== false) return 1;
+    if (b.isActive === false && a.isActive !== false) return -1;
+    return (a.firstName||'').localeCompare(b.firstName||'');
+  });
+
+  el.innerHTML = sorted.map(u => {
+    const isDeactivated = u.isActive === false;
+    const hasRides = (u.totalRides||0) > 0;
+    const photo = u.photoURL ? `<img src="${u.photoURL}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">` : initials(u.firstName,u.lastName);
+    return `<div class="admin-student-row ${isDeactivated?'deactivated':''}">
+      <div class="avatar" style="background:${avatarColor(u.id)};flex-shrink:0;font-size:.8rem">${photo}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600;font-size:.875rem">${u.firstName||'?'} ${u.lastName||'?'}</div>
+        <div style="font-size:.75rem;color:var(--muted)">${u.email||'—'} · ${u.grade||'—'} · ${u.neighborhoodZone||'—'}</div>
+        <div style="display:flex;gap:5px;margin-top:4px;flex-wrap:wrap">
+          ${isDeactivated ? '<span class="badge badge-red" style="font-size:.65rem">Deactivated</span>' : '<span class="badge badge-green" style="font-size:.65rem">Active</span>'}
+          ${hasRides ? `<span class="badge badge-blue" style="font-size:.65rem">${u.totalRides} rides</span>` : ''}
+          ${u.licenseUploaded ? '<span class="badge" style="font-size:.65rem;background:#dbeafe;color:#1a3e6e">🪪 License</span>' : ''}
+          ${u.car ? `<span class="badge" style="font-size:.65rem;background:var(--cream);color:var(--muted)">${u.car.year||''} ${u.car.make||''}</span>` : ''}
+          <span class="badge" style="font-size:.65rem;background:var(--cream);color:var(--muted)">CO₂: ${u.totalCO2Saved||0} lbs</span>
+        </div>
+      </div>
+      <div class="admin-actions">
+        <button class="btn btn-sm btn-outline" onclick="adminViewStudent('${u.id}')" title="View details">👁</button>
+        <button class="btn btn-sm btn-outline" onclick="adminResetPassword('${u.email}')" title="Send password reset" style="font-size:.72rem">🔑</button>
+        ${isDeactivated
+          ? `<button class="btn btn-sm btn-primary" onclick="adminReactivate('${u.id}','${escapeHtml(u.firstName+' '+u.lastName)}')" style="font-size:.72rem">Reactivate</button>`
+          : `<button class="btn btn-sm" onclick="adminDeactivateUser('${u.id}','${escapeHtml(u.firstName+' '+u.lastName)}')" style="background:var(--red);color:#fff;font-size:.72rem">Remove</button>`
+        }
+      </div>
+    </div>`;
+  }).join('');
+}
+
+async function adminViewStudent(uid) {
+  const snap = await db.collection('users').doc(uid).get();
+  if (!snap.exists) return;
+  const u = snap.data();
+  const ridesSnap = await db.collection('rides').where('userId','==',uid).get();
+
+  // Show in a modal-style overlay
+  const existing = document.getElementById('admin-student-detail');
+  if (existing) existing.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'admin-student-detail';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:300;display:flex;align-items:center;justify-content:center;padding:1rem';
+  overlay.innerHTML = `<div style="background:var(--warm-white);border-radius:var(--radius);padding:2rem;max-width:560px;width:100%;max-height:85vh;overflow-y:auto">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem">
+      <h3 style="font-family:'Fraunces',serif">${u.firstName} ${u.lastName}</h3>
+      <button onclick="document.getElementById('admin-student-detail').remove()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--muted)">✕</button>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.8rem;font-size:.83rem;margin-bottom:1rem">
+      <div><span style="color:var(--muted)">Email</span><br><strong>${u.email||'—'}</strong></div>
+      <div><span style="color:var(--muted)">Grade</span><br><strong>${u.grade||'—'}</strong></div>
+      <div><span style="color:var(--muted)">Zone</span><br><strong>${u.neighborhoodZone||'—'}</strong></div>
+      <div><span style="color:var(--muted)">Joined</span><br><strong>${u.createdAt?.toDate?.().toLocaleDateString()||'—'}</strong></div>
+      <div><span style="color:var(--muted)">Total Rides</span><br><strong>${u.totalRides||0}</strong></div>
+      <div><span style="color:var(--muted)">CO₂ Saved</span><br><strong>${u.totalCO2Saved||0} lbs</strong></div>
+      <div><span style="color:var(--muted)">Partners</span><br><strong>${(u.partners||[]).length}</strong></div>
+      <div><span style="color:var(--muted)">Car</span><br><strong>${u.car?`${u.car.year||''} ${u.car.make||''} ${u.car.model||''} (${u.car.mpg||'?'} MPG)`:'None'}</strong></div>
+    </div>
+    <div style="font-size:.83rem;margin-bottom:1rem">
+      <strong>Recent Rides (${ridesSnap.size} total):</strong>
+      <div style="margin-top:.5rem;display:flex;flex-direction:column;gap:.3rem">
+        ${ridesSnap.docs.slice(0,5).map(r=>{const d=r.data();return`<div style="padding:.4rem .7rem;background:var(--cream);border-radius:7px;display:flex;justify-content:space-between"><span>${d.date||'—'} · ${d.role}</span><span style="color:var(--green)">${d.miles||0}mi · ${d.co2Saved||0}lbs CO₂</span></div>`}).join('')}
+        ${ridesSnap.size===0?'<p style="color:var(--muted)">No rides yet.</p>':''}
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn btn-primary btn-sm" onclick="adminResetPassword('${u.email}')">🔑 Send Password Reset</button>
+      <button class="btn btn-sm" onclick="adminDeactivateUser('${uid}','${escapeHtml(u.firstName+' '+u.lastName)}')" style="background:var(--red);color:#fff">Remove Student</button>
+      <button class="btn btn-outline btn-sm" onclick="document.getElementById('admin-student-detail').remove()">Close</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+}
+
+async function adminDeactivateUser(uid, name) {
+  if (!adminAuthenticated || !currentUser || currentUser.email !== ADMIN_EMAIL) {
+    showToast('Unauthorized.'); return;
+  }
+  if (!confirm(`Remove ${name} from Commyute?\n\nThis will deactivate their account. They will no longer appear on the map or be able to log in.`)) return;
+
+  await db.collection('users').doc(uid).update({
+    isActive: false,
+    deactivatedAt: firebase.firestore.FieldValue.serverTimestamp(),
+    deactivatedBy: currentUser.uid
+  });
+
+  // Update local cache
+  const idx = allStudentsCache.findIndex(u => u.id === uid);
+  if (idx >= 0) allStudentsCache[idx].isActive = false;
+
+  showToast(`${name} has been removed from Commyute.`);
+  filterAdminStudents();
+  loadAdminDashboard();
+}
+
+async function adminReactivate(uid, name) {
+  if (!adminAuthenticated) return;
+  if (!confirm(`Reactivate ${name}'s account?`)) return;
+  await db.collection('users').doc(uid).update({ isActive: true, deactivatedAt: null });
+  const idx = allStudentsCache.findIndex(u => u.id === uid);
+  if (idx >= 0) allStudentsCache[idx].isActive = true;
+  showToast(`${name} has been reactivated.`);
+  filterAdminStudents();
+}
+
+async function adminResetPassword(email) {
+  if (!email) return;
+  if (!confirm(`Send a password reset email to ${email}?`)) return;
+  try {
+    await auth.sendPasswordResetEmail(email);
+    showToast(`Password reset sent to ${email}`);
+  } catch(e) { showToast('Error: '+e.message); }
+}
+
+async function loadAdminReports() {
+  const snap = await db.collection('reports').where('school','==',SCHOOL).orderBy && 
+    db.collection('reports').where('school','==',SCHOOL).get() ||
+    db.collection('reports').where('school','==',SCHOOL).get();
+
+  const el = document.getElementById('admin-reports-list');
+  if (!el) return;
+  const reports = (await db.collection('reports').where('school','==',SCHOOL).get()).docs
+    .map(d=>({id:d.id,...d.data()}))
+    .sort((a,b)=>(b.createdAt?.toMillis?.()||0)-(a.createdAt?.toMillis?.()||0));
+
+  if (!reports.length) {
+    el.innerHTML = '<p class="text-muted" style="text-align:center;padding:2rem">No reports yet. 🎉</p>';
+    return;
+  }
+
+  el.innerHTML = reports.map(r => `
+    <div class="card" style="border-left:4px solid ${r.status==='resolved'?'var(--green)':'var(--red)'}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:.6rem">
+        <div>
+          <strong>${r.reportedName||'Unknown'}</strong>
+          <span class="badge ${r.status==='resolved'?'badge-green':'badge-red'}" style="font-size:.7rem;margin-left:6px">${r.status||'pending'}</span>
+        </div>
+        <span style="font-size:.72rem;color:var(--muted)">${r.createdAt?.toDate?.().toLocaleDateString()||'—'}</span>
+      </div>
+      <div style="font-size:.83rem;margin-bottom:.5rem"><strong>Reason:</strong> ${r.reason||'—'}</div>
+      ${r.details?`<div style="font-size:.8rem;color:var(--muted);background:var(--cream);padding:.5rem .7rem;border-radius:7px;margin-bottom:.6rem">"${escapeHtml(r.details)}"</div>`:''}
+      <div style="font-size:.75rem;color:var(--muted);margin-bottom:.8rem">Reported by ${r.reporterName||'—'}</div>
+      <div style="display:flex;gap:7px;flex-wrap:wrap">
+        ${r.status!=='resolved'?`<button class="btn btn-primary btn-sm" onclick="resolveReport('${r.id}')">✓ Mark Resolved</button>`:''}
+        <button class="btn btn-sm" onclick="adminDeactivateUser('${r.reportedUid}','${escapeHtml(r.reportedName||'this student')}')" style="background:var(--red);color:#fff">Remove Student</button>
+        <button class="btn btn-outline btn-sm" onclick="adminViewStudent('${r.reportedUid}')">View Profile</button>
+      </div>
+    </div>`).join('');
+}
+
+async function resolveReport(reportId) {
+  await db.collection('reports').doc(reportId).update({status:'resolved', resolvedAt:firebase.firestore.FieldValue.serverTimestamp()});
+  showToast('Report marked as resolved.');
+  loadAdminReports();
+  loadAdminDashboard();
+}
+
+async function loadAdminRides() {
+  const snap = await db.collection('rides').where('school','==',SCHOOL).get();
+  const rides = snap.docs.map(d=>({id:d.id,...d.data()}))
+    .sort((a,b)=>(b.createdAt?.toMillis?.()||0)-(a.createdAt?.toMillis?.()||0))
+    .slice(0,100);
+  const el = document.getElementById('admin-rides-list');
+  if (!el) return;
+  if (!rides.length) { el.innerHTML='<p class="text-muted" style="text-align:center;padding:2rem">No rides logged yet.</p>'; return; }
+  el.innerHTML = rides.map(r=>`
+    <div class="admin-student-row">
+      <div style="font-size:1.2rem">${r.role==='driver'?'🚗':'🎒'}</div>
+      <div style="flex:1;font-size:.83rem">
+        <strong>${r.date||'—'}</strong> · ${r.role} · ${r.miles||0} miles · ${r.totalPeople||2} people
+        <div style="font-size:.75rem;color:var(--muted)">${r.co2Saved||0} lbs CO₂ · $${r.moneySaved||0} saved · User: ${r.userId?.slice(0,8)||'—'}...</div>
+      </div>
+      <span class="badge badge-green" style="font-size:.68rem">${r.co2Saved||0} lbs CO₂</span>
+    </div>`).join('');
+}
+
+async function loadAdminParents() {
+  const snap = await db.collection('parents').get();
+  const el = document.getElementById('admin-parents-list');
+  if (!el) return;
+  if (snap.empty) { el.innerHTML='<p class="text-muted" style="text-align:center;padding:2rem">No parent accounts yet.</p>'; return; }
+  el.innerHTML = snap.docs.map(d=>{
+    const p=d.data();
+    const student = allStudentsCache.find(u=>u.id===p.linkedStudentUid);
+    return `<div class="admin-student-row">
+      <div class="avatar" style="background:var(--purple);font-size:.8rem">👨‍👩‍👧</div>
+      <div style="flex:1;font-size:.83rem">
+        <strong>${p.firstName||'?'} ${p.lastName||'?'}</strong> <span style="font-size:.72rem;color:var(--muted)">(Parent)</span>
+        <div style="font-size:.75rem;color:var(--muted)">${p.email||'—'}</div>
+        <div style="font-size:.75rem;color:var(--green)">Linked to: ${student?`${student.firstName} ${student.lastName}`:p.linkedStudentUid?.slice(0,8)+'...'||'Unknown student'}</div>
+      </div>
+      <button class="btn btn-sm" onclick="adminRemoveParent('${d.id}','${escapeHtml(p.firstName+' '+p.lastName)}')" style="background:var(--red);color:#fff;font-size:.72rem">Remove</button>
+    </div>`;
+  }).join('');
+}
+
+async function adminRemoveParent(uid, name) {
+  if (!confirm(`Remove parent account for ${name}?`)) return;
+  await db.collection('parents').doc(uid).delete();
+  showToast(`${name}'s parent account removed.`);
+  loadAdminParents();
+}
+
+async function loadAdminFlagged() {
+  const el = document.getElementById('admin-flagged-list');
+  if (!el) return;
+  // Find students with missing check-ins (started ride but no arrival within 2 hours)
+  const yesterday = new Date(); yesterday.setDate(yesterday.getDate()-1);
+  const yesterdayStr = yesterday.toISOString().split('T')[0];
+  const checkInSnap = await db.collection('rideCheckins')
+    .where('school','==',SCHOOL)
+    .where('started','==',true)
+    .where('arrived','==',false).get();
+
+  if (checkInSnap.empty) {
+    el.innerHTML = '<div class="alert alert-success">✅ No flagged students. Everyone checked in safely!</div>';
+    return;
+  }
+
+  const rows = await Promise.all(checkInSnap.docs.map(async d=>{
+    const ci=d.data();
+    const userSnap = await db.collection('users').doc(ci.userId).get();
+    const u = userSnap.exists ? userSnap.data() : {};
+    const startedAt = ci.startedAt?.toDate?.().toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'})||'—';
+    return `<div class="admin-student-row" style="border-color:var(--red)">
+      <div style="font-size:1.5rem">⚠️</div>
+      <div style="flex:1;font-size:.83rem">
+        <strong>${u.firstName||'?'} ${u.lastName||'?'}</strong>
+        <div style="font-size:.75rem;color:var(--muted)">${u.email||'—'} · Started ride at ${startedAt} on ${ci.date||'—'}</div>
+        <div style="font-size:.75rem;color:var(--red)">Did not check in as arrived</div>
+        ${u.trustedContact?.name?`<div style="font-size:.72rem;color:var(--blue)">Trusted contact: ${u.trustedContact.name} ${u.trustedContact.phone||''}</div>`:''}
+      </div>
+      <button class="btn btn-primary btn-sm" onclick="adminClearFlag('${d.id}')">Clear Flag</button>
+    </div>`;
+  }));
+  el.innerHTML = rows.join('');
+}
+
+async function adminClearFlag(docId) {
+  await db.collection('rideCheckins').doc(docId).update({arrived:true, adminCleared:true});
+  showToast('Flag cleared.');
+  loadAdminFlagged();
+}
+
+// Export all admin functions
+window.doAdminLogin = doAdminLogin;
+window.doAdminLogout = doAdminLogout;
+window.switchAdminTab = switchAdminTab;
+window.loadAdminDashboard = loadAdminDashboard;
+window.filterAdminStudents = filterAdminStudents;
+window.adminViewStudent = adminViewStudent;
+window.adminDeactivateUser = adminDeactivateUser;
+window.adminReactivate = adminReactivate;
+window.adminResetPassword = adminResetPassword;
+window.loadAdminReports = loadAdminReports;
+window.resolveReport = resolveReport;
+window.loadAdminRides = loadAdminRides;
+window.loadAdminParents = loadAdminParents;
+window.adminRemoveParent = adminRemoveParent;
+window.loadAdminFlagged = loadAdminFlagged;
+window.adminClearFlag = adminClearFlag;
+window.initPlacesAutocomplete = initPlacesAutocomplete;
 
 </script>
 </body>
