@@ -2494,7 +2494,7 @@ auth.onAuthStateChanged(async function(user){
         return;
       }
       // Check if this is an admin login
-      if(user.email === jgoldsmith27@bishopodowd.org && adminAuthenticated){
+      if(user.email === ADMIN_EMAIL && adminAuthenticated){
         showPage('admin-dashboard');
         return;
       }
@@ -3886,7 +3886,7 @@ if(parentCode){
 // NEW FEATURES JS
 // ══════════════════════════════════════════
 
-const ADMIN_EMAIL = 'your-admin-email@bishopodowd.org'; // Replace with your actual email
+const ADMIN_EMAIL = 'jgoldsmith27@bishopodowd.org';
 
 // ── MOBILE NAV ──
 function toggleMobileNav(){
@@ -5033,7 +5033,7 @@ async function getTrustedContactHTML(uid){
   const tc = snap.data().trustedContact;
   if(!tc?.name&&!tc?.phone) return '';
   return `<div class="trusted-contact-card mt1">
-    <strong>👨‍👩‍👧 Trusted Contact: ${tc.name||'—'}</strong>
+    <strong>&#128106; Trusted Contact: ${tc.name||'—'}</strong>
     <span>${tc.phone||'No phone provided'}</span>
   </div>`;
 }
@@ -5526,7 +5526,7 @@ const _origLoadDashFinal = window.loadDashboard;
 // ── ADMIN CREDENTIALS ──
 // IMPORTANT: Change ADMIN_SECRET_KEY to something only you know
 // Store it securely — this is the second factor beyond your password
-const ADMIN_SECRET_KEY = 'Secretkey18'; // CHANGE THIS before launch
+const ADMIN_SECRET_KEY = 'secretkey18';
 
 // ── PLACES AUTOCOMPLETE SETUP ──
 let signupAutocomplete = null;
@@ -6066,7 +6066,7 @@ async function loadAdminParents() {
     const p=d.data();
     const student = allStudentsCache.find(u=>u.id===p.linkedStudentUid);
     return `<div class="admin-student-row">
-      <div class="avatar" style="background:var(--purple);font-size:.8rem">👨‍👩‍👧</div>
+      <div class="avatar" style="background:var(--purple);font-size:.8rem">&#128106;</div>
       <div style="flex:1;font-size:.83rem">
         <strong>${p.firstName||'?'} ${p.lastName||'?'}</strong> <span style="font-size:.72rem;color:var(--muted)">(Parent)</span>
         <div style="font-size:.75rem;color:var(--muted)">${p.email||'—'}</div>
