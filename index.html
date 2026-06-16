@@ -2589,13 +2589,22 @@ auth.onAuthStateChanged(async function(user){
 // ── SIGNUP STEPS ──
 function suStep(n){
   if(n===2){
-    const email = document.getElementById('reg-email').value.trim();
-    const first = document.getElementById('reg-first').value.trim();
-    const last = document.getElementById('reg-last').value.trim();
-    const pass = document.getElementById('reg-pass').value;
-    if(!first||!last){ showToast('Please enter your full name.'); return; }
-    if(!email.endsWith('@'+SCHOOL_DOMAIN)){ showToast('Please use your @'+SCHOOL_DOMAIN+' school email.'); return; }
-    if(pass.length<6){ showToast('Password must be at least 6 characters.'); return; }
+    const first = document.getElementById('reg-first')?.value.trim();
+    const last = document.getElementById('reg-last')?.value.trim();
+    const email = document.getElementById('reg-email')?.value.trim();
+    const pass = document.getElementById('reg-pass')?.value;
+    if(!first||!last){ showToast('Please enter your first and last name.'); return; }
+    if(!email||!email.endsWith('@'+SCHOOL_DOMAIN)){ showToast('Please use your @'+SCHOOL_DOMAIN+' school email.'); return; }
+    if(!pass||pass.length<6){ showToast('Password must be at least 6 characters.'); return; }
+  }
+  if(n===3){
+    // Step 3 — no required validation, address is optional
+    const addressInput = document.getElementById('reg-address-input');
+    const hasLocation = document.getElementById('reg-lat')?.value || document.getElementById('reg-zip')?.value;
+    if(addressInput?.value && !hasLocation){
+      showToast('Please select your address from the dropdown suggestions, or clear the field to skip.');
+      return;
+    }
   }
   document.getElementById('su1').style.display='none';
   document.getElementById('su2').className='toggle-section';
@@ -2632,13 +2641,25 @@ async function doSignup(){
   const pass = document.getElementById('reg-pass').value;
   const age = document.getElementById('reg-age').value;
   const grade = document.getElementById('reg-grade').value;
-  const zip = document.getElementById('reg-zip').value.trim();
   const pref = document.getElementById('reg-pref').value;
   const comp = document.getElementById('reg-comp').value;
   const nickname = document.getElementById('reg-nickname').value.trim();
   const hasCar = document.getElementById('reg-has-car').value === 'yes';
 
-  if(!zip){ showToast('Please enter your ZIP code.'); return; }
+  // Get location from Places autocomplete hidden fields
+  const addressInput = document.getElementById('reg-address-input');
+  const lat = parseFloat(document.getElementById('reg-lat')?.value || '0');
+  const lng = parseFloat(document.getElementById('reg-lng')?.value || '0');
+  const zip = document.getElementById('reg-zip')?.value?.trim() || '';
+  const zone = document.getElementById('reg-zone')?.value?.trim() || '';
+
+  // Validate location was selected
+  if(addressInput && addressInput.value && (!lat || !lng)){
+    showToast('Please select your address from the dropdown suggestions.'); return;
+  }
+  if(!addressInput?.value && !zip){
+    showToast('Please enter your neighborhood or street address.'); return;
+  }
 
   let carData = null;
   if(hasCar){
@@ -2657,13 +2678,12 @@ async function doSignup(){
   try {
     const cred = await auth.createUserWithEmailAndPassword(email, pass);
     const uid = cred.user.uid;
-    const zone = getNeighborhood(zip);
+    const finalZone = zone || getNeighborhood(zip) || 'Oakland Area';
 
     // ── VERIFICATION GATE 3: Store data in sessionStorage, write to Firestore ONLY after email verified ──
-    // This prevents any unverified account from appearing in the database
     const pendingData = {
       uid, firstName:escapeHtml(first), lastName:escapeHtml(last), email, age:parseInt(age)||17, grade,
-      schoolName:SCHOOL, zip, neighborhoodZone:zone,
+      schoolName:SCHOOL, zip, neighborhoodZone:finalZone, lat:lat||null, lng:lng||null,
       ridePreference:pref, compensation:comp,
       nickname:nickname||null, showOnLeaderboard:!!nickname,
       hasCar, car:carData
@@ -2960,7 +2980,7 @@ async function onMapReady(){
   const snap = await db.collection('users')
     .where('schoolName','==',SCHOOL)
     .where('isActive','==',true).get();
-  const peers = snap.docs.filter(d=>d.id!==currentUser.uid);
+  const peers = snap.docs.filter(d=>d.id!==currentUser.uid && d.data().isActive!==false);
   document.getElementById('map-count').textContent = peers.length+' students nearby';
   const cardsEl = document.getElementById('peer-cards');
   cardsEl.innerHTML='';
@@ -2976,9 +2996,16 @@ async function onMapReady(){
   peers.forEach(pd=>{
     const p=pd.data();
     const zone=p.neighborhoodZone||'Oakland Area';
-    const base=ZONE_COORDS[zone]||center;
-    const jitter=()=>(Math.random()-0.5)*0.008;
-    const pos={lat:base.lat+jitter(),lng:base.lng+jitter()};
+    // Use stored lat/lng if available (from Places autocomplete), else fall back to zone
+    let pos;
+    if(p.lat && p.lng){
+      // Already has privacy offset applied at signup — use directly
+      pos = {lat:p.lat, lng:p.lng};
+    } else {
+      const base=ZONE_COORDS[zone]||center;
+      const jitter=()=>(Math.random()-0.5)*0.012;
+      pos={lat:base.lat+jitter(),lng:base.lng+jitter()};
+    }
     const isPartner=(currentUserData.partners||[]).includes(pd.id);
     const marker=new google.maps.Marker({
       position:pos,map:mapInstance,title:p.firstName,
@@ -3741,7 +3768,7 @@ async function loadLeaderboard(){
   const el=document.getElementById('leaderboard-list');
   // Filter to only those who opted in, sort by CO2 saved
   const eligible = snap.docs
-    .filter(d=>d.data().showOnLeaderboard===true && d.data().nickname)
+    .filter(d=>d.data().showOnLeaderboard===true && d.data().nickname && d.data().isActive!==false)
     .sort((a,b)=>(b.data().totalCO2Saved||0)-(a.data().totalCO2Saved||0))
     .slice(0,20);
   if(eligible.length===0){
@@ -3831,7 +3858,7 @@ function openEditProfileModal(){
   document.getElementById('ep-last').value=d.lastName||'';
   document.getElementById('ep-age').value=d.age||'';
   document.getElementById('ep-grade').value=d.grade||'9th (Freshman)';
-  document.getElementById('ep-zip').value=d.zip||'';
+  const epZipEl = document.getElementById('ep-zip'); if(epZipEl) epZipEl.value=d.neighborhoodZone||d.zip||'';
   document.getElementById('ep-pref').value=d.ridePreference||'both';
   document.getElementById('ep-comp').value=d.compensation||'free';
   openModal('modal-edit-profile');
@@ -3842,11 +3869,15 @@ async function saveProfile(){
   const last=document.getElementById('ep-last').value.trim();
   const age=document.getElementById('ep-age').value;
   const grade=document.getElementById('ep-grade').value;
-  const zip=document.getElementById('ep-zip').value.trim();
   const pref=document.getElementById('ep-pref').value;
   const comp=document.getElementById('ep-comp').value;
   if(!first||!last){ showToast('Please enter your name.'); return; }
-  const zone=getNeighborhood(zip);
+  // Get location from Places autocomplete or keep existing
+  const epZoneVal = document.getElementById('ep-zone-val')?.value?.trim();
+  const epLat = parseFloat(document.getElementById('ep-lat')?.value||'0');
+  const epLng = parseFloat(document.getElementById('ep-lng')?.value||'0');
+  const zone = epZoneVal || currentUserData?.neighborhoodZone || 'Oakland Area';
+  const zip = currentUserData?.zip || '';
   await db.collection('users').doc(currentUser.uid).update({
     firstName:first,lastName:last,age:parseInt(age)||17,grade,zip,neighborhoodZone:zone,ridePreference:pref,compensation:comp
   });
@@ -5373,7 +5404,8 @@ async function checkVerificationAndLogin(){
           await db.collection('users').doc(uid).set({
             firstName:p.firstName, lastName:p.lastName, email:p.email,
             age:p.age, grade:p.grade, schoolName:p.schoolName,
-            zip:p.zip, neighborhoodZone:p.neighborhoodZone,
+            zip:p.zip||'', neighborhoodZone:p.neighborhoodZone||'Oakland Area',
+            lat:p.lat||null, lng:p.lng||null,
             ridePreference:p.ridePreference, compensation:p.compensation,
             nickname:p.nickname||null, showOnLeaderboard:!!p.nickname,
             hasCar:p.hasCar, car:p.car||null,
@@ -5557,7 +5589,7 @@ injectPWAManifest();
 function getProfileCompletion(d){
   const checks = [
     {label:'Added your car',done:!!d.car},
-    {label:'Set your ZIP code',done:!!d.zip},
+    {label:'Set your neighborhood',done:!!(d.zip||d.neighborhoodZone||d.lat)},
     {label:'Made a carpool partner',done:(d.partners||[]).length>0},
     {label:'Logged your first ride',done:(d.totalRides||0)>0},
     {label:'Set leaderboard nickname',done:!!d.nickname},
@@ -5747,19 +5779,7 @@ window.openEditProfileModal = async function() {
 // Patch the coordinate extraction
 const _origDoSignup = window.doSignup;
 window.doSignup = async function() {
-  // Validate that location was selected via autocomplete
-  const addressInput = document.getElementById('reg-address-input');
-  const lat = document.getElementById('reg-lat')?.value;
-  const lng = document.getElementById('reg-lng')?.value;
-  const zone = document.getElementById('reg-zone')?.value;
-
-  if (addressInput && addressInput.value && (!lat || !lng)) {
-    // They typed something but didn't select from autocomplete
-    showToast('Please select your address from the dropdown suggestions.');
-    return;
-  }
-
-  // Proceed with original signup
+  // Proceed with original signup — validation handled inside doSignup
   if (_origDoSignup) await _origDoSignup();
 };
 
