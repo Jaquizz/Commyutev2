@@ -5783,7 +5783,7 @@ const _origLoadDashFinal = window.loadDashboard;
 const ADMIN_SECRET_KEY = 'secretkey18';
 
 // ── PLACES AUTOCOMPLETE SETUP ──
-let signupAutocomplete = null;
+let window.signupAutocomplete = null;
 let editAutocomplete = null;
 
 function initPlacesAutocomplete() {
@@ -5806,7 +5806,7 @@ function initPlacesAutocomplete() {
   const signupInput = document.getElementById('reg-address-input');
   if (signupInput && !signupAutocomplete) {
     try{
-      signupAutocomplete = new google.maps.places.Autocomplete(signupInput, opts);
+      window.signupAutocomplete = new google.maps.places.Autocomplete(signupInput, opts);
       signupAutocomplete.addListener('place_changed', () => {
         const place = signupAutocomplete.getPlace();
         if (!place.geometry){ showToast('Please select an address from the dropdown.'); return; }
@@ -5818,7 +5818,7 @@ function initPlacesAutocomplete() {
   // Edit profile form
   const editInput = document.getElementById('ep-zip');
   if (editInput && !editAutocomplete) {
-    editAutocomplete = new google.maps.places.Autocomplete(editInput, opts);
+    window.editAutocomplete = new google.maps.places.Autocomplete(editInput, opts);
     editAutocomplete.addListener('place_changed', () => {
       const place = editAutocomplete.getPlace();
       if (!place.geometry) return;
