@@ -1708,9 +1708,11 @@ d{color:var(--muted)}
           <select id="admin-filter-status" onchange="filterAdminStudents()" style="padding:9px 14px;border:1.5px solid var(--border);border-radius:10px;font-family:inherit;font-size:.875rem">
             <option value="">All Status</option>
             <option value="active">Active</option>
-            <option value="inactive">Deactivated</option>
             <option value="rides">Has rides</option>
           </select>
+          <label style="display:flex;align-items:center;gap:6px;font-size:.8rem;color:var(--muted);cursor:pointer;white-space:nowrap">
+            <input type="checkbox" id="admin-show-removed" onchange="filterAdminStudents()"> Show removed
+          </label>
         </div>
         <div id="admin-students-list" style="display:flex;flex-direction:column;gap:.5rem"></div>
       </div>
@@ -4333,7 +4335,7 @@ async function loadAdminPage(){
         <strong style="font-size:.875rem">${u.firstName} ${u.lastName}</strong>
         <div style="font-size:.75rem;color:var(--muted)">${u.grade} · ${u.neighborhoodZone||''} · ${u.totalRides||0} rides · ${u.totalCO2Saved||0} lbs CO₂</div>
       </div>
-      <button class="btn btn-outline btn-sm" onclick="adminDeactivate('${u.id}','${u.firstName} ${u.lastName}')" style="color:var(--red);border-color:var(--red)">Remove</button>
+      <button class="btn btn-outline btn-sm" onclick="adminDeactivateUser('${u.id}','${u.firstName} ${u.lastName}')" style="color:var(--red);border-color:var(--red)">Remove</button>
     </div>`).join('');
 
   // Reports
@@ -4347,21 +4349,12 @@ async function loadAdminPage(){
       <div style="color:var(--muted);margin:.3rem 0">${r.reason}</div>
       ${r.details?`<div style="background:var(--cream);padding:.5rem;border-radius:6px;margin:.3rem 0">"${r.details}"</div>`:''}
       <div style="color:var(--muted);font-size:.75rem">Reported by ${r.reporterName} · ${fmtDate(r.createdAt)}</div>
-      <button class="btn btn-red btn-sm" style="margin-top:.5rem" onclick="adminDeactivate('${r.reportedUid}','${r.reportedName}')">Remove Student</button>
+      <button class="btn btn-red btn-sm" style="margin-top:.5rem" onclick="adminDeactivateUser('${r.reportedUid}','${r.reportedName}')">Remove Student</button>
     </div>`;
   }).join('');
 }
 
-async function adminDeactivate(uid, name){
-  // Guard: only actual admins can deactivate
-  if(!currentUser || !currentUserData || (!currentUserData.isAdmin && currentUserData.email !== ADMIN_EMAIL)){
-    showToast('Unauthorized.'); return;
-  }
-  if(!confirm(`Remove ${name} from Commyute? This will deactivate their account.`)) return;
-  await db.collection('users').doc(uid).update({isActive:false});
-  showToast(`${name} has been removed.`);
-  loadAdminPage();
-}
+// adminDeactivate consolidated into adminDeactivateUser
 
 // Show admin button in nav if admin user
 const _origAuthState = auth.onAuthStateChanged.bind(auth);
@@ -5979,9 +5972,8 @@ async function loadAdminDashboard() {
       if(el) el.textContent = total;
       if(el2) el2.textContent = active;
       if(el3) el3.textContent = `${total} students`;
-      // Refresh current tab
-      const activeTab = document.querySelector('.admin-tab.active');
-      if(activeTab && activeTab.id === 'atab-students') filterAdminStudents();
+      // Refresh current view immediately
+      filterAdminStudents();
     });
 
   // Static stats (rides + reports)
@@ -6009,8 +6001,7 @@ function filterAdminStudents() {
     const email = (u.email||'').toLowerCase();
     if (search && !name.includes(search) && !email.includes(search)) return false;
     if (grade && u.grade !== grade) return false;
-    if (status === 'active' && !u.isActive) return false;
-    if (status === 'inactive' && u.isActive !== false) return false;
+    if (status === 'active' && u.isActive === false) return false;
     if (status === 'rides' && (u.totalRides||0) === 0) return false;
     return true;
   });
@@ -6026,17 +6017,17 @@ function renderAdminStudents(students) {
   const el = document.getElementById('admin-students-list');
   if (!el) return;
 
-  if (!students.length) {
+  // Hide deactivated unless "Show removed" is checked
+  const showRemoved = document.getElementById('admin-show-removed')?.checked || false;
+  const visible = showRemoved ? students : students.filter(u => u.isActive !== false);
+
+  if (!visible.length) {
     el.innerHTML = '<p class="text-muted" style="text-align:center;padding:2rem">No students match your filters.</p>';
     return;
   }
 
-  // Sort: flagged first, then by name
-  const sorted = [...students].sort((a,b) => {
-    if (a.isActive === false && b.isActive !== false) return 1;
-    if (b.isActive === false && a.isActive !== false) return -1;
-    return (a.firstName||'').localeCompare(b.firstName||'');
-  });
+  const removedCount = students.filter(u => u.isActive === false).length;
+  const sorted = [...visible].sort((a,b) => (a.firstName||'').localeCompare(b.firstName||''));
 
   el.innerHTML = sorted.map(u => {
     const isDeactivated = u.isActive === false;
