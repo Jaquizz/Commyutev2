@@ -2691,13 +2691,11 @@ async function doSignup(){
     sessionStorage.setItem('commyute_pending_signup', JSON.stringify(pendingData));
 
     // Send verification email — keep user signed in so they can resend/check status
+    // Using Firebase's default verification flow (no custom url) for maximum reliability
     let emailSent = true;
     let emailErrorMsg = '';
     try{
-      await cred.user.sendEmailVerification({
-        url: window.location.origin + window.location.pathname + '?verified=true',
-        handleCodeInApp: false
-      });
+      await cred.user.sendEmailVerification();
     } catch(verifyErr){
       console.error('Could not send verification email:', verifyErr);
       emailSent = false;
@@ -5461,10 +5459,7 @@ async function resendVerifyEmail(){
   }
   if(btn){ btn.textContent='Sending...'; btn.disabled=true; }
   try{
-    await user.sendEmailVerification({
-      url: window.location.origin + window.location.pathname + '?verified=true',
-      handleCodeInApp: false
-    });
+    await user.sendEmailVerification();
     showToast('✅ Verification email sent! Check your @bishopodowd.org inbox (and spam folder).');
   } catch(e){
     if(e.code === 'auth/too-many-requests'){
