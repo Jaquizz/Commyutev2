@@ -2616,8 +2616,37 @@ auth.onAuthStateChanged(async function(user){
             return;
           }
         }catch(pe){}
-        // Email verified but no Firestore doc — they need to complete verification flow
+        // Email is verified but no student profile exists yet — try to auto-create it
+        // from the pendingSignups doc saved at signup time (works across devices).
         if(user.emailVerified){
+          try{
+            const pendingSnap = await db.collection('pendingSignups').doc(user.uid).get();
+            if(pendingSnap.exists){
+              const p = pendingSnap.data();
+              await db.collection('users').doc(user.uid).set({
+                firstName:p.firstName, lastName:p.lastName, email:p.email,
+                age:p.age, grade:p.grade, schoolName:p.schoolName,
+                zip:p.zip||'', neighborhoodZone:p.neighborhoodZone||'Oakland Area',
+                lat:p.lat||null, lng:p.lng||null,
+                ridePreference:p.ridePreference, compensation:p.compensation,
+                nickname:p.nickname||null, showOnLeaderboard:!!p.nickname,
+                hasCar:p.hasCar, car:p.car||null,
+                isActive:true, isVerified:true,
+                totalCO2Saved:0, totalRides:0, totalMiles:0, totalMoneySaved:0, totalTimeSaved:0,
+                partners:[], createdAt:firebase.firestore.FieldValue.serverTimestamp()
+              });
+              db.collection('pendingSignups').doc(user.uid).delete().catch(()=>{});
+              const freshSnap = await db.collection('users').doc(user.uid).get();
+              currentUser = user;
+              currentUserData = freshSnap.data();
+              document.body.classList.add('is-logged-in');
+              loadDashboard();
+              return;
+            }
+          }catch(autoErr){
+            console.error('Auto-create profile from pendingSignups failed:', autoErr);
+          }
+          // No pending data found anywhere — they need to finish signup manually
           if(loadingScreen) loadingScreen.style.display='none';
           showPage('pending');
           return;
@@ -2751,7 +2780,9 @@ async function doSignup(){
     const uid = cred.user.uid;
     const finalZone = zone || 'Oakland Area';
 
-    // ── VERIFICATION GATE 3: Store data in sessionStorage, write to Firestore ONLY after email verified ──
+    // ── VERIFICATION GATE 3: Store data in a Firestore "pendingSignups" doc, keyed by uid.
+    // This survives across devices/tabs (unlike sessionStorage), so verifying on a phone
+    // after signing up on a laptop still works correctly.
     const pendingData = {
       uid, firstName:escapeHtml(first), lastName:escapeHtml(last), email, age:parseInt(age)||17, grade,
       schoolName:SCHOOL, zip, neighborhoodZone:finalZone, lat:lat||null, lng:lng||null,
@@ -2759,7 +2790,13 @@ async function doSignup(){
       nickname:nickname||null, showOnLeaderboard:!!nickname,
       hasCar, car:carData
     };
-    sessionStorage.setItem('commyute_pending_signup', JSON.stringify(pendingData));
+    try{
+      await db.collection('pendingSignups').doc(uid).set(pendingData);
+    } catch(pendingErr){
+      console.error('Could not save pending signup data:', pendingErr);
+    }
+    // Also keep a sessionStorage copy as a fast-path fallback on the same device
+    try{ sessionStorage.setItem('commyute_pending_signup', JSON.stringify(pendingData)); }catch(_){}
 
     // Send verification email — keep user signed in so they can resend/check status
     // Using Firebase's default verification flow (no custom url) for maximum reliability
@@ -2808,8 +2845,43 @@ async function doLogin(){
   btn.textContent='Logging in...'; btn.disabled=true;
   try {
     const cred = await auth.signInWithEmailAndPassword(email, pass);
-    const snap = await db.collection('users').doc(cred.user.uid).get();
-    if(!snap.exists){ showToast('Account not found. Please sign up.'); return; }
+    let snap = await db.collection('users').doc(cred.user.uid).get();
+
+    if(!snap.exists){
+      // No profile yet. If their email is verified, try to auto-create it from
+      // pendingSignups (handles the case where they verified on a different device/tab
+      // than the one they originally signed up on).
+      if(cred.user.emailVerified){
+        try{
+          const pendingSnap = await db.collection('pendingSignups').doc(cred.user.uid).get();
+          if(pendingSnap.exists){
+            const p = pendingSnap.data();
+            await db.collection('users').doc(cred.user.uid).set({
+              firstName:p.firstName, lastName:p.lastName, email:p.email,
+              age:p.age, grade:p.grade, schoolName:p.schoolName,
+              zip:p.zip||'', neighborhoodZone:p.neighborhoodZone||'Oakland Area',
+              lat:p.lat||null, lng:p.lng||null,
+              ridePreference:p.ridePreference, compensation:p.compensation,
+              nickname:p.nickname||null, showOnLeaderboard:!!p.nickname,
+              hasCar:p.hasCar, car:p.car||null,
+              isActive:true, isVerified:true,
+              totalCO2Saved:0, totalRides:0, totalMiles:0, totalMoneySaved:0, totalTimeSaved:0,
+              partners:[], createdAt:firebase.firestore.FieldValue.serverTimestamp()
+            });
+            db.collection('pendingSignups').doc(cred.user.uid).delete().catch(()=>{});
+            snap = await db.collection('users').doc(cred.user.uid).get();
+          }
+        }catch(autoErr){
+          console.error('Auto-create profile on login failed:', autoErr);
+        }
+      }
+      if(!snap.exists){
+        showToast('We found your account but could not finish setting up your profile. Please contact the administrator or try signing up again.');
+        await auth.signOut();
+        btn.textContent='Log In →'; btn.disabled=false;
+        return;
+      }
+    }
     // ── VERIFICATION GATE 2: Block unverified users on login ──
     if(!cred.user.emailVerified){
       errEl.innerHTML = '❌ Please verify your <strong>@bishopodowd.org</strong> email before logging in.<br><br><button class="btn btn-outline btn-sm" style="margin-top:.5rem" onclick="resendVerifyEmail()">📧 Resend verification email</button>';
@@ -5574,9 +5646,18 @@ async function checkVerificationAndLogin(){
       const uid = freshUser.uid;
       const snap = await db.collection('users').doc(uid).get();
       if(!snap.exists){
-        const pendingRaw = sessionStorage.getItem('commyute_pending_signup');
-        if(pendingRaw){
-          const p = JSON.parse(pendingRaw);
+        // Look for pending signup data — check Firestore first (works across devices/tabs),
+        // then fall back to sessionStorage (same-device fast path)
+        let p = null;
+        try{
+          const pendingSnap = await db.collection('pendingSignups').doc(uid).get();
+          if(pendingSnap.exists) p = pendingSnap.data();
+        }catch(_){}
+        if(!p){
+          const pendingRaw = sessionStorage.getItem('commyute_pending_signup');
+          if(pendingRaw){ try{ p = JSON.parse(pendingRaw); }catch(_){} }
+        }
+        if(p){
           await db.collection('users').doc(uid).set({
             firstName:p.firstName, lastName:p.lastName, email:p.email,
             age:p.age, grade:p.grade, schoolName:p.schoolName,
@@ -5590,6 +5671,7 @@ async function checkVerificationAndLogin(){
             partners:[], createdAt:firebase.firestore.FieldValue.serverTimestamp()
           });
           sessionStorage.removeItem('commyute_pending_signup');
+          db.collection('pendingSignups').doc(uid).delete().catch(()=>{});
         } else {
           showToast('Almost there — please complete signup again to finish your profile.');
           if(btn){ btn.textContent='I Verified My Email →'; btn.disabled=false; }
