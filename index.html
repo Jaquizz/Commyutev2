@@ -1536,7 +1536,7 @@ d{color:var(--muted)}
             <div style="display:flex;flex-direction:column;gap:.9rem">
               <div style="display:flex;justify-content:space-between;font-size:.875rem;padding-bottom:.8rem;border-bottom:1px solid var(--border)"><span style="color:var(--muted)">Full Name</span><strong id="pd-name">—</strong></div>
               <div style="display:flex;justify-content:space-between;font-size:.875rem;padding-bottom:.8rem;border-bottom:1px solid var(--border)"><span style="color:var(--muted)">Age</span><strong id="pd-age">—</strong></div>
-              <div style="display:flex;justify-content:space-between;font-size:.875rem;padding-bottom:.8rem;border-bottom:1px solid var(--border)"><span style="color:var(--muted)">Grade</span><strong id="pd-grade">—</strong></div>
+              <div style="display:flex;justify-content:space-between;align-items:center;font-size:.875rem;padding-bottom:.8rem;border-bottom:1px solid var(--border)"><span style="color:var(--muted)">Grade</span><span style="display:flex;align-items:center;gap:8px"><strong id="pd-grade">—</strong><button class="btn btn-outline btn-sm" style="padding:3px 10px;font-size:.72rem" onclick="openEditProfileModal()">Update</button></span></div>
               <div style="display:flex;justify-content:space-between;font-size:.875rem;padding-bottom:.8rem;border-bottom:1px solid var(--border)"><span style="color:var(--muted)">Email</span><strong id="pd-email">—</strong></div>
               <div style="display:flex;justify-content:space-between;font-size:.875rem;padding-bottom:.8rem;border-bottom:1px solid var(--border)"><span style="color:var(--muted)">Neighborhood</span><strong id="pd-zone">—</strong></div>
               <div style="display:flex;justify-content:space-between;font-size:.875rem;padding-bottom:.8rem;border-bottom:1px solid var(--border);align-items:center"><span style="color:var(--muted)">Available This Week</span><label style="display:flex;align-items:center;gap:6px;cursor:pointer"><input type="checkbox" id="available-toggle" onchange="toggleAvailableThisWeek(this.checked)"><span style="font-size:.8rem">Show green ring on map</span></label></div>
@@ -2690,21 +2690,33 @@ async function doSignup(){
     };
     sessionStorage.setItem('commyute_pending_signup', JSON.stringify(pendingData));
 
-    // Send verification email
+    // Send verification email — keep user signed in so they can resend/check status
+    let emailSent = true;
+    let emailErrorMsg = '';
     try{
       await cred.user.sendEmailVerification({
         url: window.location.origin + window.location.pathname + '?verified=true',
         handleCodeInApp: false
       });
     } catch(verifyErr){
-      console.warn('Could not send verification email:', verifyErr.message);
+      console.error('Could not send verification email:', verifyErr);
+      emailSent = false;
+      emailErrorMsg = verifyErr.message;
     }
 
-    // Sign out immediately — no Firestore doc yet = no dashboard access possible
-    await auth.signOut();
-    currentUser = null;
+    // IMPORTANT: stay signed in (but with no Firestore doc = no dashboard access).
+    // This lets resend/check-status work without forcing a fresh login first.
+    currentUser = cred.user;
     currentUserData = null;
-    openModal('modal-success');
+
+    closeModal('modal-success');
+    showPage('pending');
+
+    if(!emailSent){
+      showToast('⚠️ Could not send verification email automatically. Use "Resend" below.');
+    } else {
+      showToast('Account created! Check your @bishopodowd.org inbox. 📬');
+    }
   } catch(e){
     if(e.code==='auth/email-already-in-use') showToast('An account with this email already exists.');
     else if(e.code==='auth/weak-password') showToast('Password must be at least 6 characters.');
@@ -5388,16 +5400,20 @@ window.generatePairingCode = generatePairingCode;
 // ── IMPROVED EMAIL VERIFICATION ──
 async function checkVerificationAndLogin(){
   const btn = document.getElementById('verify-check-btn');
-  if(!auth.currentUser){ showToast('Please log in first — use the login page.'); showPage('login'); return; }
-  btn.textContent = 'Checking...'; btn.disabled=true;
+  const user = auth.currentUser || currentUser;
+  if(!user){
+    showToast('Your session expired. Please log in.');
+    showPage('login');
+    return;
+  }
+  if(btn){ btn.textContent = 'Checking...'; btn.disabled=true; }
   try{
-    await auth.currentUser.reload();
-    if(auth.currentUser.emailVerified){
-      // Email verified — now write Firestore doc if it doesn't exist yet
-      const uid = auth.currentUser.uid;
+    await user.reload();
+    const freshUser = auth.currentUser;
+    if(freshUser && freshUser.emailVerified){
+      const uid = freshUser.uid;
       const snap = await db.collection('users').doc(uid).get();
       if(!snap.exists){
-        // Retrieve pending signup data from sessionStorage
         const pendingRaw = sessionStorage.getItem('commyute_pending_signup');
         if(pendingRaw){
           const p = JSON.parse(pendingRaw);
@@ -5415,32 +5431,50 @@ async function checkVerificationAndLogin(){
           });
           sessionStorage.removeItem('commyute_pending_signup');
         } else {
-          // pendingData lost (e.g. different device) — ask them to contact admin
-          showToast('Verification confirmed but signup data was lost. Please sign up again.');
-          await auth.signOut();
+          showToast('Almost there — please complete signup again to finish your profile.');
+          if(btn){ btn.textContent='I Verified My Email →'; btn.disabled=false; }
           showPage('signup');
           return;
         }
       }
-      currentUser = auth.currentUser;
+      currentUser = freshUser;
       currentUserData = (await db.collection('users').doc(uid).get()).data();
+      document.body.classList.add('is-logged-in');
       loadDashboard();
     } else {
-      showToast('Email not verified yet. Check your @bishopodowd.org inbox and click the link.');
-      btn.textContent='I Verified My Email →'; btn.disabled=false;
+      showToast('Not verified yet — click the link in your email first, then try again.');
+      if(btn){ btn.textContent='I Verified My Email →'; btn.disabled=false; }
     }
   } catch(e){
     showToast('Error: '+e.message);
-    btn.textContent='I Verified My Email →'; btn.disabled=false;
+    if(btn){ btn.textContent='I Verified My Email →'; btn.disabled=false; }
   }
 }
 
 async function resendVerifyEmail(){
-  if(!auth.currentUser){ showToast('Please log in first.'); return; }
+  const btn = event?.target;
+  const user = auth.currentUser || currentUser;
+  if(!user){
+    showToast('Session expired — please sign up again or log in.');
+    showPage('signup');
+    return;
+  }
+  if(btn){ btn.textContent='Sending...'; btn.disabled=true; }
   try{
-    await auth.currentUser.sendEmailVerification();
-    showToast('Verification email resent! Check your @bishopodowd.org inbox.');
-  } catch(e){ showToast('Error: '+e.message); }
+    await user.sendEmailVerification({
+      url: window.location.origin + window.location.pathname + '?verified=true',
+      handleCodeInApp: false
+    });
+    showToast('✅ Verification email sent! Check your @bishopodowd.org inbox (and spam folder).');
+  } catch(e){
+    if(e.code === 'auth/too-many-requests'){
+      showToast('⏱ Too many attempts. Please wait a few minutes before trying again.');
+    } else {
+      showToast('Error sending email: '+e.message);
+    }
+  } finally {
+    if(btn){ btn.textContent='Resend Verification Email'; btn.disabled=false; }
+  }
 }
 
 window.checkVerificationAndLogin = checkVerificationAndLogin;
@@ -6375,6 +6409,101 @@ function emptyRequests(incoming, outgoing){
 window.showSectionLoading = showSectionLoading;
 window.skeletonCards = skeletonCards;
 window.switchToStudentLogin = switchToStudentLogin;
+
+
+// ── GRADE PROMOTION SYSTEM ──
+const GRADE_ORDER = ["9th (Freshman)","10th (Sophomore)","11th (Junior)","12th (Senior)"];
+
+function getCurrentSchoolYearStart(){
+  // School year "starts" each August 1
+  const now = new Date();
+  const year = now.getMonth() >= 7 ? now.getFullYear() : now.getFullYear()-1; // Aug=7
+  return new Date(year, 7, 1); // Aug 1
+}
+
+function nextGrade(current){
+  const idx = GRADE_ORDER.indexOf(current);
+  if(idx === -1 || idx === GRADE_ORDER.length-1) return null; // already senior or unknown
+  return GRADE_ORDER[idx+1];
+}
+
+async function checkGradePromotion(){
+  if(!currentUser || !currentUserData) return;
+  const d = currentUserData;
+  if(!d.grade) return;
+
+  const yearStart = getCurrentSchoolYearStart();
+  const lastPromptedYear = d.gradePromoYearChecked || 0;
+  const thisYearMark = yearStart.getFullYear();
+
+  // Already asked about promotion for this school year
+  if(lastPromptedYear >= thisYearMark) return;
+
+  const suggested = nextGrade(d.grade);
+  if(!suggested) {
+    // Senior — mark checked, no prompt (they should graduate, not promote)
+    db.collection('users').doc(currentUser.uid).update({gradePromoYearChecked: thisYearMark}).catch(()=>{});
+    return;
+  }
+
+  // Only prompt if their account was created (or last graded) in a PRIOR school year
+  const createdAt = d.createdAt?.toDate?.() || null;
+  if(createdAt && createdAt >= yearStart) return; // joined this school year, no promotion needed yet
+
+  showGradePromotionPrompt(d.grade, suggested);
+}
+
+function showGradePromotionPrompt(currentGrade, suggestedGrade){
+  const existing = document.getElementById('grade-promo-banner');
+  if(existing) return;
+  const banner = document.createElement('div');
+  banner.id = 'grade-promo-banner';
+  banner.className = 'nudge-banner';
+  banner.style.background = 'linear-gradient(135deg,var(--accent),#c8891a)';
+  banner.innerHTML = `<div>
+      <strong>🎓 New school year — update your grade?</strong>
+      <p>You're listed as ${currentGrade}. Did you move up to ${suggestedGrade}?</p>
+    </div>
+    <div style="display:flex;gap:8px;flex-shrink:0">
+      <button class="btn" style="background:rgba(255,255,255,.25);color:#fff;border-color:rgba(255,255,255,.4)" onclick="confirmGradePromotion('${suggestedGrade}')">Yes, I'm in ${suggestedGrade.split(' ')[0]} now</button>
+      <button class="btn" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.3)" onclick="dismissGradePromotion()">Not yet</button>
+    </div>`;
+  const overviewAlert = document.getElementById('overview-alert');
+  if(overviewAlert) overviewAlert.parentNode.insertBefore(banner, overviewAlert);
+}
+
+async function confirmGradePromotion(newGrade){
+  if(!currentUser) return;
+  const thisYearMark = getCurrentSchoolYearStart().getFullYear();
+  await db.collection('users').doc(currentUser.uid).update({
+    grade: newGrade,
+    gradePromoYearChecked: thisYearMark
+  });
+  currentUserData.grade = newGrade;
+  currentUserData.gradePromoYearChecked = thisYearMark;
+  document.getElementById('grade-promo-banner')?.remove();
+  showToast(`Grade updated to ${newGrade}! 🎉`);
+  renderMilestones();
+}
+
+async function dismissGradePromotion(){
+  if(!currentUser) return;
+  const thisYearMark = getCurrentSchoolYearStart().getFullYear();
+  await db.collection('users').doc(currentUser.uid).update({gradePromoYearChecked: thisYearMark});
+  currentUserData.gradePromoYearChecked = thisYearMark;
+  document.getElementById('grade-promo-banner')?.remove();
+}
+
+window.checkGradePromotion = checkGradePromotion;
+window.confirmGradePromotion = confirmGradePromotion;
+window.dismissGradePromotion = dismissGradePromotion;
+
+// Run grade promotion check on dashboard load
+const _origLoadOverviewGrade = window.loadOverview;
+window.loadOverview = async function(){
+  if(_origLoadOverviewGrade) await _origLoadOverviewGrade();
+  checkGradePromotion();
+};
 
 </script>
 </body>
