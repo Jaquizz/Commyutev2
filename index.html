@@ -788,6 +788,8 @@ d{color:var(--muted)}
       <a onclick="showPage('why')" id="nav-why">Why Carpool?</a>
       <a onclick="showPage('how')" id="nav-how">How It Works</a>
       <a onclick="showPage('safety')" id="nav-safety">Safety</a>
+            <a onclick="showPage('about')" id="nav-about">The Story</a>
+            <a onclick="showPage('contact')" id="nav-contact">Contact</a>
     </div>
     <div class="nav-links hidden" id="authNav">
       <a onclick="showDash('overview')" class="active">Dashboard</a>
@@ -928,7 +930,7 @@ d{color:var(--muted)}
         <div class="footer-col"><h4>Students</h4><a onclick="showPage('signup')">Find Carpool Partners</a><a onclick="showPage('signup')">Schedule Rides</a><a onclick="showPage('signup')">Track Impact</a><a onclick="showPage('signup')">Leaderboard</a></div>
         <div class="footer-col"><h4>Info</h4><a>Privacy Policy</a><a>Terms of Service</a><a>About Commyute</a><a>Contact</a></div>
       </div>
-      <div class="footer-bottom"><span>© 2025 Commyute · Bishop O'Dowd High School</span><span><a onclick="showPage('about')" style="color:rgba(255,255,255,.6);cursor:pointer;text-decoration:none">Our Story</a> · 🌿 Ride together. Arrive greener.</span><a onclick="showPage('admin-login')" style="color:rgba(255,255,255,.2);font-size:.7rem;cursor:pointer">Admin</a></div>
+      <div class="footer-bottom"><span>© 2025 Commyute · Bishop O'Dowd High School</span><span><a onclick="showPage('about')" style="color:rgba(255,255,255,.6);cursor:pointer;text-decoration:none">The Story</a> · <a onclick="showPage('contact')" style="color:rgba(255,255,255,.6);cursor:pointer;text-decoration:none">Contact</a> · 🌿 Ride together. Arrive greener.</span><a onclick="showPage('admin-login')" style="color:rgba(255,255,255,.2);font-size:.7rem;cursor:pointer">Admin</a></div>
     </div>
   </footer>
 </div>
@@ -1042,38 +1044,63 @@ d{color:var(--muted)}
 
 <!-- ══════ PAGE: ABOUT ══════ -->
 <div class="page" id="page-about">
-  <div style="max-width:760px;margin:0 auto;padding:3rem 2rem 4rem">
+  <div style="max-width:700px;margin:0 auto;padding:3rem 2rem 4rem">
     <div style="text-align:center;margin-bottom:2.5rem">
-      <div style="width:80px;height:80px;background:var(--green);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:2rem;margin:0 auto 1.2rem">🛣</div>
-      <h1 style="font-family:'Fraunces',serif;font-size:2.2rem;color:var(--green-dark);margin-bottom:.4rem">The Story Behind Commyute</h1>
-      <p style="color:var(--muted);font-size:1rem">Built by Jonah Goldsmith</p>
+      <h1 style="font-family:'Fraunces',serif;font-size:2rem;color:var(--green-dark);margin-bottom:.4rem">The Story</h1>
+      <p style="color:var(--muted);font-size:.95rem">By Jonah Goldsmith, Founder</p>
     </div>
 
-    <div style="font-size:1.05rem;line-height:1.8;color:var(--charcoal)">
-      <p style="margin-bottom:1.5rem;font-size:1.15rem;font-weight:500;color:var(--green-dark)">Nobody wants to take the bus to high school.</p>
+    <div style="font-size:1rem;line-height:1.85;color:var(--charcoal)">
+      <p style="margin-bottom:1.4rem">Nobody wants to take the bus to high school. When I started at Bishop O'Dowd, I needed a ride every morning and my parents couldn't take me. On top of that, only five kids from my grade school came with me, none of them close friends. I was starting from scratch.</p>
 
-      <p style="margin-bottom:1.5rem">From day one at Bishop O'Dowd, I needed a ride to school every morning. My parents couldn't take me, and figuring that out was the first of many challenges. Starting at a new school already felt like jumping from a calm river into open ocean — new people, new expectations, and deep water everywhere I looked. Only five students came with me from grade school, none of them close friends. I had to build everything from scratch.</p>
+      <p style="margin-bottom:1.4rem">Then I noticed a little yellow Mini Cooper a few streets down with an O'Dowd sticker on the back. I walked over and knocked on the door.</p>
 
-      <div style="background:var(--green-light);border-left:4px solid var(--green);border-radius:0 10px 10px 0;padding:1.5rem 1.8rem;margin:2rem 0;font-size:1rem">
-        <p style="margin:0;color:var(--green-dark)">I saw a sticker from my new school on the back of a little yellow Mini Cooper a few streets from my house. So I walked over and knocked on the door.</p>
+      <p style="margin-bottom:1.4rem">That knock changed everything. The driver was Felix, a senior, and he ended up giving me a ride to school every day of freshman year. He taught me how things worked, gave me advice, looked out for me. He was like the older brother I never had.</p>
+
+      <div style="background:var(--green-light);border-radius:12px;padding:1.4rem 1.6rem;margin:1.8rem 0">
+        <p style="margin:0;font-size:.95rem;color:var(--green-dark);font-weight:500">I got lucky with Felix. Commyute exists so every student can have that same experience without relying on luck.</p>
       </div>
 
-      <p style="margin-bottom:1.5rem">That one knock turned into a high school friendship and a ride to school every single day of freshman year. My new friend Felix was a senior who taught me the ropes — giving me advice, showing me how things worked, almost like the older brother I never had. I was incredibly lucky to have someone who drove me to school, took me home, and genuinely cared about helping me navigate a brand new world.</p>
+      <p style="margin-bottom:1.4rem">That's why I built Commyute. It's a free carpooling platform where verified O'Dowd students can find classmates in their neighborhoods to share rides with. It's safe, it's simple, and it helps reduce carbon emissions, cut traffic, and save money on gas.</p>
 
-      <p style="margin-bottom:1.5rem">My experience with Felix is why I built <strong>Commyute</strong> — a free carpooling platform that helps students at Bishop O'Dowd find classmates in their own neighborhoods to share rides with. It's a safe, verified system where students can connect based on proximity, meet new people nearby, and make an actual impact on the world by reducing carbon emissions, cutting traffic, and saving money on gas.</p>
-
-      <p style="margin-bottom:1.5rem">Knocking on Felix's door gave me a friend, a ride, and a purpose. Commyute exists so that every student can have that same experience — without needing to get lucky.</p>
-
-      <div style="background:var(--cream);border-radius:var(--radius);padding:1.8rem;margin:2rem 0;border:1.5px solid var(--border)">
-        <div style="font-family:'Fraunces',serif;font-size:1.1rem;font-weight:700;color:var(--green-dark);margin-bottom:.8rem">What's Next</div>
-        <p style="margin:0;font-size:.95rem;color:var(--charcoal)">Commyute launched at Bishop O'Dowd, but the vision is bigger. The plan is to expand to high schools across the Bay Area and eventually nationwide — helping students everywhere find safe rides, build real friendships, and contribute to a greener planet.</p>
-      </div>
+      <p style="margin-bottom:1.4rem">I launched Commyute at Bishop O'Dowd, but the plan is to expand to schools across the Bay Area and eventually across the country. Every school has students who need rides and students who can offer them. Commyute just connects them.</p>
     </div>
 
     <div style="text-align:center;margin-top:2.5rem">
       <button class="btn btn-primary btn-lg" onclick="showPage('signup')">Join Commyute</button>
       <div style="margin-top:1rem"><a style="color:var(--muted);font-size:.875rem;cursor:pointer" onclick="showPage('home')">Back to Home</a></div>
     </div>
+  </div>
+</div>
+
+<!-- ══════ PAGE: CONTACT ══════ -->
+<div class="page" id="page-contact">
+  <div style="max-width:600px;margin:0 auto;padding:3rem 2rem 4rem">
+    <div style="text-align:center;margin-bottom:2rem">
+      <div style="font-size:2.5rem;margin-bottom:.8rem">📬</div>
+      <h1 style="font-family:'Fraunces',serif;font-size:2rem;color:var(--green-dark);margin-bottom:.4rem">Get in Touch</h1>
+      <p style="color:var(--muted);font-size:.95rem">Questions, feedback, partnership inquiries, or just want to say hey.</p>
+    </div>
+    <div class="card">
+      <div class="form-group"><label>Your Name</label><input type="text" id="contact-name" placeholder="Your name"></div>
+      <div class="form-group"><label>Your Email</label><input type="email" id="contact-email" placeholder="your@email.com"></div>
+      <div class="form-group"><label>Subject</label>
+        <select id="contact-subject">
+          <option>General Question</option>
+          <option>Bug Report</option>
+          <option>Feature Request</option>
+          <option>Partnership / School Expansion</option>
+          <option>Press / Media</option>
+          <option>Other</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Message</label><textarea id="contact-message" rows="5" placeholder="What's on your mind?"></textarea></div>
+      <button class="btn btn-primary w100" onclick="sendContactMessage()">Send Message →</button>
+    </div>
+    <div style="text-align:center;margin-top:1.5rem;font-size:.85rem;color:var(--muted)">
+      <p>Or email directly: <a href="mailto:jgoldsmith27@bishopodowd.org" style="color:var(--green);font-weight:600">jgoldsmith27@bishopodowd.org</a></p>
+    </div>
+    <div style="text-align:center;margin-top:1rem"><a style="color:var(--muted);font-size:.875rem;cursor:pointer" onclick="showPage('home')">← Back to Home</a></div>
   </div>
 </div>
 
@@ -2501,7 +2528,7 @@ function showPage(id){
   window.scrollTo({top:0, behavior:'instant'});
 
   // Show/hide nav actions based on page context
-  const guestPages = ['home','why','how','safety','about','login','signup','pending','parent-login','parent-signup','admin-login'];
+  const guestPages = ['home','why','how','safety','about','contact','login','signup','pending','parent-login','parent-signup','admin-login'];
   const authPages = ['dashboard'];
   const adminPages = ['admin-dashboard'];
   const parentPages = ['parent-dashboard'];
@@ -2570,7 +2597,7 @@ auth.onAuthStateChanged(async function(user){
       if(!user.emailVerified){
         if(loadingScreen) loadingScreen.style.display='none';
         const activePage = document.querySelector('.page.active');
-        const safePages = ['page-pending','page-login','page-signup','page-home','page-why','page-how','page-safety','page-about','page-parent-login','page-parent-signup','page-admin-login','page-admin-dashboard'];
+        const safePages = ['page-pending','page-login','page-signup','page-home','page-why','page-how','page-safety','page-about','page-contact','page-parent-login','page-parent-signup','page-admin-login','page-admin-dashboard'];
         if(activePage && !safePages.includes(activePage.id)){
           showPage('pending');
         }
@@ -3103,15 +3130,28 @@ async function onMapReady(){
     const col=avatarColor(pd.id);
     const card=document.createElement('div');
     card.className='peer-card';
+    if(p.photoURL) photoCache[pd.id]=p.photoURL;
+    const isBlocked = (currentUserData.blockedUsers||[]).includes(pd.id) || (p.blockedUsers||[]).includes(currentUser.uid);
+    if(isBlocked) return; // Skip blocked users entirely
+
+    // Determine if "Request Ride" button should show
+    // Don't show if: already partners, they're rider-only and you're rider-only, or user is deactivated
+    const myPref = currentUserData.ridePreference||'both';
+    const theirPref = p.ridePreference||'both';
+    const canRequest = !isPartner && !(myPref==='rider' && theirPref==='rider');
+
     card.innerHTML=`
-     if(p.photoURL) photoCache[pd.id]=p.photoURL;
-       <div style="margin:0 auto .3rem;display:flex;justify-content:center">${avatarHtml(pd.id,p.firstName,p.lastName,'48px',p.photoURL||null)}</div>
+      <div style="margin:0 auto .3rem;display:flex;justify-content:center">${avatarHtml(pd.id,p.firstName,p.lastName,'48px',p.photoURL||null)}</div>
       <strong>${p.firstName}</strong>
       <span class="peer-detail">${p.grade} · ${zone}</span>
-      <span class="peer-detail">${p.ridePreference==='driver'?'🚗 Driver':p.ridePreference==='rider'?'🎒 Rider':'🚗🎒 Both'}</span>
+      <span class="peer-detail">${theirPref==='driver'?'🚗 Driver':theirPref==='rider'?'🎒 Rider':'🚗🎒 Both'}</span>
+      ${p.licenseUploaded?'<span class="license-badge verified" style="font-size:.65rem">🪪 License</span>':''}
       ${isPartner
         ?'<span class="badge badge-green">✓ Partner</span>'
-        :`<button class="btn btn-primary btn-sm" onclick="openRequestModal('${pd.id}','${p.firstName}')">Request Ride</button>`}`;
+        :canRequest
+          ?'<button class="btn btn-primary btn-sm" onclick="openRequestModal(\''+pd.id+'\',\''+p.firstName+'\')">Request Ride</button>'
+          :theirPref==='rider'?'<span class="badge" style="font-size:.7rem;background:var(--cream);color:var(--muted)">🎒 Rider only</span>':''}
+      <button class="report-btn" onclick="reportUser(\''+pd.id+'\',\''+p.firstName+'\')">🚩 Report</button>`;
     cardsEl.appendChild(card);
   });
 }
@@ -3294,8 +3334,12 @@ async function loadAvailableRides(){
     .where('school','==',SCHOOL)
     .where('isActive','==',true).get();
   const el = document.getElementById('available-rides-list');
+  const blocked = currentUserData?.blockedUsers||[];
   const others = snap.docs
-    .filter(d=>d.data().driverUid!==currentUser.uid)
+    .filter(d=>{
+      const r = d.data();
+      return r.driverUid!==currentUser.uid && !blocked.includes(r.driverUid);
+    })
     .sort((a,b)=>{
       const ta = a.data().createdAt?.toMillis?.()||0;
       const tb = b.data().createdAt?.toMillis?.()||0;
@@ -3933,6 +3977,13 @@ function openEditProfileModal(){
   if(!currentUserData) return;
   const d=currentUserData;
   document.getElementById('ep-first').value=d.firstName||'';
+  // Prefill grade dropdown
+  const gradeEl = document.getElementById('ep-grade');
+  if(gradeEl && d.grade){ 
+    for(let i=0;i<gradeEl.options.length;i++){
+      if(gradeEl.options[i].text===d.grade){ gradeEl.selectedIndex=i; break; }
+    }
+  }
   document.getElementById('ep-last').value=d.lastName||'';
   document.getElementById('ep-age').value=d.age||'';
   document.getElementById('ep-grade').value=d.grade||'9th (Freshman)';
@@ -4655,18 +4706,22 @@ function renderPeerCards(peers){
     return;
   }
   cardsEl.innerHTML = '';
+  const myPref = currentUserData?.ridePreference||'both';
   peers.forEach(({id, data:p})=>{
+    // Skip blocked users
+    if((currentUserData?.blockedUsers||[]).includes(id)) return;
+    if((p.blockedUsers||[]).includes(currentUser?.uid)) return;
+
     const zone = p.neighborhoodZone||'Oakland Area';
-    const isPartner = (currentUserData.partners||[]).includes(id);
+    const isPartner = (currentUserData?.partners||[]).includes(id);
     if(p.photoURL) photoCache[id] = p.photoURL;
     const avHtml2 = avatarHtml(id, p.firstName, p.lastName, '48px', p.photoURL||null);
+    const theirPref = p.ridePreference||'both';
+    const canRequest = !isPartner && !(myPref==='rider' && theirPref==='rider');
+    const licenseBadge = p.licenseUploaded ? '<span class="license-badge verified" style="font-size:.65rem">🪪 License</span>' : '';
+
     const card = document.createElement('div');
     card.className = 'peer-card';
-    if(p.availableThisWeek) card.querySelector && setTimeout(()=>{
-      const av = card.querySelector('div');
-      if(av) av.classList.add('available-ring');
-    },0);
-    const licenseBadge = p.licenseUploaded ? '<span class="license-badge verified" style="font-size:.65rem">🪪 License on file</span>' : '';
     card.innerHTML = `
       <div style="margin:0 auto .3rem;display:flex;justify-content:center;position:relative">
         ${avHtml2}
@@ -4674,12 +4729,14 @@ function renderPeerCards(peers){
       </div>
       <strong>${p.firstName}</strong>
       <span class="peer-detail">${p.grade} · ${zone}</span>
-      <span class="peer-detail">${p.ridePreference==='driver'?'🚗 Driver':p.ridePreference==='rider'?'🎒 Rider':'🚗🎒 Both'}</span>
+      <span class="peer-detail">${theirPref==='driver'?'🚗 Driver':theirPref==='rider'?'🎒 Rider':'🚗🎒 Both'}</span>
       ${licenseBadge}
       ${isPartner
         ? '<span class="badge badge-green">✓ Partner</span>'
-        : `<button class="btn btn-primary btn-sm" onclick="openRequestModal('${id}','${p.firstName}')">Request Ride</button>`}
-      <button class="report-btn" onclick="reportUser('${id}','${p.firstName}')">🚩 Report</button>`;
+        : canRequest
+          ? '<button class="btn btn-primary btn-sm" onclick="openRequestModal(\'' + id + '\',\'' + p.firstName + '\')">Request Ride</button>'
+          : theirPref==='rider' ? '<span class="badge" style="font-size:.7rem;background:var(--cream);color:var(--muted)">🎒 Rider only</span>' : ''}
+      <button class="report-btn" onclick="reportUser(\'' + id + '\',\'' + p.firstName + '\')">🚩 Report</button>`;
     cardsEl.appendChild(card);
   });
 }
@@ -6556,6 +6613,79 @@ window.loadOverview = async function(){
   if(_origLoadOverviewGrade) await _origLoadOverviewGrade();
   checkGradePromotion();
 };
+
+
+// ── CONTACT FORM ──
+async function sendContactMessage(){
+  const name = document.getElementById('contact-name').value.trim();
+  const email = document.getElementById('contact-email').value.trim();
+  const subject = document.getElementById('contact-subject').value;
+  const message = document.getElementById('contact-message').value.trim();
+  if(!name||!email||!message){ showToast('Please fill in your name, email, and message.'); return; }
+  try{
+    await db.collection('contactMessages').add({
+      name, email, subject, message,
+      createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+      read: false
+    });
+    showToast('Message sent! Thanks for reaching out.');
+    document.getElementById('contact-name').value='';
+    document.getElementById('contact-email').value='';
+    document.getElementById('contact-message').value='';
+  } catch(e){
+    // Fallback: open email client directly
+    window.location.href = `mailto:jgoldsmith27@bishopodowd.org?subject=${encodeURIComponent(subject+' — '+name)}&body=${encodeURIComponent(message+'\n\nFrom: '+name+' ('+email+')')}`;
+  }
+}
+window.sendContactMessage = sendContactMessage;
+
+// ── SCHOOL-WIDE IMPACT COUNTER (loads on home page, no auth needed) ──
+async function loadSchoolImpact(){
+  try{
+    const snap = await db.collection('users').where('schoolName','==',SCHOOL).get();
+    let totalRides=0, totalCO2=0, totalMiles=0, totalStudents=0;
+    snap.docs.forEach(d=>{
+      const u = d.data();
+      if(u.isActive===false) return;
+      totalStudents++;
+      totalRides += u.totalRides||0;
+      totalCO2 += u.totalCO2Saved||0;
+      totalMiles += u.totalMiles||0;
+    });
+    // Animate the counters
+    const animate = (id, target)=>{
+      const el = document.getElementById(id);
+      if(!el) return;
+      const duration = 1200;
+      const start = performance.now();
+      function tick(now){
+        const p = Math.min((now-start)/duration, 1);
+        const eased = 1-Math.pow(1-p,3);
+        el.textContent = Math.round(eased*target).toLocaleString();
+        if(p<1) requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    };
+    animate('school-total-rides', totalRides);
+    animate('school-total-co2', Math.round(totalCO2));
+    animate('school-total-students', totalStudents);
+    animate('school-total-miles', Math.round(totalMiles));
+  } catch(e){
+    console.warn('Could not load school impact:', e);
+  }
+}
+
+// Load impact counter when home page is visible
+const _origShowPage = showPage;
+window.showPage = function(id){
+  _origShowPage(id);
+  if(id === 'home') loadSchoolImpact();
+};
+
+// Also load on initial page load (home is default)
+document.addEventListener('DOMContentLoaded', ()=>{
+  setTimeout(loadSchoolImpact, 500);
+});
 
 </script>
 </body>
