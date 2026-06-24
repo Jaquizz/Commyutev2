@@ -1148,12 +1148,12 @@ d{color:var(--muted)}
         </div>
         <div class="form-group">
           <label>Your Home Area <span style="font-size:.72rem;color:var(--muted);font-weight:400">(for the neighbor map)</span></label>
-          <input type="text" id="reg-address-input" placeholder="Start typing your street or cross-streets..." autocomplete="off" style="margin-bottom:4px">
+          <input type="text" id="reg-address-input" placeholder="Start typing your address or neighborhood..." autocomplete="off">
           <input type="hidden" id="reg-lat">
           <input type="hidden" id="reg-lng">
           <input type="hidden" id="reg-zip">
           <input type="hidden" id="reg-zone">
-          <p style="font-size:.72rem;color:var(--muted)">🔒 Only your approximate area is shown — never your exact address</p>
+          <p style="font-size:.72rem;color:var(--muted)">🔒 Only your approximate area is shown. If suggestions appear, select one for better accuracy.</p>
         </div>
         <div class="form-group"><label>I want to…</label><select id="reg-pref"><option value="both">Offer rides AND request rides</option><option value="driver">Only offer rides (I'm a driver)</option><option value="rider">Only request rides</option></select></div>
         <div style="display:flex;gap:10px">
@@ -2671,11 +2671,10 @@ function suStep(n){
     if(!pass||pass.length<6){ showToast('Password must be at least 6 characters.'); return; }
   }
   if(n===3){
-    // Step 3 — no required validation, address is optional
-    const addressInput = document.getElementById('reg-address-input');
-    const hasLocation = document.getElementById('reg-lat')?.value || document.getElementById('reg-zip')?.value;
-    if(addressInput?.value && !hasLocation){
-      showToast('Please select your address from the dropdown suggestions, or clear the field to skip.');
+    // Step 3 — validate they entered something for location
+    const addrVal = document.getElementById('reg-address-input')?.value?.trim();
+    if(!addrVal){
+      showToast('Please enter your neighborhood or address.');
       return;
     }
   }
@@ -2719,19 +2718,18 @@ async function doSignup(){
   const nickname = document.getElementById('reg-nickname').value.trim();
   const hasCar = document.getElementById('reg-has-car').value === 'yes';
 
-  // Get location from Places autocomplete hidden fields
+  // Get location — from Places autocomplete if selected, or use typed text as zone name
   const addressInput = document.getElementById('reg-address-input');
+  const typedAddr = addressInput?.value?.trim() || '';
   const lat = parseFloat(document.getElementById('reg-lat')?.value || '0');
   const lng = parseFloat(document.getElementById('reg-lng')?.value || '0');
   const zip = document.getElementById('reg-zip')?.value?.trim() || '';
-  const zone = document.getElementById('reg-zone')?.value?.trim() || '';
+  const autoZone = document.getElementById('reg-zone')?.value?.trim() || '';
+  // Use autocomplete zone if available, otherwise use whatever they typed
+  const zone = autoZone || typedAddr || '';
 
-  // Validate location was selected
-  if(addressInput && addressInput.value && (!lat || !lng)){
-    showToast('Please select your address from the dropdown suggestions.'); return;
-  }
-  if(!addressInput?.value && !zip){
-    showToast('Please enter your neighborhood or street address.'); return;
+  if(!zone){
+    showToast('Please enter your neighborhood or address.'); return;
   }
 
   let carData = null;
@@ -2751,7 +2749,7 @@ async function doSignup(){
   try {
     const cred = await auth.createUserWithEmailAndPassword(email, pass);
     const uid = cred.user.uid;
-    const finalZone = zone || getNeighborhood(zip) || 'Oakland Area';
+    const finalZone = zone || 'Oakland Area';
 
     // ── VERIFICATION GATE 3: Store data in sessionStorage, write to Firestore ONLY after email verified ──
     const pendingData = {
@@ -3059,24 +3057,41 @@ async function loadPendingOverview(){
 }
 
 // ── MAP ──
+// ── SINGLE SHARED GOOGLE MAPS SDK LOADER ──
+// Prevents the "included the Google Maps JavaScript API multiple times" error
+// which silently breaks Places Autocomplete when two separate scripts try to load it.
+let _mapsSdkState = 'unloaded'; // unloaded | loading | ready
+let _mapsSdkCallbacks = [];
+
+function loadMapsSDK(onReady){
+  if(_mapsSdkState === 'ready'){ onReady(); return; }
+  _mapsSdkCallbacks.push(onReady);
+  if(_mapsSdkState === 'loading') return; // already loading, callback will fire when ready
+
+  _mapsSdkState = 'loading';
+  window.__mapsSdkLoaded = function(){
+    _mapsSdkState = 'ready';
+    _mapsSdkCallbacks.forEach(cb => { try{ cb(); }catch(e){ console.error('Maps callback error:', e); } });
+    _mapsSdkCallbacks = [];
+  };
+  const script = document.createElement('script');
+  script.src = `https://maps.googleapis.com/maps/api/js?key=${MAPS_KEY}&libraries=places,geometry&callback=__mapsSdkLoaded&loading=async`;
+  script.async = true;
+  script.onerror = () => {
+    _mapsSdkState = 'unloaded';
+    showToast('Could not load Google Maps. Check your connection.');
+  };
+  document.head.appendChild(script);
+}
+
 function initMap(){
   if(!currentUser||!currentUserData) return;
-  if(!mapLoaded){
-    window.onMapReady = onMapReady;
-    const script = document.createElement('script');
-    script.src=`https://maps.googleapis.com/maps/api/js?key=${MAPS_KEY}&libraries=places,geometry&callback=onMapReady`;
-    script.async=true;
-    script.onerror = ()=>showToast('Could not load Google Maps. Check your connection.');
-    document.head.appendChild(script);
-    mapLoaded=true;
-  } else if(window.google&&window.google.maps){
-    // Map already loaded — just refresh the data
-    onMapReady();
-  }
+  loadMapsSDK(() => onMapReady());
 }
 
 async function onMapReady(){
   if(!currentUser || !currentUserData) return;
+  initPlacesAutocomplete(); // safe to call multiple times, no-ops if already initialized
   const center = {lat:37.768,lng:-122.218};
   mapInstance = new google.maps.Map(document.getElementById('map'),{
     center, zoom:12,
@@ -3090,14 +3105,47 @@ async function onMapReady(){
   const cardsEl = document.getElementById('peer-cards');
   cardsEl.innerHTML='';
   const ZONE_COORDS = {
-    "Oakland Hills":{lat:37.800,lng:-122.193},"Montclair / Piedmont Ave":{lat:37.824,lng:-122.207},
-    "Rockridge":{lat:37.841,lng:-122.249},"Grand Lake":{lat:37.810,lng:-122.236},
-    "Temescal":{lat:37.843,lng:-122.263},"Glenview / Redwood Heights":{lat:37.785,lng:-122.206},
-    "East Oakland":{lat:37.755,lng:-122.194},"West Oakland":{lat:37.812,lng:-122.289},
-    "Downtown Oakland":{lat:37.804,lng:-122.270},"Berkeley":{lat:37.872,lng:-122.273},
-    "Berkeley Hills":{lat:37.873,lng:-122.244},"Orinda":{lat:37.877,lng:-122.179},
-    "Oakland Area":{lat:37.780,lng:-122.230}
-  };
+  'Oakland Hills':{lat:37.812,lng:-122.188},
+  'Montclair':{lat:37.832,lng:-122.213},
+  'Piedmont':{lat:37.824,lng:-122.232},
+  'Rockridge':{lat:37.844,lng:-122.252},
+  'Temescal':{lat:37.836,lng:-122.260},
+  'Grand Lake':{lat:37.812,lng:-122.248},
+  'Laurel District':{lat:37.794,lng:-122.218},
+  'Fruitvale':{lat:37.776,lng:-122.226},
+  'Dimond':{lat:37.800,lng:-122.213},
+  'Glenview':{lat:37.806,lng:-122.228},
+  'Trestle Glen':{lat:37.810,lng:-122.238},
+  'Upper Dimond':{lat:37.804,lng:-122.206},
+  'Redwood Heights':{lat:37.802,lng:-122.192},
+  'Lincoln Highlands':{lat:37.790,lng:-122.182},
+  'Grass Valley':{lat:37.786,lng:-122.174},
+  'Seminary':{lat:37.770,lng:-122.194},
+  'Millsmont':{lat:37.786,lng:-122.198},
+  'Maxwell Park':{lat:37.778,lng:-122.212},
+  'Leimert Bridge':{lat:37.792,lng:-122.208},
+  'Joaquin Miller':{lat:37.816,lng:-122.194},
+  'Skyline':{lat:37.820,lng:-122.180},
+  'Claremont Hills':{lat:37.854,lng:-122.240},
+  'North Oakland':{lat:37.840,lng:-122.270},
+  'West Oakland':{lat:37.810,lng:-122.290},
+  'Downtown Oakland':{lat:37.804,lng:-122.272},
+  'Lake Merritt':{lat:37.802,lng:-122.258},
+  'Adams Point':{lat:37.812,lng:-122.254},
+  'Berkeley':{lat:37.870,lng:-122.268},
+  'Albany':{lat:37.888,lng:-122.298},
+  'El Cerrito':{lat:37.916,lng:-122.312},
+  'San Leandro':{lat:37.722,lng:-122.158},
+  'Castro Valley':{lat:37.694,lng:-122.086},
+  'Hayward':{lat:37.669,lng:-122.080},
+  'Orinda':{lat:37.878,lng:-122.180},
+  'Moraga':{lat:37.834,lng:-122.130},
+  'Lafayette':{lat:37.886,lng:-122.118},
+  'Walnut Creek':{lat:37.910,lng:-122.066},
+  'San Francisco':{lat:37.774,lng:-122.418},
+  'Other East Bay':{lat:37.800,lng:-122.220},
+  'Oakland Area':{lat:37.804,lng:-122.226},
+};
   peers.forEach(pd=>{
     const p=pd.data();
     const zone=p.neighborhoodZone||'Oakland Area';
@@ -4511,7 +4559,6 @@ window.openRecurringModal = openRecurringModal;
 window.saveRecurring = saveRecurring;
 window.confirmTodayRide = confirmTodayRide;
 window.loadAdminPage = loadAdminPage;
-window.adminDeactivate = adminDeactivate;
 
 window.initMap=initMap;
 window.loadFriends=loadFriends;
@@ -4571,7 +4618,6 @@ window.openRecurringModal=openRecurringModal;
 window.saveRecurring=saveRecurring;
 window.confirmTodayRide=confirmTodayRide;
 window.loadAdminPage=loadAdminPage;
-window.adminDeactivate=adminDeactivate;
 
 // ══════════════════════════════════════════
 // NEW FEATURE SET 2
@@ -5783,8 +5829,8 @@ const _origLoadDashFinal = window.loadDashboard;
 const ADMIN_SECRET_KEY = 'secretkey18';
 
 // ── PLACES AUTOCOMPLETE SETUP ──
-window.signupAutocomplete = null;
-window.editAutocomplete = null;
+let signupAutocomplete = null;
+let editAutocomplete = null;
 
 function initPlacesAutocomplete() {
   if (!window.google || !window.google.maps || !window.google.maps.places) return;
@@ -5806,7 +5852,7 @@ function initPlacesAutocomplete() {
   const signupInput = document.getElementById('reg-address-input');
   if (signupInput && !signupAutocomplete) {
     try{
-      window.signupAutocomplete = new google.maps.places.Autocomplete(signupInput, opts);
+      signupAutocomplete = new google.maps.places.Autocomplete(signupInput, opts);
       signupAutocomplete.addListener('place_changed', () => {
         const place = signupAutocomplete.getPlace();
         if (!place.geometry){ showToast('Please select an address from the dropdown.'); return; }
@@ -5818,7 +5864,7 @@ function initPlacesAutocomplete() {
   // Edit profile form
   const editInput = document.getElementById('ep-zip');
   if (editInput && !editAutocomplete) {
-    window.editAutocomplete = new google.maps.places.Autocomplete(editInput, opts);
+    editAutocomplete = new google.maps.places.Autocomplete(editInput, opts);
     editAutocomplete.addListener('place_changed', () => {
       const place = editAutocomplete.getPlace();
       if (!place.geometry) return;
@@ -5871,47 +5917,14 @@ function applyPrivacyOffset(place, latId, lngId, zipId, zoneId) {
   showToast(`📍 Location set: ${zone}`);
 }
 
-// Override onMapReady to also init Places
-const _origMapReadyPlaces = window.onMapReady;
-window.onMapReady = async function() {
-  if (_origMapReadyPlaces) await _origMapReadyPlaces();
-  initPlacesAutocomplete();
-};
-
-// Also init when signup step 2 shows
+// Init Places autocomplete whenever the shared Maps SDK becomes ready
 const _origSuStep = window.suStep;
 window.suStep = function(n) {
   if (_origSuStep) _origSuStep(n);
   if (n === 2) {
-    // Init Places on step 2 if Maps already loaded
-    setTimeout(() => {
-      if (window.google && window.google.maps) {
-        initPlacesAutocomplete();
-      } else {
-        // Load Maps SDK if not already loaded
-        if (!document.querySelector('script[src*="maps.googleapis.com"]')) {
-          const s = document.createElement('script');
-          s.src = `https://maps.googleapis.com/maps/api/js?key=${MAPS_KEY}&libraries=places,geometry&callback=onPlacesReady`;
-          s.async = true;
-          document.head.appendChild(s);
-          window.onPlacesReady = initPlacesAutocomplete;
-        } else {
-          // SDK loading — wait
-          let tries = 0;
-          const wait = setInterval(() => {
-            tries++;
-            if (window.google && window.google.maps) {
-              clearInterval(wait);
-              initPlacesAutocomplete();
-            }
-            if (tries > 20) clearInterval(wait);
-          }, 250);
-        }
-      }
-    }, 100);
+    loadMapsSDK(() => initPlacesAutocomplete());
   }
 };
-window.suStep = _origSuStep ? window.suStep : window.suStep; // keep reference
 
 // Also init when edit profile modal opens
 const _origOpenEdit = window.openEditProfileModal;
