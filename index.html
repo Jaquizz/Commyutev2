@@ -5783,8 +5783,8 @@ const _origLoadDashFinal = window.loadDashboard;
 const ADMIN_SECRET_KEY = 'secretkey18';
 
 // ── PLACES AUTOCOMPLETE SETUP ──
-let window.signupAutocomplete = null;
-let editAutocomplete = null;
+window.signupAutocomplete = null;
+window.editAutocomplete = null;
 
 function initPlacesAutocomplete() {
   if (!window.google || !window.google.maps || !window.google.maps.places) return;
