@@ -3255,10 +3255,10 @@ async function onMapReady(){
     if(isBlocked) return; // Skip blocked users entirely
 
     // Determine if "Request Ride" button should show
-    // Don't show if: already partners, they're rider-only and you're rider-only, or user is deactivated
+    // Only show if they can drive (driver or both) — riders can't be requested for a ride
     const myPref = currentUserData.ridePreference||'both';
     const theirPref = p.ridePreference||'both';
-    const canRequest = !isPartner && !(myPref==='rider' && theirPref==='rider');
+    const canRequest = !isPartner && (theirPref==='driver' || theirPref==='both');
 
     card.innerHTML=`
       <div style="margin:0 auto .3rem;display:flex;justify-content:center">${avatarHtml(pd.id,p.firstName,p.lastName,'48px',p.photoURL||null)}</div>
@@ -4835,7 +4835,7 @@ function renderPeerCards(peers){
     if(p.photoURL) photoCache[id] = p.photoURL;
     const avHtml2 = avatarHtml(id, p.firstName, p.lastName, '48px', p.photoURL||null);
     const theirPref = p.ridePreference||'both';
-    const canRequest = !isPartner && !(myPref==='rider' && theirPref==='rider');
+    const canRequest = !isPartner && (theirPref==='driver' || theirPref==='both');
     const licenseBadge = p.licenseUploaded ? '<span class="license-badge verified" style="font-size:.65rem">🪪 License</span>' : '';
 
     const card = document.createElement('div');
