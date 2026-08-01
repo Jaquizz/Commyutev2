@@ -2232,6 +2232,8 @@ let convUnsub = null;
 let msgUnsub = null;
 let rideCalcData = null;
 let mapInstance = null;
+let mapPeersUnsub = null;
+let mapMarkers = [];
 let mapLoaded = false;
 
 // ── ZIP → NEIGHBORHOOD ──
@@ -2572,6 +2574,7 @@ function showDash(id){
   const tabId = tabMap[id];
   if(tabId){ const tb=document.getElementById(tabId); if(tb) tb.classList.add('active'); }
   if(id==='map'){ mapInstance=null; initMap(); }
+  else if(mapPeersUnsub){ mapPeersUnsub(); mapPeersUnsub=null; }
   if(id==='impact') loadImpact();
   // Close mobile sidebar when navigating
   closeMobileNav();
@@ -2939,6 +2942,9 @@ async function doLogout(){
   if(typeof msgNotifUnsub==='function') msgNotifUnsub();
   if(typeof convUnsub==='function') convUnsub();
   if(typeof msgUnsub==='function') msgUnsub();
+  if(mapPeersUnsub){ mapPeersUnsub(); mapPeersUnsub=null; }
+  mapMarkers.forEach(m=>m.setMap(null));
+  mapMarkers=[];
   // Reset state
   currentUser=null; currentUserData=null; activeConvId=null;
   document.body.classList.remove('is-logged-in');
@@ -3172,13 +3178,24 @@ async function onMapReady(){
     center, zoom:12,
     styles:[{featureType:'poi',stylers:[{visibility:'off'}]}]
   });
-  const snap = await db.collection('users')
+  // Tear down any previous live listener before starting a new one (avoids duplicate/leaked listeners)
+  if(mapPeersUnsub){ mapPeersUnsub(); mapPeersUnsub=null; }
+  mapPeersUnsub = db.collection('users')
     .where('schoolName','==',SCHOOL)
-    .where('isActive','==',true).get();
-  const peers = snap.docs.filter(d=>d.data().isActive!==false);
+    .where('isActive','==',true)
+    .onSnapshot(snap => renderMapPeers(snap.docs), err => console.error('Map live update error:', err));
+}
+
+function renderMapPeers(docs){
+  if(!mapInstance) return;
+  const center = {lat:37.768,lng:-122.218};
+  const peers = docs.filter(d=>d.data().isActive!==false);
   document.getElementById('map-count').textContent = peers.length+' students nearby';
   const cardsEl = document.getElementById('peer-cards');
   cardsEl.innerHTML='';
+  // Clear previous markers before redrawing with fresh data
+  mapMarkers.forEach(m=>m.setMap(null));
+  mapMarkers = [];
   const ZONE_COORDS = {
   'Oakland Hills':{lat:37.812,lng:-122.188},
   'Montclair':{lat:37.832,lng:-122.213},
@@ -3252,6 +3269,7 @@ async function onMapReady(){
             style="margin-top:5px;background:#1a6b3c;color:#fff;border:none;padding:4px 10px;border-radius:6px;font-size:.75rem;cursor:pointer">Request Ride</button>`}
       </div>`});
     marker.addListener('click',()=>info.open(mapInstance,marker));
+    mapMarkers.push(marker);
     const col=avatarColor(pd.id);
     const card=document.createElement('div');
     card.className='peer-card';
@@ -5974,8 +5992,8 @@ function applyPrivacyOffset(place, latId, lngId, zipId, zoneId) {
   const lat = place.geometry.location.lat();
   const lng = place.geometry.location.lng();
 
-  // Random offset: 0.1–0.3 miles in a random direction
-  const offsetMiles = 0.1 + Math.random() * 0.2;
+  // Random offset: 0.05–0.1 miles (about 1-2 blocks) in a random direction
+  const offsetMiles = 0.05 + Math.random() * 0.05;
   const offsetMeters = offsetMiles * 1609.34;
   const angle = Math.random() * 2 * Math.PI;
 
