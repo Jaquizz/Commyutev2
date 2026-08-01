@@ -4139,6 +4139,10 @@ function openEditProfileModal(){
   document.getElementById('ep-age').value=d.age||'';
   document.getElementById('ep-grade').value=d.grade||'9th (Freshman)';
   const epZipEl = document.getElementById('ep-zip'); if(epZipEl) epZipEl.value=d.neighborhoodZone||d.zip||'';
+  // Reset hidden location fields — only a fresh autocomplete selection in this session should set them
+  const epLatEl = document.getElementById('ep-lat'); if(epLatEl) epLatEl.value='';
+  const epLngEl = document.getElementById('ep-lng'); if(epLngEl) epLngEl.value='';
+  const epZoneValEl = document.getElementById('ep-zone-val'); if(epZoneValEl) epZoneValEl.value='';
   document.getElementById('ep-pref').value=d.ridePreference||'both';
   document.getElementById('ep-comp').value=d.compensation||'free';
   openModal('modal-edit-profile');
@@ -4152,14 +4156,17 @@ async function saveProfile(){
   const pref=document.getElementById('ep-pref').value;
   const comp=document.getElementById('ep-comp').value;
   if(!first||!last){ showToast('Please enter your name.'); return; }
-  // Get location from Places autocomplete or keep existing
+  // Get location from Places autocomplete, or fall back to whatever text was typed
+  const typedAddr = document.getElementById('ep-zip')?.value?.trim() || '';
   const epZoneVal = document.getElementById('ep-zone-val')?.value?.trim();
   const epLat = parseFloat(document.getElementById('ep-lat')?.value||'0');
   const epLng = parseFloat(document.getElementById('ep-lng')?.value||'0');
-  const zone = epZoneVal || currentUserData?.neighborhoodZone || 'Oakland Area';
+  const zone = epZoneVal || typedAddr || currentUserData?.neighborhoodZone || 'Oakland Area';
   const zip = currentUserData?.zip || '';
+  const locationUpdate = (epLat && epLng) ? {lat:epLat, lng:epLng} : {};
   await db.collection('users').doc(currentUser.uid).update({
-    firstName:first,lastName:last,age:parseInt(age)||17,grade,zip,neighborhoodZone:zone,ridePreference:pref,compensation:comp
+    firstName:first,lastName:last,age:parseInt(age)||17,grade,zip,neighborhoodZone:zone,ridePreference:pref,compensation:comp,
+    ...locationUpdate
   });
   currentUserData=(await db.collection('users').doc(currentUser.uid).get()).data();
   document.getElementById('sb-name').textContent=first+' '+last;
@@ -6044,7 +6051,7 @@ window.suStep = function(n) {
 const _origOpenEdit = window.openEditProfileModal;
 window.openEditProfileModal = async function() {
   if (_origOpenEdit) await _origOpenEdit();
-  setTimeout(initPlacesAutocomplete, 100);
+  loadMapsSDK(() => initPlacesAutocomplete());
 };
 
 // Update doSignup to use lat/lng instead of zip
