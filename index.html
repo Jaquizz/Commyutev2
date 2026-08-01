@@ -1674,31 +1674,6 @@ d{color:var(--muted)}
 </div>
 
 <!-- ══════ PAGE: ADMIN ══════ -->
-<div class="page" id="page-admin">
-  <div style="max-width:1100px;margin:0 auto;padding:2rem">
-    <div style="display:flex;align-items:center;gap:1rem;margin-bottom:2rem">
-      <h2 style="font-family:'Fraunces',serif;font-size:1.8rem;color:var(--green-dark)">Admin Dashboard</h2>
-      <span class="admin-badge">ADMIN</span>
-    </div>
-    <div class="stats-row" id="admin-stats">
-      <div class="stat-card"><div class="stat-label">Total Students</div><div class="stat-num" id="admin-total">—</div></div>
-      <div class="stat-card"><div class="stat-label">Active Carpoolers</div><div class="stat-num" id="admin-active">—</div></div>
-      <div class="stat-card"><div class="stat-label">Total Rides Logged</div><div class="stat-num" id="admin-rides">—</div></div>
-      <div class="stat-card"><div class="stat-label">Total CO₂ Saved</div><div class="stat-num" id="admin-co2">—</div><div class="stat-unit">lbs</div></div>
-    </div>
-    <div class="grid-2">
-      <div class="card">
-        <div class="card-header"><span class="card-title">All Students</span></div>
-        <div id="admin-users-list"><p class="text-muted" style="font-size:.875rem">Loading...</p></div>
-      </div>
-      <div class="card">
-        <div class="card-header"><span class="card-title">Reports</span></div>
-        <div id="admin-reports-list"><p class="text-muted" style="font-size:.875rem">No reports yet.</p></div>
-      </div>
-    </div>
-  </div>
-</div>
-
 <!-- ══════ PAGE: ADMIN LOGIN ══════ -->
 <div class="page" id="page-admin-login">
   <div class="auth-wrap">
@@ -3006,7 +2981,6 @@ function loadDashboard(){
   document.body.classList.add('is-logged-in');
   // Run post-login checks
   setTimeout(checkWelcome, 500);
-  setTimeout(checkIfAdmin, 600);
   setTimeout(renderProfileProgress, 800);
   // Subtle push notification prompt
   setTimeout(()=>{
@@ -4587,73 +4561,9 @@ async function confirmTodayRide(){
 // Load recurring summary when schedule opens
 // loadSchedule handles renderRecurringSummary directly now
 
-// ── ADMIN PAGE ──
-async function loadAdminPage(){
-  if(!currentUser||!currentUserData) return;
-  showPage('admin');
-  const snap = await db.collection('users').where('schoolName','==',SCHOOL).get();
-  const users = snap.docs.map(d=>({id:d.id,...d.data()}));
-
-  document.getElementById('admin-total').textContent = users.length;
-  document.getElementById('admin-active').textContent = users.filter(u=>u.totalRides>0).length;
-
-  // Total rides
-  const ridesSnap = await db.collection('rides').where('school','==',SCHOOL).get();
-  document.getElementById('admin-rides').textContent = ridesSnap.size;
-  const totalCO2 = ridesSnap.docs.reduce((sum,d)=>sum+(d.data().co2Saved||0),0);
-  document.getElementById('admin-co2').textContent = Math.round(totalCO2*10)/10;
-
-  // Users list
-  const el = document.getElementById('admin-users-list');
-  el.innerHTML = users.sort((a,b)=>b.totalRides-a.totalRides).map(u=>`
-    <div style="display:flex;align-items:center;gap:10px;padding:.7rem 0;border-bottom:1px solid var(--border)">
-      <div>${avatarHtml(u.id, u.firstName, u.lastName, '40px', u.photoURL||null)}</div>
-      <div style="flex:1">
-        <strong style="font-size:.875rem">${u.firstName} ${u.lastName}</strong>
-        <div style="font-size:.75rem;color:var(--muted)">${u.grade} · ${u.neighborhoodZone||''} · ${u.totalRides||0} rides · ${u.totalCO2Saved||0} lbs CO₂</div>
-      </div>
-      <button class="btn btn-outline btn-sm" onclick="adminDeactivateUser('${u.id}','${u.firstName} ${u.lastName}')" style="color:var(--red);border-color:var(--red)">Remove</button>
-    </div>`).join('');
-
-  // Reports
-  const reportsSnap = await db.collection('reports').where('school','==',SCHOOL).get();
-  const rEl = document.getElementById('admin-reports-list');
-  if(reportsSnap.empty){ rEl.innerHTML='<p class="text-muted" style="font-size:.875rem">No reports yet.</p>'; return; }
-  rEl.innerHTML = reportsSnap.docs.map(d=>{
-    const r=d.data();
-    return `<div class="card mb1" style="font-size:.875rem">
-      <strong>Report: ${r.reportedName}</strong>
-      <div style="color:var(--muted);margin:.3rem 0">${r.reason}</div>
-      ${r.details?`<div style="background:var(--cream);padding:.5rem;border-radius:6px;margin:.3rem 0">"${r.details}"</div>`:''}
-      <div style="color:var(--muted);font-size:.75rem">Reported by ${r.reporterName} · ${fmtDate(r.createdAt)}</div>
-      <button class="btn btn-red btn-sm" style="margin-top:.5rem" onclick="adminDeactivateUser('${r.reportedUid}','${r.reportedName}')">Remove Student</button>
-    </div>`;
-  }).join('');
-}
-
-// adminDeactivate consolidated into adminDeactivateUser
-
-// Show admin button in nav if admin user
-const _origAuthState = auth.onAuthStateChanged.bind(auth);
-// Check admin on load
-async function checkIfAdmin(){
-  if(!currentUser||!currentUserData) return;
-  if(currentUserData.email === ADMIN_EMAIL || currentUserData.isAdmin === true){
-    // Add admin button to auth actions
-    const authActions = document.getElementById('authActions');
-    if(authActions && !document.getElementById('admin-nav-btn')){
-      const adminBtn = document.createElement('button');
-      adminBtn.id = 'admin-nav-btn';
-      adminBtn.className = 'btn btn-outline btn-sm';
-      adminBtn.innerHTML = '⚙️ Admin';
-      adminBtn.onclick = loadAdminPage;
-      authActions.insertBefore(adminBtn, authActions.firstChild);
-    }
-  }
-}
-
-// Hook into loadDashboard to check admin
-// Admin check runs after loadDashboard
+// Legacy in-app admin page and nav button removed — the full admin system
+// now lives exclusively at page-admin-login / page-admin-dashboard, reachable
+// only via the footer "Admin" link, requiring email + password + secret key.
 
 // ── EXPORT NEW FUNCTIONS ──
 window.toggleMobileNav = toggleMobileNav;
@@ -4670,7 +4580,6 @@ window.submitReport = submitReport;
 window.openRecurringModal = openRecurringModal;
 window.saveRecurring = saveRecurring;
 window.confirmTodayRide = confirmTodayRide;
-window.loadAdminPage = loadAdminPage;
 
 window.initMap=initMap;
 window.loadFriends=loadFriends;
@@ -4729,7 +4638,6 @@ window.submitReport=submitReport;
 window.openRecurringModal=openRecurringModal;
 window.saveRecurring=saveRecurring;
 window.confirmTodayRide=confirmTodayRide;
-window.loadAdminPage=loadAdminPage;
 
 // ══════════════════════════════════════════
 // NEW FEATURE SET 2
