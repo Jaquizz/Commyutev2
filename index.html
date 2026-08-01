@@ -6123,6 +6123,14 @@ async function doAdminLogin() {
     return;
   }
 
+  // Hard restriction: only the designated admin email may ever proceed, checked before
+  // any Firebase auth attempt is even made — no other account can access this portal.
+  if (email.toLowerCase() !== ADMIN_EMAIL.toLowerCase()) {
+    errEl.textContent = '❌ This account does not have admin privileges.';
+    errEl.classList.remove('hidden');
+    return;
+  }
+
   // Check admin key FIRST (client-side fast check)
   if (key !== ADMIN_SECRET_KEY) {
     errEl.textContent = '❌ Invalid admin key.';
@@ -6323,6 +6331,7 @@ function renderAdminStudents(students) {
       </div>
       <div class="admin-actions">
         <button class="btn btn-sm btn-outline" onclick="adminViewStudent('${u.id}')" title="View details">👁</button>
+        <button class="btn btn-sm btn-outline" onclick="adminEditStudent('${u.id}')" title="Edit this student's profile">✏️ Edit</button>
         <button class="btn btn-sm btn-outline" onclick="adminResetPassword('${u.email}')" title="Send password reset" style="font-size:.72rem">🔑</button>
         ${!hasPreciseLocation && !u.needsLocationUpdate ? `<button class="btn btn-sm btn-outline" onclick="adminRequestLocationUpdate('${u.id}','${escapeHtml(u.firstName||'')}')" title="Ask this student to update their location" style="font-size:.72rem">📍 Request Update</button>` : ''}
         ${isDeactivated
@@ -6924,6 +6933,170 @@ async function adminFlagAllImpreciseLocations(){
   }catch(e){ showToast('Error: '+e.message); }
 }
 window.adminFlagAllImpreciseLocations = adminFlagAllImpreciseLocations;
+
+// ── FULL ADMIN STUDENT EDITOR ──
+// Lets the admin (jgoldsmith27@bishopodowd.org only) edit any field on any student's
+// profile directly. Changes write straight to Firestore and appear live in the app
+// via the existing onSnapshot listeners (map, leaderboard, admin list all update automatically).
+let adminEditAutocomplete = null;
+
+async function adminEditStudent(uid){
+  if(!adminAuthenticated) return;
+  const snap = await db.collection('users').doc(uid).get();
+  if(!snap.exists) return;
+  const u = snap.data();
+
+  document.getElementById('admin-edit-overlay')?.remove();
+
+  const overlay = document.createElement('div');
+  overlay.id = 'admin-edit-overlay';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:300;display:flex;align-items:center;justify-content:center;padding:1rem';
+  overlay.innerHTML = `<div style="background:var(--warm-white);border-radius:var(--radius);padding:2rem;max-width:600px;width:100%;max-height:90vh;overflow-y:auto">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.2rem">
+      <h3 style="font-family:'Fraunces',serif">Edit ${u.firstName||''} ${u.lastName||''}</h3>
+      <button onclick="document.getElementById('admin-edit-overlay').remove()" style="background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--muted)">✕</button>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group"><label>First Name</label><input type="text" id="ae-first" value="${escapeHtml(u.firstName||'')}"></div>
+      <div class="form-group"><label>Last Name</label><input type="text" id="ae-last" value="${escapeHtml(u.lastName||'')}"></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label>Age</label><input type="number" id="ae-age" min="13" max="19" value="${u.age||''}"></div>
+      <div class="form-group"><label>Grade</label>
+        <select id="ae-grade">
+          <option ${u.grade==='9th (Freshman)'?'selected':''}>9th (Freshman)</option>
+          <option ${u.grade==='10th (Sophomore)'?'selected':''}>10th (Sophomore)</option>
+          <option ${u.grade==='11th (Junior)'?'selected':''}>11th (Junior)</option>
+          <option ${u.grade==='12th (Senior)'?'selected':''}>12th (Senior)</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group"><label>Email</label><input type="email" id="ae-email" value="${escapeHtml(u.email||'')}" disabled style="opacity:.6"></div>
+    <p style="font-size:.7rem;color:var(--muted);margin-top:-.6rem;margin-bottom:.8rem">Email can't be changed here — it's tied to their login account.</p>
+
+    <div class="form-row">
+      <div class="form-group"><label>Ride Preference</label>
+        <select id="ae-pref">
+          <option value="both" ${(u.ridePreference||'both')==='both'?'selected':''}>Offer & Request</option>
+          <option value="driver" ${u.ridePreference==='driver'?'selected':''}>Only offer (driver)</option>
+          <option value="rider" ${u.ridePreference==='rider'?'selected':''}>Only request (rider)</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Compensation</label>
+        <select id="ae-comp">
+          <option value="free" ${(u.compensation||'free')==='free'?'selected':''}>Free</option>
+          <option value="cash" ${u.compensation==='cash'?'selected':''}>Cash contribution</option>
+          <option value="baked" ${u.compensation==='baked'?'selected':''}>Baked goods</option>
+          <option value="open" ${u.compensation==='open'?'selected':''}>Open to anything</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label>Location <span style="font-size:.72rem;color:var(--muted);font-weight:400">(current: ${escapeHtml(u.neighborhoodZone||'not set')})</span></label>
+      <input type="text" id="ae-address-input" placeholder="Type a new address to update their map location..." autocomplete="off">
+      <input type="hidden" id="ae-lat"><input type="hidden" id="ae-lng"><input type="hidden" id="ae-zone">
+      <p style="font-size:.72rem;color:var(--muted);margin-top:.3rem">🔒 Leave blank to keep their current location unchanged. Only an approximate area will ever be shown on the map.</p>
+    </div>
+
+    <div class="form-group">
+      <label><input type="checkbox" id="ae-has-car" ${u.hasCar?'checked':''} style="width:auto;margin-right:6px"> Has a car</label>
+    </div>
+    <div id="ae-car-fields" style="display:${u.hasCar?'grid':'none'};grid-template-columns:1fr 1fr;gap:.8rem">
+      <div class="form-group"><label>Year</label><input type="number" id="ae-car-year" value="${u.car?.year||''}"></div>
+      <div class="form-group"><label>Make</label><input type="text" id="ae-car-make" value="${escapeHtml(u.car?.make||'')}"></div>
+      <div class="form-group"><label>Model</label><input type="text" id="ae-car-model" value="${escapeHtml(u.car?.model||'')}"></div>
+      <div class="form-group"><label>MPG</label><input type="number" id="ae-car-mpg" value="${u.car?.mpg||''}" placeholder="Auto-calculated if blank"></div>
+    </div>
+
+    <div class="form-group"><label>Leaderboard Nickname</label><input type="text" id="ae-nickname" value="${escapeHtml(u.nickname||'')}" placeholder="Leave blank to stay off leaderboard"></div>
+
+    <div style="display:flex;gap:8px;margin-top:1rem">
+      <button class="btn btn-primary" onclick="adminSaveStudentEdits('${uid}')">Save Changes</button>
+      <button class="btn btn-outline" onclick="document.getElementById('admin-edit-overlay').remove()">Cancel</button>
+    </div>
+  </div>`;
+  document.body.appendChild(overlay);
+
+  // Toggle car fields visibility
+  document.getElementById('ae-has-car').addEventListener('change', function(){
+    document.getElementById('ae-car-fields').style.display = this.checked ? 'grid' : 'none';
+  });
+
+  // Attach a fresh Places Autocomplete to this modal's address field
+  loadMapsSDK(() => {
+    const input = document.getElementById('ae-address-input');
+    if(!input || !window.google?.maps?.places) return;
+    adminEditAutocomplete = new google.maps.places.Autocomplete(input, {
+      componentRestrictions:{country:'us'},
+      fields:['geometry','address_components'],
+      types:['geocode']
+    });
+    adminEditAutocomplete.addListener('place_changed', () => {
+      const place = adminEditAutocomplete.getPlace();
+      if(!place.geometry) return;
+      applyPrivacyOffset(place, 'ae-lat', 'ae-lng', null, 'ae-zone');
+    });
+  });
+}
+window.adminEditStudent = adminEditStudent;
+
+async function adminSaveStudentEdits(uid){
+  if(!adminAuthenticated) return;
+  const first = document.getElementById('ae-first').value.trim();
+  const last = document.getElementById('ae-last').value.trim();
+  const age = parseInt(document.getElementById('ae-age').value)||17;
+  const grade = document.getElementById('ae-grade').value;
+  const pref = document.getElementById('ae-pref').value;
+  const comp = document.getElementById('ae-comp').value;
+  const nickname = document.getElementById('ae-nickname').value.trim();
+  const hasCar = document.getElementById('ae-has-car').checked;
+
+  if(!first || !last){ showToast('First and last name are required.'); return; }
+
+  const update = {
+    firstName: escapeHtml(first),
+    lastName: escapeHtml(last),
+    age, grade,
+    ridePreference: pref,
+    compensation: comp,
+    nickname: nickname || null,
+    showOnLeaderboard: !!nickname,
+    hasCar
+  };
+
+  if(hasCar){
+    const year = document.getElementById('ae-car-year').value;
+    const make = document.getElementById('ae-car-make').value.trim();
+    const model = document.getElementById('ae-car-model').value.trim();
+    let mpg = parseFloat(document.getElementById('ae-car-mpg').value);
+    if(!mpg && year && make && model) mpg = getMPG(year, make, model);
+    update.car = {year: parseInt(year)||null, make, model, mpg: mpg||null};
+  } else {
+    update.car = null;
+  }
+
+  // Only touch location if the admin actually typed and selected a new address
+  const newLat = parseFloat(document.getElementById('ae-lat')?.value||'0');
+  const newLng = parseFloat(document.getElementById('ae-lng')?.value||'0');
+  const newZone = document.getElementById('ae-zone')?.value?.trim();
+  if(newLat && newLng){
+    update.lat = newLat;
+    update.lng = newLng;
+    update.neighborhoodZone = newZone || 'Oakland Area';
+    update.needsLocationUpdate = false;
+  }
+
+  try{
+    await db.collection('users').doc(uid).update(update);
+    showToast(`${first}'s profile updated.`);
+    document.getElementById('admin-edit-overlay')?.remove();
+    // Live listeners (map, leaderboard, admin list) refresh automatically
+  }catch(e){ showToast('Error saving changes: '+e.message); }
+}
+window.adminSaveStudentEdits = adminSaveStudentEdits;
 
 // ── STUDENT-SIDE NUDGE: prompt to update location if flagged ──
 function checkLocationUpdatePrompt(){
