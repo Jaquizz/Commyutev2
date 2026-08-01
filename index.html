@@ -1779,7 +1779,9 @@ d{color:var(--muted)}
           <label style="display:flex;align-items:center;gap:6px;font-size:.8rem;color:var(--muted);cursor:pointer;white-space:nowrap">
             <input type="checkbox" id="admin-show-removed" onchange="filterAdminStudents()"> Show removed
           </label>
+          <button class="btn btn-sm btn-outline" style="white-space:nowrap;font-size:.78rem" onclick="adminFlagAllImpreciseLocations()">📍 Flag All Approximate Locations</button>
         </div>
+        <div id="admin-location-flag-summary" style="font-size:.78rem;color:var(--muted);margin-bottom:.8rem"></div>
         <div id="admin-students-list" style="display:flex;flex-direction:column;gap:.5rem"></div>
       </div>
 
@@ -4163,7 +4165,7 @@ async function saveProfile(){
   const epLng = parseFloat(document.getElementById('ep-lng')?.value||'0');
   const zone = epZoneVal || typedAddr || currentUserData?.neighborhoodZone || 'Oakland Area';
   const zip = currentUserData?.zip || '';
-  const locationUpdate = (epLat && epLng) ? {lat:epLat, lng:epLng} : {};
+  const locationUpdate = (epLat && epLng) ? {lat:epLat, lng:epLng, needsLocationUpdate:false} : {};
   await db.collection('users').doc(currentUser.uid).update({
     firstName:first,lastName:last,age:parseInt(age)||17,grade,zip,neighborhoodZone:zone,ridePreference:pref,compensation:comp,
     ...locationUpdate
@@ -6286,9 +6288,21 @@ function renderAdminStudents(students) {
   const removedCount = students.filter(u => u.isActive === false).length;
   const sorted = [...visible].sort((a,b) => (a.firstName||'').localeCompare(b.firstName||''));
 
+  // Update location accuracy summary
+  const summaryEl = document.getElementById('admin-location-flag-summary');
+  if(summaryEl){
+    const activeStudents = students.filter(u=>u.isActive!==false);
+    const impreciseCount = activeStudents.filter(u=>!(u.lat && u.lng)).length;
+    const preciseCount = activeStudents.length - impreciseCount;
+    summaryEl.textContent = impreciseCount>0
+      ? `📍 ${preciseCount} of ${activeStudents.length} students have a precise map location · ${impreciseCount} still need to update theirs`
+      : `📍 All ${activeStudents.length} active students have a precise map location`;
+  }
+
   el.innerHTML = sorted.map(u => {
     const isDeactivated = u.isActive === false;
     const hasRides = (u.totalRides||0) > 0;
+    const hasPreciseLocation = !!(u.lat && u.lng);
     const photo = u.photoURL ? `<img src="${u.photoURL}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">` : initials(u.firstName,u.lastName);
     return `<div class="admin-student-row ${isDeactivated?'deactivated':''}">
       <div class="avatar" style="background:${avatarColor(u.id)};flex-shrink:0;font-size:.8rem">${photo}</div>
@@ -6297,6 +6311,10 @@ function renderAdminStudents(students) {
         <div style="font-size:.75rem;color:var(--muted)">${u.email||'—'} · ${u.grade||'—'} · ${u.neighborhoodZone||'—'}</div>
         <div style="display:flex;gap:5px;margin-top:4px;flex-wrap:wrap">
           ${isDeactivated ? '<span class="badge badge-red" style="font-size:.65rem">Deactivated</span>' : '<span class="badge badge-green" style="font-size:.65rem">Active</span>'}
+          ${hasPreciseLocation
+            ? '<span class="badge" style="font-size:.65rem;background:#dcfce7;color:#166534">📍 Precise location</span>'
+            : '<span class="badge" style="font-size:.65rem;background:#fef3c7;color:#92400e">⚠️ Approximate only</span>'}
+          ${u.needsLocationUpdate ? '<span class="badge" style="font-size:.65rem;background:#fee2e2;color:#991b1b">🔔 Update requested</span>' : ''}
           ${hasRides ? `<span class="badge badge-blue" style="font-size:.65rem">${u.totalRides} rides</span>` : ''}
           ${u.licenseUploaded ? '<span class="badge" style="font-size:.65rem;background:#dbeafe;color:#1a3e6e">🪪 License</span>' : ''}
           ${u.car ? `<span class="badge" style="font-size:.65rem;background:var(--cream);color:var(--muted)">${u.car.year||''} ${u.car.make||''}</span>` : ''}
@@ -6306,6 +6324,7 @@ function renderAdminStudents(students) {
       <div class="admin-actions">
         <button class="btn btn-sm btn-outline" onclick="adminViewStudent('${u.id}')" title="View details">👁</button>
         <button class="btn btn-sm btn-outline" onclick="adminResetPassword('${u.email}')" title="Send password reset" style="font-size:.72rem">🔑</button>
+        ${!hasPreciseLocation && !u.needsLocationUpdate ? `<button class="btn btn-sm btn-outline" onclick="adminRequestLocationUpdate('${u.id}','${escapeHtml(u.firstName||'')}')" title="Ask this student to update their location" style="font-size:.72rem">📍 Request Update</button>` : ''}
         ${isDeactivated
           ? `<button class="btn btn-sm btn-primary" onclick="adminReactivate('${u.id}','${escapeHtml(u.firstName+' '+u.lastName)}')" style="font-size:.72rem">Reactivate</button>`
           : `<button class="btn btn-sm" onclick="adminDeactivateUser('${u.id}','${escapeHtml(u.firstName+' '+u.lastName)}')" style="background:var(--red);color:#fff;font-size:.72rem">Remove</button>`
@@ -6877,6 +6896,67 @@ async function requestAccountDeletion(){
   }catch(e){ showToast('Error deleting account: '+e.message); }
 }
 window.requestAccountDeletion = requestAccountDeletion;
+
+// ── LOCATION ACCURACY MANAGEMENT (admin side) ──
+// Admins can never see or set a student's real address — that data is never stored anywhere.
+// What admins CAN do is flag accounts with an imprecise (fallback) location so the student
+// sees a prompt next time they log in, asking them to re-enter their own address.
+
+async function adminRequestLocationUpdate(uid, name){
+  if(!adminAuthenticated) return;
+  try{
+    await db.collection('users').doc(uid).update({needsLocationUpdate:true});
+    showToast(`${name} will be asked to update their location next time they log in.`);
+  }catch(e){ showToast('Error: '+e.message); }
+}
+window.adminRequestLocationUpdate = adminRequestLocationUpdate;
+
+async function adminFlagAllImpreciseLocations(){
+  if(!adminAuthenticated) return;
+  const toFlag = allStudentsCache.filter(u => u.isActive!==false && !(u.lat && u.lng) && !u.needsLocationUpdate);
+  if(!toFlag.length){ showToast('No students need flagging — everyone either has a precise location or was already flagged.'); return; }
+  if(!confirm(`Flag ${toFlag.length} student${toFlag.length>1?'s':''} to update their location?\n\nThey'll see a one-time prompt next time they log in asking them to re-enter their address for a more accurate map placement.`)) return;
+  try{
+    const batch = db.batch();
+    toFlag.forEach(u => batch.update(db.collection('users').doc(u.id), {needsLocationUpdate:true}));
+    await batch.commit();
+    showToast(`${toFlag.length} student${toFlag.length>1?'s':''} flagged. They'll see the prompt next login.`);
+  }catch(e){ showToast('Error: '+e.message); }
+}
+window.adminFlagAllImpreciseLocations = adminFlagAllImpreciseLocations;
+
+// ── STUDENT-SIDE NUDGE: prompt to update location if flagged ──
+function checkLocationUpdatePrompt(){
+  if(!currentUser || !currentUserData) return;
+  if(!currentUserData.needsLocationUpdate) return;
+  if(document.getElementById('location-update-banner')) return; // already showing
+  const banner = document.createElement('div');
+  banner.id = 'location-update-banner';
+  banner.className = 'nudge-banner';
+  banner.style.background = 'linear-gradient(135deg,#2463a8,#1a4d80)';
+  banner.innerHTML = `<div>
+      <strong>📍 Update your location</strong>
+      <p>Your map location may be inaccurate. Update it in your profile for better matches nearby.</p>
+    </div>
+    <div style="display:flex;gap:8px;flex-shrink:0">
+      <button class="btn" style="background:rgba(255,255,255,.25);color:#fff;border-color:rgba(255,255,255,.4)" onclick="dismissLocationBanner();openEditProfileModal()">Update Now</button>
+      <button class="btn" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.3)" onclick="dismissLocationBanner()">Later</button>
+    </div>`;
+  const overviewAlert = document.getElementById('overview-alert');
+  if(overviewAlert && overviewAlert.parentNode) overviewAlert.parentNode.insertBefore(banner, overviewAlert);
+}
+function dismissLocationBanner(){
+  document.getElementById('location-update-banner')?.remove();
+}
+window.checkLocationUpdatePrompt = checkLocationUpdatePrompt;
+window.dismissLocationBanner = dismissLocationBanner;
+
+// Run location-update check whenever the overview loads (same pattern as grade promotion)
+const _origLoadOverviewLoc = window.loadOverview;
+window.loadOverview = async function(){
+  if(_origLoadOverviewLoc) await _origLoadOverviewLoc();
+  checkLocationUpdatePrompt();
+};
 
 </script>
 </body>
