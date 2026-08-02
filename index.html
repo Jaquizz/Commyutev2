@@ -2610,6 +2610,7 @@ auth.onAuthStateChanged(async function(user){
                 age:p.age, grade:p.grade, schoolName:p.schoolName,
                 zip:p.zip||'', neighborhoodZone:p.neighborhoodZone||'Oakland Area',
                 lat:p.lat||null, lng:p.lng||null,
+                needsLocationUpdate: p.needsLocationUpdate ?? !(p.lat && p.lng),
                 ridePreference:p.ridePreference, compensation:p.compensation,
                 nickname:p.nickname||null, showOnLeaderboard:!!p.nickname,
                 hasCar:p.hasCar, car:p.car||null,
@@ -2729,19 +2730,19 @@ async function doSignup(){
   const nickname = document.getElementById('reg-nickname').value.trim();
   const hasCar = document.getElementById('reg-has-car').value === 'yes';
 
-  // Get location — from Places autocomplete if selected, or use typed text as zone name
+  // Get location — only from a real Places autocomplete selection. Never use raw typed
+  // text as the public-facing "neighborhood" label, since that text could be their
+  // literal street address and would otherwise be shown to every other student.
   const addressInput = document.getElementById('reg-address-input');
-  const typedAddr = addressInput?.value?.trim() || '';
   const lat = parseFloat(document.getElementById('reg-lat')?.value || '0');
   const lng = parseFloat(document.getElementById('reg-lng')?.value || '0');
   const zip = document.getElementById('reg-zip')?.value?.trim() || '';
   const autoZone = document.getElementById('reg-zone')?.value?.trim() || '';
-  // Use autocomplete zone if available, otherwise use whatever they typed
-  const zone = autoZone || typedAddr || '';
-
-  if(!zone){
-    showToast('Please enter your neighborhood or address.'); return;
-  }
+  const hasPreciseLocation = !!(autoZone && lat && lng);
+  // Public zone label: only ever the safe, geocoded neighborhood name — never raw input.
+  // If they typed something but didn't select a suggestion, fall back to a generic label
+  // and flag the account so they see a prompt to fix it precisely after signing up.
+  const zone = autoZone || 'Oakland Area';
 
   let carData = null;
   if(hasCar){
@@ -2760,14 +2761,10 @@ async function doSignup(){
   try {
     const cred = await auth.createUserWithEmailAndPassword(email, pass);
     const uid = cred.user.uid;
-    const finalZone = zone || 'Oakland Area';
-
-    // ── VERIFICATION GATE 3: Store data in a Firestore "pendingSignups" doc, keyed by uid.
-    // This survives across devices/tabs (unlike sessionStorage), so verifying on a phone
-    // after signing up on a laptop still works correctly.
     const pendingData = {
       uid, firstName:escapeHtml(first), lastName:escapeHtml(last), email, age:parseInt(age)||17, grade,
-      schoolName:SCHOOL, zip, neighborhoodZone:finalZone, lat:lat||null, lng:lng||null,
+      schoolName:SCHOOL, zip, neighborhoodZone:zone, lat:lat||null, lng:lng||null,
+      needsLocationUpdate: !hasPreciseLocation,
       ridePreference:pref, compensation:comp,
       nickname:nickname||null, showOnLeaderboard:!!nickname,
       hasCar, car:carData
@@ -2843,6 +2840,7 @@ async function doLogin(){
               age:p.age, grade:p.grade, schoolName:p.schoolName,
               zip:p.zip||'', neighborhoodZone:p.neighborhoodZone||'Oakland Area',
               lat:p.lat||null, lng:p.lng||null,
+              needsLocationUpdate: p.needsLocationUpdate ?? !(p.lat && p.lng),
               ridePreference:p.ridePreference, compensation:p.compensation,
               nickname:p.nickname||null, showOnLeaderboard:!!p.nickname,
               hasCar:p.hasCar, car:p.car||null,
@@ -4131,22 +4129,28 @@ async function saveProfile(){
   const pref=document.getElementById('ep-pref').value;
   const comp=document.getElementById('ep-comp').value;
   if(!first||!last){ showToast('Please enter your name.'); return; }
-  // Get location from Places autocomplete, or fall back to whatever text was typed
-  const typedAddr = document.getElementById('ep-zip')?.value?.trim() || '';
+  // Get location — only from a real Places autocomplete selection. Never use raw typed
+  // text as the public-facing zone label, since it could be their literal street address.
   const epZoneVal = document.getElementById('ep-zone-val')?.value?.trim();
   const epLat = parseFloat(document.getElementById('ep-lat')?.value||'0');
   const epLng = parseFloat(document.getElementById('ep-lng')?.value||'0');
-  const zone = epZoneVal || typedAddr || currentUserData?.neighborhoodZone || 'Oakland Area';
   const zip = currentUserData?.zip || '';
-  const locationUpdate = (epLat && epLng) ? {lat:epLat, lng:epLng, needsLocationUpdate:false} : {};
+  // Only touch location fields at all if a genuine autocomplete selection was made this session.
+  // Otherwise their existing (already-safe) location is left completely unchanged.
+  const locationUpdate = (epZoneVal && epLat && epLng)
+    ? {lat:epLat, lng:epLng, neighborhoodZone:epZoneVal, needsLocationUpdate:false}
+    : {};
   await db.collection('users').doc(currentUser.uid).update({
-    firstName:first,lastName:last,age:parseInt(age)||17,grade,zip,neighborhoodZone:zone,ridePreference:pref,compensation:comp,
+    firstName:first,lastName:last,age:parseInt(age)||17,grade,zip,ridePreference:pref,compensation:comp,
     ...locationUpdate
   });
+  const typedButNotSelected = document.getElementById('ep-zip')?.value?.trim() && !locationUpdate.neighborhoodZone;
   currentUserData=(await db.collection('users').doc(currentUser.uid).get()).data();
   document.getElementById('sb-name').textContent=first+' '+last;
   closeModal('modal-edit-profile');
-  showToast('Profile updated!');
+  showToast(typedButNotSelected
+    ? 'Profile updated! Location not changed — select an address from the dropdown next time to update it.'
+    : 'Profile updated!');
   loadProfile();
 }
 
@@ -5611,6 +5615,7 @@ async function checkVerificationAndLogin(){
             age:p.age, grade:p.grade, schoolName:p.schoolName,
             zip:p.zip||'', neighborhoodZone:p.neighborhoodZone||'Oakland Area',
             lat:p.lat||null, lng:p.lng||null,
+            needsLocationUpdate: p.needsLocationUpdate ?? !(p.lat && p.lng),
             ridePreference:p.ridePreference, compensation:p.compensation,
             nickname:p.nickname||null, showOnLeaderboard:!!p.nickname,
             hasCar:p.hasCar, car:p.car||null,
