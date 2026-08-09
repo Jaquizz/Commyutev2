@@ -2778,7 +2778,47 @@ async function doSignup(){
   }
 
   try {
-    const cred = await auth.createUserWithEmailAndPassword(email, pass);
+    let cred;
+    let isRecovery = false;
+
+    try {
+      cred = await auth.createUserWithEmailAndPassword(email, pass);
+    } catch(createErr) {
+      if (createErr.code === 'auth/email-already-in-use') {
+        // This email already has a Firebase account — most likely from a previous signup
+        // attempt where the verification link expired or was never clicked. Try signing
+        // into that existing account with the password they just entered, so they can
+        // pick up right where they left off instead of hitting a dead end.
+        try {
+          cred = await auth.signInWithEmailAndPassword(email, pass);
+        } catch(signInErr) {
+          if (signInErr.code === 'auth/wrong-password' || signInErr.code === 'auth/invalid-credential') {
+            showToast('An account with this email already exists. If it\'s yours, log in instead — or use "Forgot password" if you don\'t remember it.');
+          } else {
+            showToast('An account with this email already exists: ' + signInErr.message);
+          }
+          return;
+        }
+
+        if (cred.user.emailVerified) {
+          // Already verified — check if their profile actually exists
+          const existingSnap = await db.collection('users').doc(cred.user.uid).get();
+          if (existingSnap.exists) {
+            showToast('You already have an account — logging you in.');
+            currentUser = cred.user;
+            currentUserData = existingSnap.data();
+            document.body.classList.add('is-logged-in');
+            loadDashboard();
+            return;
+          }
+          // Verified but somehow missing a profile — fall through and rebuild it below
+        }
+        isRecovery = true;
+      } else {
+        throw createErr; // re-throw anything else to the outer catch
+      }
+    }
+
     const uid = cred.user.uid;
 
     // ── LIABILITY WAIVER AUDIT LOG ──
@@ -2834,12 +2874,13 @@ async function doSignup(){
 
     if(!emailSent){
       showToast('⚠️ Could not send verification email automatically. Use "Resend" below.');
+    } else if(isRecovery){
+      showToast('Welcome back! Your last verification link expired, so we sent you a new one. Check your @bishopodowd.org inbox. 📬');
     } else {
       showToast('Account created! Check your @bishopodowd.org inbox. 📬');
     }
   } catch(e){
-    if(e.code==='auth/email-already-in-use') showToast('An account with this email already exists.');
-    else if(e.code==='auth/weak-password') showToast('Password must be at least 6 characters.');
+    if(e.code==='auth/weak-password') showToast('Password must be at least 6 characters.');
     else showToast('Signup error: '+e.message);
   }
 }
@@ -2900,10 +2941,14 @@ async function doLogin(){
     }
     // ── VERIFICATION GATE 2: Block unverified users on login ──
     if(!cred.user.emailVerified){
-      errEl.innerHTML = '❌ Please verify your <strong>@bishopodowd.org</strong> email before logging in.<br><br><button class="btn btn-outline btn-sm" style="margin-top:.5rem" onclick="resendVerifyEmail()">📧 Resend verification email</button>';
-      errEl.classList.remove('hidden');
-      await auth.signOut();
+      // Keep them signed in (same pattern as signup) so Resend / Check Verification
+      // actually have a session to work with — signing out here was the exact dead end
+      // that left students stuck if their original verification link expired.
+      currentUser = cred.user;
+      currentUserData = null;
       btn.textContent='Log In →'; btn.disabled=false;
+      showPage('pending');
+      showToast('Your email isn\'t verified yet. Check your inbox, or resend the link below.');
       return;
     }
     // Set session state before loading dashboard
