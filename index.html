@@ -1229,6 +1229,7 @@ d{color:var(--muted)}
       <button class="btn btn-primary w100" onclick="doLogin()" id="login-btn">Log In →</button>
       <div style="text-align:center;margin-top:.8rem"><a style="font-size:.8rem;color:var(--muted);cursor:pointer" onclick="doPasswordReset()">Forgot password?</a></div>
       <div class="auth-switch">New to Commyute? <a onclick="showPage('signup')">Create an account</a></div>
+      <div style="text-align:center;margin-top:.8rem"><a style="font-size:.75rem;color:var(--muted);cursor:pointer" onclick="openInstallInstructionsModal()">📲 Add Commyute to your home screen</a></div>
     </div>
   </div>
 </div>
@@ -1285,7 +1286,7 @@ d{color:var(--muted)}
       <div style="font-size:2.5rem;margin-bottom:.8rem">👋</div>
       <h3 style="font-family:'Fraunces',serif;font-size:1.5rem;color:var(--green-dark);margin-bottom:.5rem">Welcome to Commyute!</h3>
       <p style="color:var(--muted);font-size:.9rem;margin-bottom:1.5rem">Let's get you set up in 3 quick steps so you can start carpooling with your O'Dowd classmates.</p>
-      <div class="welcome-steps"><div class="welcome-step active"></div><div class="welcome-step"></div><div class="welcome-step"></div></div>
+      <div class="welcome-steps"><div class="welcome-step active"></div><div class="welcome-step"></div><div class="welcome-step"></div><div class="welcome-step"></div></div>
       <div class="alert alert-info">📍 First, add your car so we can calculate your emissions savings accurately.</div>
       <div id="car-fields" style="display:block">
         <div style="display:flex;gap:10px;margin-bottom:1rem">
@@ -1311,7 +1312,7 @@ d{color:var(--muted)}
       <div style="font-size:2.5rem;margin-bottom:.8rem">📍</div>
       <h3 style="font-family:'Fraunces',serif;font-size:1.5rem;color:var(--green-dark);margin-bottom:.5rem">Your Neighborhood</h3>
       <p style="color:var(--muted);font-size:.9rem;margin-bottom:1.5rem">We use your ZIP code to show you on the map. Your exact address is never shared.</p>
-      <div class="welcome-steps"><div class="welcome-step done"></div><div class="welcome-step active"></div><div class="welcome-step"></div></div>
+      <div class="welcome-steps"><div class="welcome-step done"></div><div class="welcome-step active"></div><div class="welcome-step"></div><div class="welcome-step"></div></div>
       <div class="form-group"><label>ZIP Code</label><input type="text" id="wzipcode" placeholder="94605" maxlength="5"></div>
       <div class="form-group"><label>Ride Preference</label>
         <select id="wpref"><option value="both">I want to offer AND request rides</option><option value="driver">I can drive others</option><option value="rider">I need rides</option></select>
@@ -1323,10 +1324,18 @@ d{color:var(--muted)}
       <div style="font-size:2.5rem;margin-bottom:.8rem">🏆</div>
       <h3 style="font-family:'Fraunces',serif;font-size:1.5rem;color:var(--green-dark);margin-bottom:.5rem">Leaderboard Nickname</h3>
       <p style="color:var(--muted);font-size:.9rem;margin-bottom:1.5rem">Want to compete with classmates on emissions saved? Set a nickname to appear on the leaderboard. Totally optional.</p>
-      <div class="welcome-steps"><div class="welcome-step done"></div><div class="welcome-step done"></div><div class="welcome-step active"></div></div>
+      <div class="welcome-steps"><div class="welcome-step done"></div><div class="welcome-step done"></div><div class="welcome-step active"></div><div class="welcome-step"></div></div>
       <div class="form-group"><label>Public Nickname (optional)</label><input type="text" id="wnickname" placeholder="GreenEagle, EcoRider..."></div>
-      <button class="btn btn-primary w100" onclick="finishWelcome()">Go to Dashboard 🎉</button>
-      <a style="display:block;text-align:center;margin-top:.8rem;font-size:.8rem;color:var(--muted);cursor:pointer" onclick="skipWelcome()">Skip</a>
+      <button class="btn btn-primary w100" onclick="welcomeNext(4)">Next →</button>
+      <a style="display:block;text-align:center;margin-top:.8rem;font-size:.8rem;color:var(--muted);cursor:pointer" onclick="finishWelcome()">Skip</a>
+    </div>
+    <div id="welcome-step-4" class="hidden">
+      <div style="font-size:2.5rem;margin-bottom:.8rem">📲</div>
+      <h3 style="font-family:'Fraunces',serif;font-size:1.5rem;color:var(--green-dark);margin-bottom:.5rem">Add to Your Home Screen</h3>
+      <p style="color:var(--muted);font-size:.9rem;margin-bottom:1.2rem">Install Commyute like a real app — one tap to open, no browser bar.</p>
+      <div class="welcome-steps"><div class="welcome-step done"></div><div class="welcome-step done"></div><div class="welcome-step done"></div><div class="welcome-step active"></div></div>
+      <div id="install-instructions-body"></div>
+      <button class="btn btn-primary w100" style="margin-top:1rem" onclick="finishWelcome()">Go to Dashboard 🎉</button>
     </div>
   </div>
 </div>
@@ -1381,6 +1390,15 @@ d{color:var(--muted)}
           <div class="stat-card"><div class="stat-label">CO₂ Saved</div><div class="stat-num" id="stat-co2">0</div><div class="stat-unit">lbs</div></div>
           <div class="stat-card"><div class="stat-label">Money Saved</div><div class="stat-num" id="stat-money">$0</div></div>
           <div class="stat-card"><div class="stat-label">Time Together 🤝</div><div class="stat-num" id="stat-time">0</div><div class="stat-unit">min in the car</div></div>
+        </div>
+        <div class="card mb1" style="background:linear-gradient(135deg,var(--green-light),var(--warm-white));border:1.5px solid var(--green)">
+          <div class="card-header"><span class="card-title">⚡ Quick Log a Ride</span><span id="streak-pill" class="badge" style="display:none;background:#fff3e0;color:#c0651a;font-size:.75rem"></span></div>
+          <p style="font-size:.8rem;color:var(--muted);margin-bottom:.8rem">One tap logs today's date and route — just confirm the details.</p>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <button class="btn btn-primary" style="flex:1;min-width:150px;justify-content:center" onclick="openQuickLogRide('to')">🌅 To School</button>
+            <button class="btn btn-primary" style="flex:1;min-width:150px;justify-content:center;background:var(--green-dark)" onclick="openQuickLogRide('from')">🌇 From School</button>
+            <button class="btn btn-outline" style="flex:1;min-width:150px;justify-content:center" onclick="logSameAsYesterday()">🔁 Same as Yesterday</button>
+          </div>
         </div>
         <div class="grid-2">
           <div>
@@ -1900,6 +1918,15 @@ d{color:var(--muted)}
 </div>
 
 <!-- ══════ MODALS ══════ -->
+<div class="modal-overlay" id="modal-install-instructions">
+  <div class="modal-box" style="max-width:420px;text-align:center">
+    <div style="font-size:2.2rem;margin-bottom:.6rem">📲</div>
+    <h3 style="margin-bottom:.6rem">Add to Your Home Screen</h3>
+    <div id="install-instructions-body-modal"></div>
+    <button class="btn btn-outline w100" style="margin-top:1.2rem" onclick="closeModal('modal-install-instructions')">Close</button>
+  </div>
+</div>
+
 <div class="modal-overlay" id="modal-waiver">
   <div class="modal-box" style="max-width:560px;max-height:80vh;overflow-y:auto;text-align:left">
     <h3 style="margin-bottom:.8rem">Terms of Use & Liability Waiver</h3>
@@ -3580,7 +3607,52 @@ function openAddRideModal(){
   document.getElementById('lr-start').value='';
   document.getElementById('lr-calc').classList.add('hidden');
   rideCalcData=null;
+  const titleEl = document.querySelector('#modal-log-ride h3');
+  if(titleEl) titleEl.textContent = 'Log a Ride';
   openModal('modal-log-ride');
+}
+
+// Quick Log shortcuts (homepage) — pre-fill the same modal based on ride direction
+async function openQuickLogRide(direction){
+  const schoolAddr = "Bishop O'Dowd High School, Oakland, CA";
+  const homeAddr = await getMostCommonHomeAddress() || currentUserData?.neighborhoodZone || '';
+  const titleEl = document.querySelector('#modal-log-ride h3');
+  if(direction === 'to'){
+    document.getElementById('lr-start').value = homeAddr;
+    document.getElementById('lr-end').value = schoolAddr;
+    if(titleEl) titleEl.textContent = 'Log Ride to School';
+  } else {
+    document.getElementById('lr-start').value = schoolAddr;
+    document.getElementById('lr-end').value = homeAddr;
+    if(titleEl) titleEl.textContent = 'Log Ride Home';
+  }
+  document.getElementById('lr-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('lr-calc').classList.add('hidden');
+  rideCalcData = null;
+  openModal('modal-log-ride');
+}
+
+// Look at recent rides and find the most frequently used non-school address,
+// so Quick Log gets smarter over time instead of always using the generic zone name
+async function getMostCommonHomeAddress(){
+  if(!currentUser) return null;
+  try{
+    const snap = await db.collection('rides').where('userId','==',currentUser.uid).limit(20).get();
+    const counts = {};
+    snap.docs.forEach(d=>{
+      const r = d.data();
+      [r.start, r.end].forEach(addr=>{
+        if(addr && !/o'?dowd/i.test(addr)){
+          counts[addr] = (counts[addr]||0) + 1;
+        }
+      });
+    });
+    let best = null, bestCount = 0;
+    for(const [addr, count] of Object.entries(counts)){
+      if(count > bestCount){ best = addr; bestCount = count; }
+    }
+    return best;
+  } catch(e){ return null; }
 }
 
 async function estimateDistance(start, end){
@@ -3641,12 +3713,16 @@ async function confirmLogRide(){
   if(!start||!date){ showToast('Please fill in all fields.'); return; }
   if(!rideCalcData){ await calcModalRide(); }
   if(!rideCalcData){ showToast('Could not calculate trip. Check your addresses.'); return; }
+  // Infer direction from which end mentions the school — used for streaks and the
+  // afternoon "log your ride home" reminder
+  const direction = /o'?dowd/i.test(end) ? 'to' : /o'?dowd/i.test(start) ? 'from' : 'other';
   try{
     await db.collection('rides').add({
       userId:currentUser.uid, school:SCHOOL,
       role, miles:rideCalcData.miles, co2Saved:rideCalcData.co2Saved,
       moneySaved:rideCalcData.moneySaved, timeSaved:rideCalcData.timeSaved,
-      totalPeople:people, date, createdAt:firebase.firestore.FieldValue.serverTimestamp()
+      totalPeople:people, date, direction, start, end,
+      createdAt:firebase.firestore.FieldValue.serverTimestamp()
     });
     const snap=await db.collection('users').doc(currentUser.uid).get();
     const ud=snap.data();
@@ -4478,6 +4554,9 @@ async function welcomeNext(step){
   }
   document.getElementById('welcome-step-'+(step-1)).classList.add('hidden');
   document.getElementById('welcome-step-'+step).classList.remove('hidden');
+  if(step===4){
+    renderInstallInstructions('install-instructions-body');
+  }
 }
 
 async function finishWelcome(){
@@ -4680,6 +4759,7 @@ window.openRequestModal=openRequestModal;
 window.openPostRideModal=openPostRideModal;
 window.postRide=postRide;
 window.openAddRideModal=openAddRideModal;
+window.openQuickLogRide=openQuickLogRide;
 window.confirmLogRide=confirmLogRide;
 window.calcRide=calcRide;
 window.logRide=logRide;
@@ -7124,6 +7204,179 @@ window.loadOverview = async function(){
   checkLocationUpdatePrompt();
 };
 
+// ── SAME AS YESTERDAY ──
+async function logSameAsYesterday(){
+  if(!currentUser) return;
+  const yesterday = new Date(); yesterday.setDate(yesterday.getDate()-1);
+  const yStr = yesterday.toISOString().split('T')[0];
+  try{
+    const snap = await db.collection('rides').where('userId','==',currentUser.uid).where('date','==',yStr).limit(1).get();
+    if(snap.empty){ showToast('No ride logged yesterday to copy.'); return; }
+    const r = snap.docs[0].data();
+    document.getElementById('lr-start').value = r.start || '';
+    document.getElementById('lr-end').value = r.end || "Bishop O'Dowd High School, Oakland, CA";
+    document.getElementById('lr-role').value = r.role || 'passenger';
+    document.getElementById('lr-people').value = r.totalPeople || 2;
+    document.getElementById('lr-date').value = new Date().toISOString().split('T')[0];
+    document.getElementById('lr-calc').classList.add('hidden');
+    rideCalcData = null;
+    const titleEl = document.querySelector('#modal-log-ride h3');
+    if(titleEl) titleEl.textContent = 'Log Ride (same as yesterday)';
+    openModal('modal-log-ride');
+    showToast('Pre-filled from yesterday — confirm to log it.');
+  }catch(e){ showToast('Error: '+e.message); }
+}
+window.logSameAsYesterday = logSameAsYesterday;
+
+// ── STREAK TRACKER ──
+function computeRideStreak(rides){
+  const days = new Set(rides.map(r=>r.date).filter(Boolean));
+  let streak = 0;
+  const cursor = new Date();
+  const todayStr = cursor.toISOString().split('T')[0];
+  if(!days.has(todayStr)) cursor.setDate(cursor.getDate()-1);
+  while(days.has(cursor.toISOString().split('T')[0])){
+    streak++;
+    cursor.setDate(cursor.getDate()-1);
+  }
+  return streak;
+}
+function renderStreakPill(streak){
+  const el = document.getElementById('streak-pill');
+  if(!el) return;
+  if(streak >= 2){
+    el.textContent = `🔥 ${streak}-day streak`;
+    el.style.display = 'inline-block';
+  } else {
+    el.style.display = 'none';
+  }
+}
+
+// ── AFTERNOON RETURN-RIDE NUDGE ──
+function checkAfternoonReturnNudge(rides){
+  const now = new Date();
+  if(now.getHours() < 14) return; // only after 2pm local time
+  const todayStr = now.toISOString().split('T')[0];
+  try{ if(localStorage.getItem('commyute_return_nudge_'+todayStr)) return; }catch(_){}
+  const todayRides = rides.filter(r=>r.date===todayStr);
+  const hasTo = todayRides.some(r=>r.direction==='to');
+  const hasFrom = todayRides.some(r=>r.direction==='from');
+  if(hasTo && !hasFrom) showReturnRideNudge();
+}
+function showReturnRideNudge(){
+  if(document.getElementById('return-ride-banner')) return;
+  const banner = document.createElement('div');
+  banner.id = 'return-ride-banner';
+  banner.className = 'nudge-banner';
+  banner.style.background = 'linear-gradient(135deg,#e67e22,#c0651a)';
+  banner.innerHTML = `<div><strong>🌇 Carpool home today?</strong><p>Don't forget to log your ride back from school.</p></div>
+    <div style="display:flex;gap:8px;flex-shrink:0">
+      <button class="btn" style="background:rgba(255,255,255,.25);color:#fff;border-color:rgba(255,255,255,.4)" onclick="dismissReturnNudge();openQuickLogRide('from')">Log It</button>
+      <button class="btn" style="background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.3)" onclick="dismissReturnNudge()">Not Today</button>
+    </div>`;
+  const overviewAlert = document.getElementById('overview-alert');
+  if(overviewAlert && overviewAlert.parentNode) overviewAlert.parentNode.insertBefore(banner, overviewAlert);
+}
+function dismissReturnNudge(){
+  document.getElementById('return-ride-banner')?.remove();
+  try{ localStorage.setItem('commyute_return_nudge_'+new Date().toISOString().split('T')[0], '1'); }catch(_){}
+}
+window.dismissReturnNudge = dismissReturnNudge;
+
+// ── WEEKLY RECAP ──
+function getWeekKey(d){
+  const onejan = new Date(d.getFullYear(),0,1);
+  const week = Math.ceil((((d - onejan) / 86400000) + onejan.getDay()+1)/7);
+  return d.getFullYear()+'-W'+week;
+}
+function checkWeeklyRecap(rides){
+  const now = new Date();
+  const day = now.getDay();
+  if(day!==0 && day!==1) return; // only Sunday or Monday
+  const weekKey = getWeekKey(now);
+  try{ if(localStorage.getItem('commyute_recap_'+weekKey)) return; }catch(_){}
+  const sevenAgo = new Date(now); sevenAgo.setDate(now.getDate()-7);
+  const fourteenAgo = new Date(now); fourteenAgo.setDate(now.getDate()-14);
+  const thisWeek = rides.filter(r=>r.date && new Date(r.date+'T12:00:00') >= sevenAgo);
+  const lastWeek = rides.filter(r=>r.date && new Date(r.date+'T12:00:00') >= fourteenAgo && new Date(r.date+'T12:00:00') < sevenAgo);
+  if(!thisWeek.length) return;
+  const thisCO2 = Math.round(thisWeek.reduce((s,r)=>s+(r.co2Saved||0),0)*10)/10;
+  const lastCO2 = lastWeek.reduce((s,r)=>s+(r.co2Saved||0),0);
+  const diff = Math.round((thisCO2-lastCO2)*10)/10;
+  showWeeklyRecapBanner(thisWeek.length, thisCO2, diff);
+  try{ localStorage.setItem('commyute_recap_'+weekKey, '1'); }catch(_){}
+}
+function showWeeklyRecapBanner(rideCount, co2, diff){
+  if(document.getElementById('weekly-recap-banner')) return;
+  const banner = document.createElement('div');
+  banner.id = 'weekly-recap-banner';
+  banner.className = 'nudge-banner';
+  banner.style.background = 'linear-gradient(135deg,var(--green),var(--green-dark))';
+  const diffText = diff>0 ? `up ${diff} lbs from last week 📈` : diff<0 ? `down ${Math.abs(diff)} lbs from last week` : 'same as last week';
+  banner.innerHTML = `<div><strong>📊 Your week in review</strong><p>${rideCount} ride${rideCount>1?'s':''} logged · ${co2} lbs CO₂ saved — ${diffText}</p></div>
+    <button class="btn" style="background:rgba(255,255,255,.2);color:#fff;border-color:rgba(255,255,255,.35)" onclick="document.getElementById('weekly-recap-banner').remove()">Nice ✓</button>`;
+  const overviewAlert = document.getElementById('overview-alert');
+  if(overviewAlert && overviewAlert.parentNode) overviewAlert.parentNode.insertBefore(banner, overviewAlert);
+}
+
+// ── TIE IT ALL TOGETHER: one ride fetch feeds streak, nudge, and recap ──
+async function loadRideInsights(){
+  if(!currentUser) return;
+  try{
+    const snap = await db.collection('rides').where('userId','==',currentUser.uid).limit(60).get();
+    const rides = snap.docs.map(d=>d.data());
+    renderStreakPill(computeRideStreak(rides));
+    checkAfternoonReturnNudge(rides);
+    checkWeeklyRecap(rides);
+  }catch(e){ console.error('Ride insights error:', e); }
+}
+const _origLoadOverviewInsights = window.loadOverview;
+window.loadOverview = async function(){
+  if(_origLoadOverviewInsights) await _origLoadOverviewInsights();
+  loadRideInsights();
+};
+// ── ADD TO HOME SCREEN INSTRUCTIONS (shared by welcome tutorial + login page link) ──
+function detectDeviceForInstall(){
+  const ua = navigator.userAgent || '';
+  const isIOS = /iPad|iPhone|iPod/.test(ua) && !window.MSStream;
+  const isAndroid = /Android/.test(ua);
+  return isIOS ? 'ios' : isAndroid ? 'android' : 'desktop';
+}
+function renderInstallInstructions(targetElId){
+  const el = document.getElementById(targetElId);
+  if(!el) return;
+  const device = detectDeviceForInstall();
+  if(device === 'ios'){
+    el.innerHTML = `<div style="text-align:left;font-size:.85rem;line-height:1.7;color:var(--charcoal)">
+      <p style="margin-bottom:.6rem">You're on an iPhone/iPad — open this site in <strong>Safari</strong> (not Chrome) and:</p>
+      <ol style="padding-left:1.2rem;margin:0">
+        <li>Tap the <strong>Share</strong> button (square with an arrow ⬆️) in the toolbar</li>
+        <li>Scroll down and tap <strong>"Add to Home Screen"</strong></li>
+        <li>Tap <strong>Add</strong> — Commyute now opens fullscreen like a real app</li>
+      </ol>
+    </div>`;
+  } else if(device === 'android'){
+    el.innerHTML = `<div style="text-align:left;font-size:.85rem;line-height:1.7;color:var(--charcoal)">
+      <p style="margin-bottom:.6rem">You're on Android — open this site in <strong>Chrome</strong> and:</p>
+      <ol style="padding-left:1.2rem;margin:0">
+        <li>Tap the <strong>⋮ menu</strong> (top right)</li>
+        <li>Tap <strong>"Add to Home screen"</strong> or <strong>"Install app"</strong></li>
+        <li>Confirm — Commyute now opens fullscreen like a real app</li>
+      </ol>
+    </div>`;
+  } else {
+    el.innerHTML = `<div style="text-align:left;font-size:.85rem;line-height:1.7;color:var(--charcoal)">
+      <p style="margin:0">This works best on your phone. Open <strong>commyutev2.pages.dev</strong> on your iPhone (Safari) or Android (Chrome) to add it to your home screen.</p>
+    </div>`;
+  }
+}
+window.renderInstallInstructions = renderInstallInstructions;
+function openInstallInstructionsModal(){
+  renderInstallInstructions('install-instructions-body-modal');
+  openModal('modal-install-instructions');
+}
+window.openInstallInstructionsModal = openInstallInstructionsModal;
+
 </script>
 </body>
-</html><!-- THIS TAG IS INVALID — JS IS APPENDED BELOW -->
+</html>
