@@ -2511,16 +2511,26 @@ function getMPG(year, make, model){
 }
 
 // ── EMISSIONS CALCS ──
-function calcCO2(miles, mpg, totalPeople){
-  const gallons = miles / mpg;
+// Congestion reduces real-world fuel efficiency (more idling, stop-and-go driving).
+// trafficRatio > 1 means the trip is taking longer than typical conditions; we apply
+// a mild MPG penalty scaled to how congested the trip currently is, capped at 20%.
+function trafficAdjustedMPG(mpg, trafficRatio){
+  const ratio = trafficRatio || 1;
+  const penalty = Math.min(Math.max(ratio - 1, 0) * 0.3, 0.20);
+  return mpg * (1 - penalty);
+}
+function calcCO2(miles, mpg, totalPeople, trafficRatio){
+  const effectiveMPG = trafficAdjustedMPG(mpg, trafficRatio);
+  const gallons = miles / effectiveMPG;
   const totalCO2 = gallons * 19.6;
   return Math.round(totalCO2 * (1 - 1/totalPeople) * 10) / 10;
 }
-function calcMoney(miles, mpg, totalPeople){
-  return Math.round((miles/mpg) * 4.50 * (1-1/totalPeople) * 100) / 100;
+function calcMoney(miles, mpg, totalPeople, trafficRatio){
+  const effectiveMPG = trafficAdjustedMPG(mpg, trafficRatio);
+  return Math.round((miles/effectiveMPG) * 4.50 * (1-1/totalPeople) * 100) / 100;
 }
 function calcTime(minutes, totalPeople){
-  // minutes comes directly from Google Maps Duration — actual drive time
+  // minutes comes directly from Google Maps duration_in_traffic — real, traffic-aware drive time
   if(totalPeople < 2) return minutes || 0;
   return minutes || 0;
 }
@@ -3164,9 +3174,43 @@ async function loadRecentRides(containerId, lim){
       <div style="font-size:1.3rem">${r.role==='driver'?'🚗':'🎒'}</div>
       <div class="ride-info"><strong>${r.role==='driver'?'You drove':'You rode'}</strong><span>${fmtDate(r.createdAt)} · ${r.miles||0} mi</span></div>
       <div class="ride-meta"><strong style="color:var(--green)">${r.co2Saved||0} lbs CO₂</strong>saved</div>
+      <button class="btn btn-outline btn-sm" style="color:var(--red);border-color:var(--red);flex-shrink:0" onclick="deleteLoggedRide('${d.id}')" title="Remove this ride">🗑</button>
     </div>`;
   }).join('');
 }
+
+async function deleteLoggedRide(rideId){
+  if(!currentUser) return;
+  if(!confirm('Remove this ride from your history? Your saved stats will be adjusted to match.')) return;
+  try{
+    const rideSnap = await db.collection('rides').doc(rideId).get();
+    if(!rideSnap.exists){ showToast('Ride not found — it may have already been removed.'); return; }
+    const r = rideSnap.data();
+    if(r.userId !== currentUser.uid){ showToast('You can only remove your own rides.'); return; }
+
+    await db.collection('rides').doc(rideId).delete();
+
+    const userSnap = await db.collection('users').doc(currentUser.uid).get();
+    const ud = userSnap.data();
+    await db.collection('users').doc(currentUser.uid).update({
+      totalRides: Math.max((ud.totalRides||0)-1, 0),
+      totalCO2Saved: Math.max(Math.round(((ud.totalCO2Saved||0)-(r.co2Saved||0))*10)/10, 0),
+      totalMiles: Math.max(Math.round(((ud.totalMiles||0)-(r.miles||0))*10)/10, 0),
+      totalMoneySaved: Math.max(Math.round(((ud.totalMoneySaved||0)-(r.moneySaved||0))*100)/100, 0),
+      totalTimeSaved: Math.max((ud.totalTimeSaved||0)-(r.timeSaved||0), 0)
+    });
+    currentUserData = (await db.collection('users').doc(currentUser.uid).get()).data();
+
+    showToast('Ride removed. Your stats have been updated.');
+    // Refresh every view that could be showing this ride or its totals
+    loadRecentRides('ride-history', 10);
+    loadRecentRides('recent-rides', 3);
+    loadSchedule();
+    loadImpact();
+    loadOverview();
+  } catch(e){ showToast('Error removing ride: '+e.message); }
+}
+window.deleteLoggedRide = deleteLoggedRide;
 
 async function loadPartners(){
   if(!currentUser||!currentUserData) return;
@@ -3268,120 +3312,10 @@ async function onMapReady(){
 }
 
 function renderMapPeers(docs){
-  if(!mapInstance) return;
-  const center = {lat:37.768,lng:-122.218};
-  const peers = docs.filter(d=>d.data().isActive!==false);
-  document.getElementById('map-count').textContent = peers.length+' students nearby';
-  const cardsEl = document.getElementById('peer-cards');
-  cardsEl.innerHTML='';
-  // Clear previous markers before redrawing with fresh data
-  mapMarkers.forEach(m=>m.setMap(null));
-  mapMarkers = [];
-  const ZONE_COORDS = {
-  'Oakland Hills':{lat:37.812,lng:-122.188},
-  'Montclair':{lat:37.832,lng:-122.213},
-  'Piedmont':{lat:37.824,lng:-122.232},
-  'Rockridge':{lat:37.844,lng:-122.252},
-  'Temescal':{lat:37.836,lng:-122.260},
-  'Grand Lake':{lat:37.812,lng:-122.248},
-  'Laurel District':{lat:37.794,lng:-122.218},
-  'Fruitvale':{lat:37.776,lng:-122.226},
-  'Dimond':{lat:37.800,lng:-122.213},
-  'Glenview':{lat:37.806,lng:-122.228},
-  'Trestle Glen':{lat:37.810,lng:-122.238},
-  'Upper Dimond':{lat:37.804,lng:-122.206},
-  'Redwood Heights':{lat:37.802,lng:-122.192},
-  'Lincoln Highlands':{lat:37.790,lng:-122.182},
-  'Grass Valley':{lat:37.786,lng:-122.174},
-  'Seminary':{lat:37.770,lng:-122.194},
-  'Millsmont':{lat:37.786,lng:-122.198},
-  'Maxwell Park':{lat:37.778,lng:-122.212},
-  'Leimert Bridge':{lat:37.792,lng:-122.208},
-  'Joaquin Miller':{lat:37.816,lng:-122.194},
-  'Skyline':{lat:37.820,lng:-122.180},
-  'Claremont Hills':{lat:37.854,lng:-122.240},
-  'North Oakland':{lat:37.840,lng:-122.270},
-  'West Oakland':{lat:37.810,lng:-122.290},
-  'Downtown Oakland':{lat:37.804,lng:-122.272},
-  'Lake Merritt':{lat:37.802,lng:-122.258},
-  'Adams Point':{lat:37.812,lng:-122.254},
-  'Berkeley':{lat:37.870,lng:-122.268},
-  'Albany':{lat:37.888,lng:-122.298},
-  'El Cerrito':{lat:37.916,lng:-122.312},
-  'San Leandro':{lat:37.722,lng:-122.158},
-  'Castro Valley':{lat:37.694,lng:-122.086},
-  'Hayward':{lat:37.669,lng:-122.080},
-  'Orinda':{lat:37.878,lng:-122.180},
-  'Moraga':{lat:37.834,lng:-122.130},
-  'Lafayette':{lat:37.886,lng:-122.118},
-  'Walnut Creek':{lat:37.910,lng:-122.066},
-  'San Francisco':{lat:37.774,lng:-122.418},
-  'Other East Bay':{lat:37.800,lng:-122.220},
-  'Oakland Area':{lat:37.804,lng:-122.226},
-};
-  peers.forEach(pd=>{
-    const p=pd.data();
-    const zone=p.neighborhoodZone||'Oakland Area';
-    // Use stored lat/lng if available (from Places autocomplete), else fall back to zone
-    let pos;
-    if(p.lat && p.lng){
-      // Already has privacy offset applied at signup — use directly
-      pos = {lat:p.lat, lng:p.lng};
-    } else {
-      const base=ZONE_COORDS[zone]||center;
-      const jitter=()=>(Math.random()-0.5)*0.012;
-      pos={lat:base.lat+jitter(),lng:base.lng+jitter()};
-    }
-    const isPartner=(currentUserData.partners||[]).includes(pd.id);
-    const isSelf = pd.id === currentUser.uid;
-    const marker=new google.maps.Marker({
-      position:pos,map:mapInstance,title:isSelf?'You':p.firstName,
-      icon:{path:google.maps.SymbolPath.CIRCLE,scale:isSelf?10:8,
-        fillColor:isSelf?'#e67e22':isPartner?'#1a6b3c':'#2463a8',fillOpacity:.9,strokeColor:'#fff',strokeWeight:2}
-    });
-    const info=new google.maps.InfoWindow({content:isSelf
-      ? `<div style="font-family:sans-serif;padding:6px;min-width:120px"><strong>📍 You</strong><br><span style="font-size:.8rem;color:#666">${zone}</span></div>`
-      : `<div style="font-family:sans-serif;padding:6px;min-width:160px">
-        <strong>${p.firstName}</strong><br>
-        <span style="font-size:.8rem;color:#666">${p.grade} · ${zone}</span><br>
-        <span style="font-size:.8rem;color:#666">${p.compensation}</span>
-        ${isPartner?'<br><span style="color:#1a6b3c;font-size:.8rem">✓ Your partner</span>'
-          :`<br><button onclick="openRequestModal('${pd.id}','${p.firstName}')" 
-            style="margin-top:5px;background:#1a6b3c;color:#fff;border:none;padding:4px 10px;border-radius:6px;font-size:.75rem;cursor:pointer">Request Ride</button>`}
-      </div>`});
-    marker.addListener('click',()=>info.open(mapInstance,marker));
-    mapMarkers.push(marker);
-    const col=avatarColor(pd.id);
-    const card=document.createElement('div');
-    card.className='peer-card';
-    if(p.photoURL) photoCache[pd.id]=p.photoURL;
-    const isBlocked = (currentUserData.blockedUsers||[]).includes(pd.id) || (p.blockedUsers||[]).includes(currentUser.uid);
-    if(isBlocked) return; // Skip blocked users entirely
-
-    // Determine if "Request Ride" button should show
-    // Only show if they can drive (driver or both) — riders can't be requested for a ride
-    const isMe = pd.id === currentUser.uid;
-    const myPref = currentUserData.ridePreference||'both';
-    const theirPref = p.ridePreference||'both';
-    const canRequest = !isPartner && (theirPref==='driver' || theirPref==='both');
-
-    card.innerHTML=`
-      <div style="margin:0 auto .3rem;display:flex;justify-content:center">${avatarHtml(pd.id,p.firstName,p.lastName,'48px',p.photoURL||null)}</div>
-      <strong>${p.firstName}</strong>
-      <span class="peer-detail">${p.grade} · ${zone}</span>
-      <span class="peer-detail">${theirPref==='driver'?'🚗 Driver':theirPref==='rider'?'🎒 Rider':'🚗🎒 Both'}</span>
-      ${p.licenseUploaded?'<span class="license-badge verified" style="font-size:.65rem">🪪 License</span>':''}
-      ${isMe
-        ?'<span class="badge" style="font-size:.7rem;background:var(--green-light);color:var(--green-dark)">📍 You</span>'
-        :isPartner
-          ?'<span class="badge badge-green">✓ Partner</span>'
-          :canRequest
-            ?'<button class="btn btn-primary btn-sm" onclick="openRequestModal(\''+pd.id+'\',\''+p.firstName+'\')">Request Ride</button>'
-            :theirPref==='rider'?'<span class="badge" style="font-size:.7rem;background:var(--cream);color:var(--muted)">🎒 Rider only</span>':''}
-      ${!isMe?'<button class="report-btn" onclick="reportUser(\''+pd.id+'\',\''+p.firstName+'\')">🚩 Report</button>':''}`;
-    cardsEl.appendChild(card);
-  });
+  allPeers = docs.filter(d=>d.data().isActive!==false).map(d=>({id:d.id, data:d.data()}));
+  filterPeers();
 }
+
 
 // ── RIDE REQUESTS ──
 function openRequestModal(uid, name){
@@ -3657,17 +3591,22 @@ async function getMostCommonHomeAddress(){
 
 async function estimateDistance(start, end){
   try{
-    // Use Google Maps Distance Matrix API for real drive time + distance
-    const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${encodeURIComponent(start)}&destinations=${encodeURIComponent(end)}&units=imperial&key=${MAPS_KEY}`;
+    // departure_time=now is required for Google to return duration_in_traffic
+    // (live/predicted traffic conditions), instead of only the static typical duration.
+    const url = `https://maps.googleapis.com/maps/api/distancematrix/json?origins=${encodeURIComponent(start)}&destinations=${encodeURIComponent(end)}&units=imperial&departure_time=now&traffic_model=best_guess&key=${MAPS_KEY}`;
     const r = await fetch(url);
     const data = await r.json();
     if(data.status !== 'OK') return null;
     const element = data.rows?.[0]?.elements?.[0];
     if(!element || element.status !== 'OK') return null;
-    // distance.value is in meters, duration.value is in seconds
+    // distance.value is in meters, duration values are in seconds
     const miles = Math.round((element.distance.value / 1609.34) * 10) / 10;
-    const minutes = Math.round(element.duration.value / 60);
-    return { miles, minutes };
+    const typicalSeconds = element.duration.value;
+    const trafficSeconds = element.duration_in_traffic?.value ?? typicalSeconds;
+    const minutes = Math.round(trafficSeconds / 60);
+    // Ratio > 1 means the trip is currently taking longer than typical due to traffic
+    const trafficRatio = typicalSeconds > 0 ? trafficSeconds / typicalSeconds : 1;
+    return { miles, minutes, trafficRatio };
   } catch(e){
     // Fallback: haversine if API fails
     try{
@@ -3681,8 +3620,8 @@ async function estimateDistance(start, end){
       const R=3958.8, dLat=(l2.lat-l1.lat)*Math.PI/180, dLng=(l2.lng-l1.lng)*Math.PI/180;
       const a=Math.sin(dLat/2)**2+Math.cos(l1.lat*Math.PI/180)*Math.cos(l2.lat*Math.PI/180)*Math.sin(dLng/2)**2;
       const miles = Math.round(R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a))*1.3*10)/10;
-      const minutes = Math.round((miles/22)*60); // fallback estimate
-      return { miles, minutes };
+      const minutes = Math.round((miles/22)*60); // fallback estimate, no traffic data available
+      return { miles, minutes, trafficRatio: 1 };
     } catch(e2){ return null; }
   }
 }
@@ -3695,12 +3634,13 @@ async function calcModalRide(){
   const result=await estimateDistance(start,end);
   if(!result){ showToast('Could not calculate distance. Try a more specific address.'); return; }
   const mpg=currentUserData?.car?.mpg||28;
-  const co2=calcCO2(result.miles,mpg,people);
-  const money=calcMoney(result.miles,mpg,people);
-  const time=calcTime(result.miles,people);
+  const co2=calcCO2(result.miles,mpg,people,result.trafficRatio);
+  const money=calcMoney(result.miles,mpg,people,result.trafficRatio);
+  const time=calcTime(result.minutes,people);
   rideCalcData={miles:result.miles,co2Saved:co2,moneySaved:money,timeSaved:time,people};
   const el=document.getElementById('lr-calc');
-  el.innerHTML=`✅ ~${result.miles} miles · ${co2} lbs CO₂ saved · $${money} saved · ${time} min together in the car`;
+  const trafficNote = result.trafficRatio > 1.15 ? ' · 🚦 traffic factored in' : '';
+  el.innerHTML=`✅ ~${result.miles} miles · ${co2} lbs CO₂ saved · $${money} saved · ${time} min together in the car${trafficNote}`;
   el.classList.remove('hidden');
 }
 
@@ -3711,11 +3651,36 @@ async function confirmLogRide(){
   const role=document.getElementById('lr-role').value;
   const people=parseInt(document.getElementById('lr-people').value)||2;
   if(!start||!date){ showToast('Please fill in all fields.'); return; }
+
+  // Validate date is not in the future
+  const rideDate = new Date(date+'T12:00:00');
+  if(rideDate > new Date()){ showToast('You cannot log a future ride.'); return; }
+  // Validate date is not too old (max 30 days)
+  const thirtyDaysAgo = new Date(); thirtyDaysAgo.setDate(thirtyDaysAgo.getDate()-30);
+  if(rideDate < thirtyDaysAgo){ showToast('Rides can only be logged within the last 30 days.'); return; }
+
   if(!rideCalcData){ await calcModalRide(); }
   if(!rideCalcData){ showToast('Could not calculate trip. Check your addresses.'); return; }
   // Infer direction from which end mentions the school — used for streaks and the
   // afternoon "log your ride home" reminder
   const direction = /o'?dowd/i.test(end) ? 'to' : /o'?dowd/i.test(start) ? 'from' : 'other';
+
+  // Limit to one logged ride per direction per day (one to school, one back home),
+  // so totals can't be inflated by logging the same commute repeatedly.
+  if(direction === 'to' || direction === 'from'){
+    try{
+      const dupSnap = await db.collection('rides')
+        .where('userId','==',currentUser.uid)
+        .where('date','==',date)
+        .where('direction','==',direction)
+        .limit(1).get();
+      if(!dupSnap.empty){
+        showToast(`You've already logged a ride ${direction==='to'?'to':'from'} school on this date. Remove it from Recent Rides first if you need to fix it.`);
+        return;
+      }
+    } catch(dupErr){ console.warn('Daily-limit check failed, allowing ride:', dupErr); }
+  }
+
   try{
     await db.collection('rides').add({
       userId:currentUser.uid, school:SCHOOL,
@@ -4010,61 +3975,31 @@ async function loadImpact(){
   document.getElementById('ride-date').value=new Date().toISOString().split('T')[0];
 }
 
+// These delegate to the modal versions (calcModalRide/confirmLogRide) so there is a
+// single source of truth for calculations, traffic handling, validation, and the
+// daily ride limit — instead of maintaining two separate, easily-diverging copies.
 async function calcRide(){
-  const start=document.getElementById('ride-start').value.trim();
-  const end=document.getElementById('ride-end').value.trim()||"Bishop O'Dowd High School, Oakland, CA";
-  const people=parseInt(document.getElementById('ride-passengers').value)||2;
-  if(!start){ showToast('Please enter a start address.'); return; }
-  const result=await estimateDistance(start,end);
-  if(!result){ showToast('Could not estimate distance. Try a more specific address.'); return; }
-  const mpg=currentUserData?.car?.mpg||28;
-  const co2=calcCO2(result.miles,mpg,people);
-  const money=calcMoney(result.miles,mpg,people);
-  const time=calcTime(result.minutes,people);
-  rideCalcData={miles:result.miles,minutes:result.minutes,co2Saved:co2,moneySaved:money,timeSaved:time,people};
-  const el=document.getElementById('ride-calc-result');
-  el.innerHTML=`✅ ~${result.miles} miles · ~${result.minutes} min drive · <strong>${co2} lbs CO₂ saved</strong> · $${money} saved · ${time} min together`;
-  el.classList.remove('hidden');
+  document.getElementById('lr-start').value = document.getElementById('ride-start').value.trim();
+  document.getElementById('lr-end').value = document.getElementById('ride-end').value.trim() || "Bishop O'Dowd High School, Oakland, CA";
+  document.getElementById('lr-people').value = document.getElementById('ride-passengers').value || 2;
+  await calcModalRide();
+  if(rideCalcData){
+    const el=document.getElementById('ride-calc-result');
+    el.innerHTML = `✅ ~${rideCalcData.miles} miles · <strong>${rideCalcData.co2Saved} lbs CO₂ saved</strong> · $${rideCalcData.moneySaved} saved · ${rideCalcData.timeSaved} min together`;
+    el.classList.remove('hidden');
+  }
 }
 
 async function logRide(){
-  const start=document.getElementById('ride-start').value.trim();
-  const end=document.getElementById('ride-end').value.trim()||"Bishop O'Dowd High School, Oakland, CA";
-  const date=document.getElementById('ride-date').value;
-  const role=document.getElementById('ride-role').value;
-  const people=parseInt(document.getElementById('ride-passengers').value)||2;
-  if(!start||!date){ showToast('Please fill in all fields.'); return; }
-  // Validate date is not in the future
-  const rideDate = new Date(date+'T12:00:00');
-  if(rideDate > new Date()){ showToast('You cannot log a future ride.'); return; }
-  // Validate date is not too old (max 30 days)
-  const thirtyDaysAgo = new Date(); thirtyDaysAgo.setDate(thirtyDaysAgo.getDate()-30);
-  if(rideDate < thirtyDaysAgo){ showToast('Rides can only be logged within the last 30 days.'); return; }
-  if(!rideCalcData) await calcRide();
-  if(!rideCalcData) return;
-  try{
-    await db.collection('rides').add({
-      userId:currentUser.uid, school:SCHOOL,
-      role, miles:rideCalcData.miles, co2Saved:rideCalcData.co2Saved,
-      moneySaved:rideCalcData.moneySaved, timeSaved:rideCalcData.timeSaved,
-      totalPeople:people, date, createdAt:firebase.firestore.FieldValue.serverTimestamp()
-    });
-    const snap=await db.collection('users').doc(currentUser.uid).get();
-    const ud=snap.data();
-    await db.collection('users').doc(currentUser.uid).update({
-      totalRides:(ud.totalRides||0)+1,
-      totalCO2Saved:Math.round(((ud.totalCO2Saved||0)+rideCalcData.co2Saved)*10)/10,
-      totalMiles:Math.round(((ud.totalMiles||0)+rideCalcData.miles)*10)/10,
-      totalMoneySaved:Math.round(((ud.totalMoneySaved||0)+rideCalcData.moneySaved)*100)/100,
-      totalTimeSaved:(ud.totalTimeSaved||0)+rideCalcData.timeSaved
-    });
-    currentUserData=(await db.collection('users').doc(currentUser.uid).get()).data();
-    document.getElementById('ride-start').value='';
-    document.getElementById('ride-calc-result').classList.add('hidden');
-    rideCalcData=null;
-    showToast('Ride logged! 🌿');
-    loadImpact();
-  } catch(e){ showToast('Error: '+e.message); }
+  document.getElementById('lr-start').value = document.getElementById('ride-start').value.trim();
+  document.getElementById('lr-end').value = document.getElementById('ride-end').value.trim() || "Bishop O'Dowd High School, Oakland, CA";
+  document.getElementById('lr-date').value = document.getElementById('ride-date').value;
+  document.getElementById('lr-role').value = document.getElementById('ride-role').value;
+  document.getElementById('lr-people').value = document.getElementById('ride-passengers').value || 2;
+  await confirmLogRide();
+  document.getElementById('ride-start').value='';
+  document.getElementById('ride-calc-result').classList.add('hidden');
+  loadImpact();
 }
 
 // ── LEADERBOARD ──
@@ -4691,19 +4626,36 @@ async function confirmTodayRide(){
   if(!r){ showToast('No recurring ride set up.'); return; }
   const today = new Date().toLocaleDateString('en-US',{weekday:'long'});
   if(!r.days.includes(today)){ showToast(`Your recurring ride isn't set for ${today}.`); return; }
+  const date = new Date().toISOString().split('T')[0];
+  const direction = /o'?dowd/i.test(r.end) ? 'to' : /o'?dowd/i.test(r.start) ? 'from' : 'other';
+
+  // Same one-ride-per-direction-per-day limit as manual logging
+  if(direction === 'to' || direction === 'from'){
+    try{
+      const dupSnap = await db.collection('rides')
+        .where('userId','==',currentUser.uid)
+        .where('date','==',date)
+        .where('direction','==',direction)
+        .limit(1).get();
+      if(!dupSnap.empty){
+        showToast(`You've already logged a ride ${direction==='to'?'to':'from'} school today.`);
+        return;
+      }
+    } catch(dupErr){ console.warn('Daily-limit check failed, allowing ride:', dupErr); }
+  }
+
   // Calculate and log the ride
   const result = await estimateDistance(r.start, r.end);
   if(!result){ showToast('Could not calculate distance. Check your recurring ride addresses.'); return; }
   const mpg = currentUserData?.car?.mpg||28;
-  const co2 = calcCO2(result.miles, mpg, r.people);
-  const money = calcMoney(result.miles, mpg, r.people);
+  const co2 = calcCO2(result.miles, mpg, r.people, result.trafficRatio);
+  const money = calcMoney(result.miles, mpg, r.people, result.trafficRatio);
   const time = calcTime(result.minutes, r.people);
-  const date = new Date().toISOString().split('T')[0];
   await db.collection('rides').add({
     userId:currentUser.uid, school:SCHOOL,
     role:r.role, miles:result.miles, minutes:result.minutes,
     co2Saved:co2, moneySaved:money, timeSaved:time,
-    totalPeople:r.people, date, isRecurring:true,
+    totalPeople:r.people, date, direction, start:r.start, end:r.end, isRecurring:true,
     createdAt:firebase.firestore.FieldValue.serverTimestamp()
   });
   const snap = await db.collection('users').doc(currentUser.uid).get();
@@ -4908,79 +4860,154 @@ function setFilter(type){
   if(btn) btn.classList.add('active');
   filterPeers();
 }
+window.setFilter = setFilter;
 
 function filterPeers(){
   const search = (document.getElementById('map-search')?.value||'').toLowerCase();
   const grade = document.getElementById('filter-grade')?.value||'';
-  const cardsEl = document.getElementById('peer-cards');
-  if(!cardsEl || !allPeers.length) return;
+  if(!allPeers.length){
+    const cardsEl = document.getElementById('peer-cards');
+    if(cardsEl) cardsEl.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><span class="empty-icon">🔍</span><h3>No students yet</h3></div>';
+    return;
+  }
 
   const filtered = allPeers.filter(({id, data:p})=>{
     if(search && !(p.firstName+' '+p.lastName).toLowerCase().includes(search)) return false;
     if(grade && p.grade !== grade) return false;
-    if(prefFilter && (p.ridePreference||'both') !== prefFilter) return false;
     if(activeMapFilter === 'driver' && p.ridePreference === 'rider') return false;
     if(activeMapFilter === 'rider' && p.ridePreference === 'driver') return false;
     if(activeMapFilter === 'available' && !p.availableThisWeek) return false;
     return true;
   });
 
-  renderPeerCards(filtered);
-}
+  const countEl = document.getElementById('map-count');
+  if(countEl) countEl.textContent = filtered.length + ' student' + (filtered.length===1?'':'s') + ' nearby';
 
-function renderPeerCards(peers){
+  renderPeerCardsAndMarkers(filtered);
+}
+window.filterPeers = filterPeers;
+
+// Single source of truth for both the map pins and the peer-card grid, driven by
+// whatever the current search/filter selection is. Called by filterPeers() so
+// search and filtering are ALWAYS correctly reflected, including on live updates.
+function renderPeerCardsAndMarkers(peers){
   const cardsEl = document.getElementById('peer-cards');
   if(!cardsEl) return;
+  cardsEl.innerHTML = '';
+  mapMarkers.forEach(m=>m.setMap(null));
+  mapMarkers = [];
+
   if(!peers.length){
     cardsEl.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><span class="empty-icon">🔍</span><h3>No matches</h3><p>Try adjusting your filters.</p></div>';
     return;
   }
-  cardsEl.innerHTML = '';
-  const myPref = currentUserData?.ridePreference||'both';
+
+  const center = {lat:37.768,lng:-122.218};
+  const ZONE_COORDS = {
+  'Oakland Hills':{lat:37.812,lng:-122.188},
+  'Montclair':{lat:37.832,lng:-122.213},
+  'Piedmont':{lat:37.824,lng:-122.232},
+  'Rockridge':{lat:37.844,lng:-122.252},
+  'Temescal':{lat:37.836,lng:-122.260},
+  'Grand Lake':{lat:37.812,lng:-122.248},
+  'Laurel District':{lat:37.794,lng:-122.218},
+  'Fruitvale':{lat:37.776,lng:-122.226},
+  'Dimond':{lat:37.800,lng:-122.213},
+  'Glenview':{lat:37.806,lng:-122.228},
+  'Trestle Glen':{lat:37.810,lng:-122.238},
+  'Upper Dimond':{lat:37.804,lng:-122.206},
+  'Redwood Heights':{lat:37.802,lng:-122.192},
+  'Lincoln Highlands':{lat:37.790,lng:-122.182},
+  'Grass Valley':{lat:37.786,lng:-122.174},
+  'Seminary':{lat:37.770,lng:-122.194},
+  'Millsmont':{lat:37.786,lng:-122.198},
+  'Maxwell Park':{lat:37.778,lng:-122.212},
+  'Leimert Bridge':{lat:37.792,lng:-122.208},
+  'Joaquin Miller':{lat:37.816,lng:-122.194},
+  'Skyline':{lat:37.820,lng:-122.180},
+  'Claremont Hills':{lat:37.854,lng:-122.240},
+  'North Oakland':{lat:37.840,lng:-122.270},
+  'West Oakland':{lat:37.810,lng:-122.290},
+  'Downtown Oakland':{lat:37.804,lng:-122.272},
+  'Lake Merritt':{lat:37.802,lng:-122.258},
+  'Adams Point':{lat:37.812,lng:-122.254},
+  'Berkeley':{lat:37.870,lng:-122.268},
+  'Albany':{lat:37.888,lng:-122.298},
+  'El Cerrito':{lat:37.916,lng:-122.312},
+  'San Leandro':{lat:37.722,lng:-122.158},
+  'Castro Valley':{lat:37.694,lng:-122.086},
+  'Hayward':{lat:37.669,lng:-122.080},
+  'Orinda':{lat:37.878,lng:-122.180},
+  'Moraga':{lat:37.834,lng:-122.130},
+  'Lafayette':{lat:37.886,lng:-122.118},
+  'Walnut Creek':{lat:37.910,lng:-122.066},
+  'San Francisco':{lat:37.774,lng:-122.418},
+  'Other East Bay':{lat:37.800,lng:-122.220},
+  'Oakland Area':{lat:37.804,lng:-122.226},
+  };
+
   peers.forEach(({id, data:p})=>{
-    // Skip blocked users
     if((currentUserData?.blockedUsers||[]).includes(id)) return;
     if((p.blockedUsers||[]).includes(currentUser?.uid)) return;
 
     const zone = p.neighborhoodZone||'Oakland Area';
-    const isPartner = (currentUserData?.partners||[]).includes(id);
-    if(p.photoURL) photoCache[id] = p.photoURL;
-    const avHtml2 = avatarHtml(id, p.firstName, p.lastName, '48px', p.photoURL||null);
+    let pos;
+    if(p.lat && p.lng){
+      pos = {lat:p.lat, lng:p.lng};
+    } else {
+      const base=ZONE_COORDS[zone]||center;
+      const jitter=()=>(Math.random()-0.5)*0.012;
+      pos={lat:base.lat+jitter(),lng:base.lng+jitter()};
+    }
+
+    const isPartner=(currentUserData.partners||[]).includes(id);
+    const isSelf = id === currentUser.uid;
+
+    if(mapInstance && window.google?.maps){
+      const marker=new google.maps.Marker({
+        position:pos,map:mapInstance,title:isSelf?'You':p.firstName,
+        icon:{path:google.maps.SymbolPath.CIRCLE,scale:isSelf?10:8,
+          fillColor:isSelf?'#e67e22':isPartner?'#1a6b3c':'#2463a8',fillOpacity:.9,strokeColor:'#fff',strokeWeight:2}
+      });
+      const info=new google.maps.InfoWindow({content:isSelf
+        ? `<div style="font-family:sans-serif;padding:6px;min-width:120px"><strong>📍 You</strong><br><span style="font-size:.8rem;color:#666">${zone}</span></div>`
+        : `<div style="font-family:sans-serif;padding:6px;min-width:160px">
+          <strong>${p.firstName}</strong><br>
+          <span style="font-size:.8rem;color:#666">${p.grade} · ${zone}</span><br>
+          <span style="font-size:.8rem;color:#666">${p.compensation}</span>
+          ${isPartner?'<br><span style="color:#1a6b3c;font-size:.8rem">✓ Your partner</span>'
+            :`<br><button onclick="openRequestModal('${id}','${p.firstName}')" 
+              style="margin-top:5px;background:#1a6b3c;color:#fff;border:none;padding:4px 10px;border-radius:6px;font-size:.75rem;cursor:pointer">Request Ride</button>`}
+        </div>`});
+      marker.addListener('click',()=>info.open(mapInstance,marker));
+      mapMarkers.push(marker);
+    }
+
+    if(p.photoURL) photoCache[id]=p.photoURL;
+    const isMe = isSelf;
     const theirPref = p.ridePreference||'both';
     const canRequest = !isPartner && (theirPref==='driver' || theirPref==='both');
-    const licenseBadge = p.licenseUploaded ? '<span class="license-badge verified" style="font-size:.65rem">🪪 License</span>' : '';
 
-    const card = document.createElement('div');
-    card.className = 'peer-card';
-    card.innerHTML = `
-      <div style="margin:0 auto .3rem;display:flex;justify-content:center;position:relative">
-        ${avHtml2}
-        ${p.availableThisWeek ? '<span style="position:absolute;bottom:0;right:0;width:12px;height:12px;background:#2ecc71;border-radius:50%;border:2px solid white" title="Available this week"></span>' : ''}
-      </div>
+    const card=document.createElement('div');
+    card.className='peer-card';
+    card.innerHTML=`
+      <div style="margin:0 auto .3rem;display:flex;justify-content:center">${avatarHtml(id,p.firstName,p.lastName,'48px',p.photoURL||null)}</div>
       <strong>${p.firstName}</strong>
       <span class="peer-detail">${p.grade} · ${zone}</span>
       <span class="peer-detail">${theirPref==='driver'?'🚗 Driver':theirPref==='rider'?'🎒 Rider':'🚗🎒 Both'}</span>
-      ${licenseBadge}
-      ${isPartner
-        ? '<span class="badge badge-green">✓ Partner</span>'
-        : canRequest
-          ? '<button class="btn btn-primary btn-sm" onclick="openRequestModal(\'' + id + '\',\'' + p.firstName + '\')">Request Ride</button>'
-          : theirPref==='rider' ? '<span class="badge" style="font-size:.7rem;background:var(--cream);color:var(--muted)">🎒 Rider only</span>' : ''}
-      <button class="report-btn" onclick="reportUser(\'' + id + '\',\'' + p.firstName + '\')">🚩 Report</button>`;
+      ${p.licenseUploaded?'<span class="license-badge verified" style="font-size:.65rem">🪪 License</span>':''}
+      ${isMe
+        ?'<span class="badge" style="font-size:.7rem;background:var(--green-light);color:var(--green-dark)">📍 You</span>'
+        :isPartner
+          ?'<span class="badge badge-green">✓ Partner</span>'
+          :canRequest
+            ?'<button class="btn btn-primary btn-sm" onclick="openRequestModal(\''+id+'\',\''+p.firstName+'\')">Request Ride</button>'
+            :theirPref==='rider'?'<span class="badge" style="font-size:.7rem;background:var(--cream);color:var(--muted)">🎒 Rider only</span>':''}
+      ${!isMe?'<button class="report-btn" onclick="reportUser(\''+id+'\',\''+p.firstName+'\')">🚩 Report</button>':''}`;
     cardsEl.appendChild(card);
   });
 }
 
-// Override onMapReady to store allPeers for filtering
-const _origMapReady = window.onMapReady;
-window.onMapReady = async function(){
-  if(_origMapReady) await _origMapReady();
-  // Store peers for filtering — reload from Firestore
-  const snap = await db.collection('users').where('schoolName','==',SCHOOL).where('isActive','==',true).get();
-  allPeers = snap.docs.filter(d=>d.id!==currentUser.uid).map(d=>({id:d.id, data:d.data()}));
-  document.getElementById('map-count').textContent = allPeers.length + ' students nearby';
-  renderPeerCards(allPeers);
-};
 
 // ── RIDE CONFIRMATION NUDGE ──
 async function checkTodayNudge(){
