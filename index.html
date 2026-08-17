@@ -1288,7 +1288,7 @@ d{color:var(--muted)}
       <p style="color:var(--muted);font-size:.9rem;margin-bottom:1.5rem">Let's get you set up in 3 quick steps so you can start carpooling with your O'Dowd classmates.</p>
       <div class="welcome-steps"><div class="welcome-step active"></div><div class="welcome-step"></div><div class="welcome-step"></div><div class="welcome-step"></div></div>
       <div class="alert alert-info">📍 First, add your car so we can calculate your emissions savings accurately.</div>
-      <div id="car-fields" style="display:block">
+      <div id="welcome-car-fields" style="display:block">
         <div style="display:flex;gap:10px;margin-bottom:1rem">
           <div class="car-option selected" id="wco-model" onclick="selectWelcomeCarOpt('model')" style="flex:1;text-align:center;padding:.8rem;cursor:pointer">🚗<br><strong style="font-size:.82rem">Year / Make / Model</strong></div>
           <div class="car-option" id="wco-mpg" onclick="selectWelcomeCarOpt('mpg')" style="flex:1;text-align:center;padding:.8rem;cursor:pointer">⛽<br><strong style="font-size:.82rem">Enter MPG manually</strong></div>
@@ -5321,7 +5321,6 @@ window.renderMilestones = renderMilestones;
 window.toggleAvailableThisWeek = toggleAvailableThisWeek;
 window.setFilter = setFilter;
 window.filterPeers = filterPeers;
-window.renderPeerCards = renderPeerCards;
 window.checkTodayNudge = checkTodayNudge;
 window.openGroupChatModal = openGroupChatModal;
 window.createGroupChat = createGroupChat;
